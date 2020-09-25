@@ -1,0 +1,1 @@
+bool check_dest_dir(const std::string& dir);

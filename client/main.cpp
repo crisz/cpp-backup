@@ -4,30 +4,37 @@
 #include "FileWatcher.h"
 #include <boost/program_options.hpp>
 #include "UserSession.h"
+#include "ServerConnection.h"
+#include <boost/any.hpp>
+#include <iostream>
+
 #define SYNCH_INTERVAL 1000
 
 namespace po = boost::program_options;
+void die(std::string message) {
+    std::cout << message << std::endl;
+    exit(-1);
+}
 
-
-void init_file_watcher(FileWatcher &fw) {
-    fw.on_file_changed([](std::string path_to_watch, FileStatus status) -> void {
+void init_file_watcher(FileWatcher &fw, ServerConnection& sc) {
+    fw.on_file_changed([&sc](std::string path_to_watch, FileStatus status) -> void {
         if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_to_watch)) && status != FileStatus::erased) {
             return;
         }
 
-        switch (status)
-        {
-        case FileStatus::created:
-            std::cout << "File created: " << path_to_watch << std::endl;
-            break;
-        case FileStatus::modified:
-            std::cout << "File modified: " << path_to_watch << std::endl;
-            break;
-        case FileStatus::erased:
-            std::cout << "File erased: " << path_to_watch << '\n';
-            break;
-        default:
-            std::cout << "Error! Unknown file status.\n";
+        switch (status) {
+            case FileStatus::created:
+                std::cout << "File created: " << path_to_watch << std::endl;
+                sc.send(path_to_watch);
+                break;
+            case FileStatus::modified:
+                std::cout << "File modified: " << path_to_watch << std::endl;
+                break;
+            case FileStatus::erased:
+                std::cout << "File erased: " << path_to_watch << '\n';
+                break;
+            default:
+                std::cout << "Error! Unknown file status.\n";
         }
     });
 }
@@ -39,6 +46,8 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
         ("dir", po::value<std::string>()->required(), "The directory you want to sync")
         ("username", po::value<std::string>()->required(), "The username you want to login with")
         ("password", po::value<std::string>()->required(), "The password you want to login with")
+        ("address", po::value<std::string>()->default_value("0.0.0.0"), "Address of the server")
+        ("port", po::value<int>()->default_value(3333), "Port of the server")
     ;
     po::variables_map vm;
     try {
@@ -47,8 +56,14 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
         po::notify(vm);
         std::string username = vm["username"].as<std::string>();
         std::string password = vm["password"].as<std::string>();
+        std::string dir = vm["dir"].as<std::string>();
+        std::string address = vm["address"].as<std::string>();
+        int port = vm["port"].as<int>();
         us.username = std::move(username);
         us.password = std::move(password);
+        us.dir = std::move(dir);
+        us.address = std::move(address);
+        us.port = std::move(port);
         return 0;
     } catch (po::error& e) {
         if (!vm.count("help")) {
@@ -69,13 +84,21 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
 }
 
 int main(int argc, char** argv) {
+    if (argc < 1) {
+        die("A command between sync and <tbd> is required");
+    }
     std::string command = argv[1];
-    FileWatcher fw{"../", std::chrono::milliseconds(SYNCH_INTERVAL)};
 
     if (command == "sync") {
         UserSession us;
         if (parse_sync_options(argc, argv, us)) return 0;
-        std::cout << "Your username is " << us.username << std::endl;
-        init_file_watcher(fw);
+
+        FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
+        // std::cout << "Your username is " << us.username << std::endl;
+        ServerConnection sc{us.address, us.port};
+        boost::any var = 12;
+        // sc.send();
+
+        init_file_watcher(fw, sc);
     }
 }
