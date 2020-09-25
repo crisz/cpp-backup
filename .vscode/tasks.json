@@ -1,0 +1,59 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+      {
+        "type": "shell",
+        "label": "clang++ build active file",
+        "command": "/usr/bin/clang++",
+        "args": [
+          "-std=c++17",
+          "-stdlib=libc++",
+          "-g",
+          "${fileDirname}/*.cpp",
+          "-o",
+          "${fileDirname}/${fileBasenameNoExtension}",
+          "-lncurses",
+          "-L/usr/local/lib",
+          "-I/usr/local/include",
+          "-lboost_system",
+          "-lboost_filesystem",
+          "-lboost_program_options"
+        ],
+        "options": {
+          "cwd": "${workspaceFolder}"
+        },
+        "problemMatcher": ["$gcc"],
+        "group": {
+          "kind": "build",
+          "isDefault": true
+        }
+      },
+      // {
+      //   "type": "shell",
+      //   "label": "clang++ build active file cpp c/s",
+      //   "command": "/usr/bin/clang++",
+      //   "args": [
+      //     "-std=c++17",
+      //     "-stdlib=libc++",
+      //     "-g",
+      //     "${fileDirname}/*.cpp",
+      //     "-I",
+      //     "${fileDirname}/../../common/lib/boost_1_73_0",
+      //     "-o",
+      //     "${fileDirname}/../bin/${fileBasenameNoExtension}",
+      //     "-lncurses"
+      //   ],
+      //   "options": {
+      //     "cwd": "${workspaceFolder}"
+      //   },
+      //   "problemMatcher": ["$gcc"],
+      //   "group": {
+      //     "kind": "build",
+      //     "isDefault": true
+      //   }
+      // },
+      
+    ]
+  }
