@@ -11,6 +11,7 @@
 #define SYNCH_INTERVAL 1000
 
 namespace po = boost::program_options;
+
 void die(std::string message) {
     std::cout << message << std::endl;
     exit(-1);
