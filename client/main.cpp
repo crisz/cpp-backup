@@ -84,7 +84,14 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
 }
 
 int main(int argc, char** argv) {
-    if (argc < 1) {
+    char* str = "\0\0\0c";
+    unsigned short num0 = (unsigned short) str[0];
+    unsigned short num1 = (unsigned short) str[1];
+    unsigned short num2 = (unsigned short) str[2];
+    unsigned short num3 = (unsigned short) str[3];
+    int sum = (num0 << 24) + (num1 << 16) + (num2 << 8) + num3;
+    std::cout << sum << std::endl;
+    if (argc <= 1) {
         die("A command between sync and <tbd> is required");
     }
     std::string command = argv[1];
@@ -99,6 +106,70 @@ int main(int argc, char** argv) {
         boost::any var = 12;
         // sc.send();
 
+
         init_file_watcher(fw, sc);
+        return 0;
+    }
+
+    if (command == "restore") {
+        // ...
+        return 0;
     }
 }
+
+
+// char* data;
+// std::string command;
+
+// unsigned short ch1 = (unsigned short)data[i];
+// unsigned short ch2 = (unsigned short)data[i+1];
+// unsigned short ch3 = (unsigned short)data[i+2];
+// unsigned short ch4 = (unsigned short)data[i+3];
+
+// int size = ch1 * 256^3 + ch2*256^2 + ch3*256 + ch4;
+
+// LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC
+// LOGINSNC __RESULT 0002 OK
+
+// REQRTREE
+// REQRTREE FILEHASH ABC9 <HASH> FILEPATH 0123 <FULL PATH> FILEHASH A123 <HASH> FILEPATH FILEHASH
+
+// POSTFILE FILEPATH 0123 <FULL PATH> FILEDATA <FULL DATA> FILEHASH A123 <HASH> 
+// POSTFILE __RESULT 0002 OK
+
+// REMVFILE FILEPATH 0123 <FULL PATH>
+// REMVFILE __RESULT 0002 OK
+
+// - generare l''hash
+
+
+// Cri:
+// - creare un parser
+// - realizzare sign-up
+
+
+// Peppe:
+
+
+// CLIENT                          SERVER
+// ./a.txt  ABC123                 ./a.txt  ABC123
+// ./b.txt  DEF234                 ./b.txt  0DE1FF
+// ./c.txt  FGH129                 ./d.txt  0D032F
+
+
+// toRemove = [d.txt];
+// toPost = [b.txt, c.txt];
+
+
+// - analizza le cartelle sul file system locale del client, lo confronta con l'albero ottenuto del server e crea due array:
+// 1. un array con i file che vanno eliminati sul server
+// 2. un array con i file che vanno aggiunti/modificati sul server
+
+// - dato un percorso crei l'albero delle cartelle necessario
+
+
+
+// Andrea:
+
+// - boost asio
+// - impl. comandi
