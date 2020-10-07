@@ -1,6 +1,12 @@
 
-#include <boost/asio/thread_pool.hpp>
+
 #include <boost/asio/post.hpp>
+
+#include <boost/bind/bind.hpp>
+#include <boost/shared_ptr.hpp>
+#include <boost/enable_shared_from_this.hpp>
+#include <boost/asio.hpp>
+
 #include <thread>
 #include <string>
 #include <memory>
@@ -10,85 +16,103 @@ void die(std::string message) {
     exit(-1);
 }
 
-struct UserConnected {
-    int fd;
-};
+using boost::asio::ip::tcp;
 
-class ConnectionPool {
-private:
-    int sockfd;
-    std::vector<UserConnected> usersConnected;
-    std::vector<std::function<void(UserConnected& uc)>> new_user_callbacks;
-    std::shared_ptr<boost::asio::thread_pool> pool_ptr;
-    void invoke_new_user_callbacks(UserConnected& uc) {
-        for (auto callback: this->new_user_callbacks) {
-            callback(uc);
-        }
-    }
+class tcp_connection : public boost::enable_shared_from_this<tcp_connection>{
 public:
-    void add_new_user_callback(std::function<void(UserConnected&)> uc) {
-        new_user_callbacks.push_back(uc);
+    typedef boost::shared_ptr<tcp_connection> pointer;
+
+    static pointer create(boost::asio::io_service &io_service) {
+        return pointer(new tcp_connection(io_service));
     }
-    ConnectionPool(int port) {
-        
-        this->pool_ptr = std::make_shared<boost::asio::thread_pool>(std::thread::hardware_concurrency());
 
-        struct sockaddr_in serv_addr;
-
-        // socket
-        this->sockfd = socket(AF_INET, SOCK_STREAM, 0);
-        if (!this->sockfd) die("Cannot create socket");
-        bzero((char *) &serv_addr, sizeof(serv_addr));
-        serv_addr.sin_family = AF_INET;  
-        serv_addr.sin_addr.s_addr = INADDR_ANY;  
-        serv_addr.sin_port = htons(port);
-
-        // bind
-        int bindResult = ::bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr));       
-        if (bindResult < 0) die("Cannot bind");
-
-        std::cout << "bound" << std::endl;
-        // listen
-        ::listen(this->sockfd, 5);
-        std::cout << "listening" << std::endl;
-        auto pool = this->pool_ptr;
-        std::thread t([this, pool]() {
-            struct sockaddr_in cli_addr;
-            socklen_t clilen = sizeof(cli_addr);
-            while (true) {
-                std::cout << "waiting connection"<<std::endl;
-
-                int newsockfd = ::accept(this->sockfd, (struct sockaddr *) &cli_addr, &clilen);
-                if (newsockfd < 0) die("Cannot bind");
-                UserConnected uc;
-                std::cout << "uccc\n";
-
-                uc.fd = newsockfd;
-                this->usersConnected.push_back(uc);
-                this->invoke_new_user_callbacks(uc);
-                boost::asio::post(*pool, [this, &uc]() {
-                    std::cout << "posting message" << std::endl;
-                    while (true) {
-                        char buffer[50];
-                        buffer[0] = 0;
-                        std::cout << "trying to read\n";
-                        int bytes_read = recv(uc.fd, buffer, 50, 0);
-                        if (bytes_read <= 0) {
-                            std::cout << "Cannot read, closing client" << std::endl;
-                            close(uc.fd);
-                            break;
-                        }
-                        std::string message = buffer;
-                        try {
-                            std::cout << "Message received " << message << std::endl;
-                        } catch(const std::bad_function_call& e) {
-                            std::cout << e.what() << '\n';
-                        }
-                    }
-                });
-            }
-        });
-
-        t.detach();
+    tcp::socket &socket() {
+        return socket_;
     }
+
+    void start() {
+        //Read from client, make json and send appropriate response
+        boost::asio::async_read(socket_, message_,
+                                boost::bind(&tcp_connection::handle_read, shared_from_this(),
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred));
+    }
+private:
+    tcp_connection(boost::asio::io_service& io_service): socket_(io_service){}
+
+    void handle_write(const boost::system::error_code& /*error*/,
+                      size_t /*bytes_transferred*/)
+    {
+    }
+
+    void handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
+
+        std::cout << "Handle Read of connection\n";
+
+        if (error && error != boost::asio::error::eof) {
+            std::cout << "Error: " << error.message() << "\n";
+            return;
+        }
+
+        std::string messageP;
+        {
+            std::stringstream ss;
+            ss << &message_;
+            ss.flush();
+            messageP = ss.str();
+        }
+
+        std::cout << messageP << std::endl;
+
+
+
+    }
+
+    tcp::socket socket_;
+    boost::asio::streambuf message_;
 };
+
+
+class tcp_server{
+
+public:
+    tcp_server(boost::asio::io_context& io_context, int port)
+            : io_context_(io_context),
+              acceptor_(io_context, tcp::endpoint(tcp::v4(), port))
+    {
+
+        start_accept();
+    }
+
+
+
+private:
+    void start_accept()
+    {
+            std::cout << "waiting connection"<<std::endl;
+            tcp_connection::pointer new_connection =
+                    tcp_connection::create(io_context_);
+
+            acceptor_.async_accept(new_connection->socket(),
+                                   boost::bind(&tcp_server::handle_accept, this, new_connection,
+                                               boost::asio::placeholders::error));
+
+    }
+
+    void handle_accept(tcp_connection::pointer new_connection, const boost::system::error_code& error)
+    {
+        if (!error)
+        {
+            std::cout << "A client connected" << std::endl;
+            new_connection->start();
+        }
+
+        start_accept();
+    }
+
+    boost::asio::io_context& io_context_;
+    tcp::acceptor acceptor_;
+
+};
+
+
