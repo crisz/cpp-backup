@@ -69,39 +69,6 @@ public:
         }
 
 
-
-        /*
-        std::vector<std::string> rem_from_trees;
-        for(auto se : server_tree){
-            for(auto ce: local_tree){
-                if(!ce.first.compare(se.first)){
-                    //if the paths are equal, compare the hash
-                    if (ce.second.compare(se.second)){
-                        //if the hashes are different the file is addes to file_to_post
-                        file_to_post.push_back(se.first);
-                    }
-                    //list of elements of no interest
-                    rem_from_trees.push_back(ce.first);
-                    break;
-                }
-            }
-        }
-
-        //remove elements of no interest from trees
-        for (auto e: rem_from_trees){
-            local_tree.erase(e);
-            server_tree.erase(e);
-        }
-
-        //the remaining elements in the server_tree are the ones to remove
-        for(auto se: server_tree){
-            file_to_remove.push_back(se.first);
-        }
-        //the remaining elements in the local_tree are the ones to add
-        for(auto ce: local_tree){
-            file_to_post.push_back(ce.first);
-        }*/
-
         //print the vectors
         std::cout<<"FILES TO REMOVE"<<std::endl;
         for(std::string path: file_to_remove){
