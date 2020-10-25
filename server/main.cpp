@@ -55,14 +55,12 @@ int main(int argc, char** argv) {
         die("La cartella " + so.dest + " non esiste o non è possibile aprirla in scrittura.");
     };
 
-    try
-    {
+    try {
         boost::asio::io_service io_service;
-        tcp_server server(io_service,so.port);
+        ConnectionPool server{io_service, so.port};
         io_service.run();
     }
-    catch (std::exception& e)
-    {
+    catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
 
