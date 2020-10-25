@@ -85,13 +85,6 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
 }
 
 int main(int argc, char** argv) {
-    char* str = "\0\0\0c";
-    unsigned short num0 = (unsigned short) str[0];
-    unsigned short num1 = (unsigned short) str[1];
-    unsigned short num2 = (unsigned short) str[2];
-    unsigned short num3 = (unsigned short) str[3];
-    int sum = (num0 << 24) + (num1 << 16) + (num2 << 8) + num3;
-    std::cout << sum << std::endl;
     if (argc <= 1) {
         die("A command between sync and <tbd> is required");
     }
@@ -104,6 +97,10 @@ int main(int argc, char** argv) {
         FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
         // std::cout << "Your username is " << us.username << std::endl;
         ServerConnection sc{us.address, us.port};
+        while (true) {
+            sc.send("ciao\n");
+            sleep(1);
+        }
         boost::any var = 12;
         // sc.send();
 
