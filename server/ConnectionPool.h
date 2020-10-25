@@ -32,6 +32,14 @@ public:
         return socket;
     }
 
+    void send_response(const std::string& message) {
+        auto on_write = boost::bind(&tcp_connection::handle_write, shared_from_this(),
+                                            boost::asio::placeholders::error,
+                                            boost::asio::placeholders::bytes_transferred);
+        auto buffered_message = boost::asio::buffer(message, message.size());
+        boost::asio::async_write(socket, buffered_message, on_write);
+    }
+
     void put_on_read() {
         auto on_read = boost::bind(&tcp_connection::handle_read, shared_from_this(),
                                             boost::asio::placeholders::error,
@@ -41,9 +49,8 @@ public:
 private:
     tcp_connection(boost::asio::io_service& io_service): socket(io_service){}
 
-    void handle_write(const boost::system::error_code& /*error*/,
-                      size_t /*bytes_transferred*/)
-    {
+    void handle_write(const boost::system::error_code& error, size_t bytes_transferred) {
+        std::cout << "write completed" << std::endl;
     }
 
     void handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
@@ -52,23 +59,28 @@ private:
 
         if (error && error != boost::asio::error::eof) {
             std::cout << "Error: " << error.message() << "\n";
+
+            // TODO: handle error
             return;
         }
 
         std::string messageP;
-        {
-            std::stringstream ss;
-            ss << &buffer;
-            ss.flush();
-            messageP = ss.str();
-        }
+        std::ostringstream oss;
+        oss << &buffer;
+        oss.flush(); // TODO: è utile?
+        messageP = oss.str();
 
         std::cout << messageP << std::endl;
         if (messageP != "") {
             this->put_on_read();
         } else {
-            // this->handle_disconnection();
+            // TODO: this->handle_disconnection();
         }
+
+        std::async([this]() {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            this->send_response("yes");
+        });
 
     }
 };
@@ -78,9 +90,9 @@ class tcp_server{
     boost::asio::io_context& io_context;
     tcp::acceptor acceptor;
 public:
-    tcp_server(boost::asio::io_context& io_context, int port)
-            : io_context(io_context),
-              acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {
+    tcp_server(boost::asio::io_context& io_context, int port) : 
+            io_context(io_context),
+            acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {
         this->start_accept();
     }
 
