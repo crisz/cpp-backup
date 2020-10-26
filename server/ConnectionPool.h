@@ -17,17 +17,20 @@ void die(std::string message) {
 class ConnectionPool {
     boost::asio::io_context& io_context;
     tcp::acceptor acceptor;
+    std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback;
 public:
-    ConnectionPool(boost::asio::io_context& io_context, int port) : 
+    ConnectionPool(boost::asio::io_context& io_context, int port, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)>  callback) : 
             io_context(io_context),
             acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {
+
+        this->callback = callback;
         this->start_accept();
     }
 
 private:
     void start_accept() {
         std::cout << "waiting connection"<<std::endl;
-        SingleUserConnection::pointer new_connection = SingleUserConnection::create(io_context);
+        SingleUserConnection::pointer new_connection = SingleUserConnection::create(io_context, this->callback);
 
         auto on_accept = boost::bind(&ConnectionPool::handle_accept, this, new_connection, boost::asio::placeholders::error);
         acceptor.async_accept(new_connection->get_socket(), on_accept);

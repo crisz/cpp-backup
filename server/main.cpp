@@ -4,9 +4,11 @@
 #include <string>
 #include "file_system_helper.h"
 #include "ConnectionPool.h"
+#include "SingleUserConnection.h"
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
 #include <thread>
+
 
 namespace po = boost::program_options;
 
@@ -48,6 +50,11 @@ int parse_options(int argc, char** argv, ServerOptions& so) {
     }
 }
 
+void handle_message(SingleUserConnection& user_connection, const std::string& message) {
+    std::cout << "Messaggio ricevuto: " << message << std::endl;
+    user_connection.send_response(message + "!!");
+}
+
 int main(int argc, char** argv) {
     ServerOptions so;
     if (parse_options(argc, argv, so)) return 0;
@@ -57,7 +64,10 @@ int main(int argc, char** argv) {
 
     try {
         boost::asio::io_service io_service;
-        ConnectionPool server{io_service, so.port};
+        ConnectionPool server{io_service, so.port, [](std::shared_ptr<SingleUserConnection> user_connection, const std::string& message){
+            std::cout << "Messaggio ricevuto: " << message << std::endl;
+            user_connection->send_response(message + "!!");
+        }};
         io_service.run();
     }
     catch (std::exception& e) {
