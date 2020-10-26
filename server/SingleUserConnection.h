@@ -9,13 +9,12 @@
 #include <memory>
 
 using boost::asio::ip::tcp;
-class SingleUserConnection : public boost::enable_shared_from_this<SingleUserConnection>{
+class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection>{
     tcp::socket socket;
     boost::asio::streambuf buffer;
     std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> handle_message_callback;
 public:
-    // TODO to std::shared_ptr
-    typedef boost::shared_ptr<SingleUserConnection> pointer; // NON USATE BOOST POINTER PLS. Sono obsoleti. Possono nascere problemi di compatibilità con gli shared pointer di c++ 
+    typedef std::shared_ptr<SingleUserConnection> pointer;
 
     static pointer create(boost::asio::io_service &io_service, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) {
         
@@ -34,11 +33,12 @@ public:
         boost::asio::async_write(socket, buffered_message, on_write);
     }
 
-    void put_on_read() {
+    void put_on_read_command() {
         auto on_read = boost::bind(&SingleUserConnection::handle_read, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
-        boost::asio::async_read_until(socket, buffer, '\n', on_read);
+        
+        boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(8), on_read);
     }
 private:
     SingleUserConnection(boost::asio::io_service& io_service, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :
@@ -52,13 +52,12 @@ private:
         std::cout << "write completed" << std::endl;
     }
 
-    void handle_read(const boost::system::error_code& error, size_t bytes_transferred) {
+    void handle_read_comand(const boost::system::error_code& error, size_t bytes_transferred) {
 
         std::cout << "Handle Read of connection\n";
 
         if (error && error != boost::asio::error::eof) {
             std::cout << "Error: " << error.message() << "\n";
-
             // TODO: handle error
             return;
         }
@@ -66,13 +65,13 @@ private:
         std::string messageP;
         std::ostringstream oss;
         oss << &buffer;
-        oss.flush(); // TODO: è utile?
         messageP = oss.str();
 
         std::cout << "Message:" << messageP << std::endl;
         if (messageP != "") {
             this->put_on_read();
-            this->handle_message_callback(std::shared_ptr<SingleUserConnection>(this), messageP);
+            std::shared_ptr<SingleUserConnection> this_ptr = shared_from_this();
+            this->handle_message_callback(this_ptr, messageP);
         } else {
             // TODO: this->handle_disconnection();
         }

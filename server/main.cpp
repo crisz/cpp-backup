@@ -9,6 +9,10 @@
 #include <boost/asio/post.hpp>
 #include <thread>
 
+#include <boost/asio/thread_pool.hpp>
+#include <boost/asio/post.hpp>
+
+
 
 namespace po = boost::program_options;
 
@@ -64,18 +68,26 @@ int main(int argc, char** argv) {
 
     try {
         boost::asio::io_service io_service;
-        ConnectionPool server{io_service, so.port, [](std::shared_ptr<SingleUserConnection> user_connection, const std::string& message){
-            std::cout << "Messaggio ricevuto: " << message << std::endl;
-            user_connection->send_response(message + "!!");
+        boost::asio::thread_pool pool(2); // TODO: spostare la gestione in un'altra classe
+        // proposta: MessageDispatcher.h
+
+        ConnectionPool server{io_service, so.port, [&pool] (std::shared_ptr<SingleUserConnection> user_connection, const std::string& message) {
+            boost::asio::post(pool, [user_connection, message]() {
+                if (message == "ciao\n") {
+                    user_connection->send_response("Ciao a te!\n");
+                } else {
+                    std::cout << "Sto calcolando la risposta per " << message << std::endl;
+                    std::this_thread::sleep_for(std::chrono::seconds(5));
+                    std::cout << "Risposta calcolata per " << message << std::endl;
+
+                    user_connection->send_response(message + "!!\n");
+                }
+            });
         }};
         io_service.run();
-    }
-    catch (std::exception& e) {
+    } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
     }
 
-    while(true) {}
-    
- 
     return 0;
 }

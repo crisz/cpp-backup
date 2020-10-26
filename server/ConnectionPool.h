@@ -19,7 +19,7 @@ class ConnectionPool {
     tcp::acceptor acceptor;
     std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback;
 public:
-    ConnectionPool(boost::asio::io_context& io_context, int port, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)>  callback) : 
+    ConnectionPool(boost::asio::io_context& io_context, int port, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) : 
             io_context(io_context),
             acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {
 
@@ -41,7 +41,7 @@ private:
             std::cout << "A client connected" << std::endl;
             new_connection->put_on_read();
         } else {
-            // TODO: handle error
+            // TODO: handle error: stampare qualcosa o generare un file di log
         }
 
         start_accept();
