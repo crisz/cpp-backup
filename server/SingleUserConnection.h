@@ -47,7 +47,6 @@ public:
         auto on_read = boost::bind(&SingleUserConnection::handle_read_parameter_name, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
-        
         boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(12), on_read);
     }
 
@@ -73,8 +72,24 @@ private:
     }
 
     void handle_read_parameter_name(const boost::system::error_code& error, size_t bytes_transferred) {
+        // 1. boost::any
+        // std::cout << "Received parameter \n";
+        // if (name == "FILEHASH") {
+        //     tipo = boost::string;
+        // }
 
-        std::cout << "Received parameter \n";
+        // 2. tutto std::string
+        // la conversione al tipo corretto viene fatto all'interno dell command dispatcher
+        // std::map<std::string, std::string>
+        // if map.key == 'file_content'
+
+
+        // 3. codificare tutti i comandi come oggetti
+        // login
+        // login.setUsername(parameterValue)
+        // login.setPassword(parameterValue)
+        // login.getUsername()
+        // login.getPassword()
 
         if (error && error != boost::asio::error::eof) {
             std::cout << "Error: " << error.message() << "\n";
@@ -132,6 +147,7 @@ private:
 
         std::cout << "value for parameter " << parameter_name << " is " <<  parameter_value << std::endl;
 
+        // TODO
         // mettiti di nuovo in read parameter name .put_on_read_parameter_name
         // dentro il handle_read_parameter_name bisogna interrompere la ricorsione se il nome del parametro è STOPFLOW
         // oltre ad interrompere la ricorsione bisogna anche invocare la callback
