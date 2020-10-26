@@ -7,14 +7,14 @@
 #include <thread>
 #include <string>
 #include <memory>
+#include "Command.h"
 
 using boost::asio::ip::tcp;
 class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection>{
     tcp::socket socket;
     boost::asio::streambuf buffer;
     std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> handle_message_callback;
-    std::string currentCommand;
-    std::map<std::string, std::string> currentParameters;
+    Command currentCommand;
 public:
     typedef std::shared_ptr<SingleUserConnection> pointer;
 
@@ -36,6 +36,7 @@ public:
     }
 
     void put_on_read_command() {
+        currentCommand.clear();
         auto on_read = boost::bind(&SingleUserConnection::handle_read_command, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
@@ -144,7 +145,7 @@ private:
         std::cout << "oss was read  " << std::endl;
 
 
-
+        currentCommand.addParameter(parameter_name,parameter_value);
         std::cout << "value for parameter " << parameter_name << " is " <<  parameter_value << std::endl;
 
         // TODO
@@ -169,6 +170,7 @@ private:
         oss << &buffer;
         messageP = oss.str();
 
+        currentCommand.setName(messageP);
         std::cout << "Message:" << messageP << std::endl;
         if (messageP != "") {
             // std::shared_ptr<SingleUserConnection> this_ptr = shared_from_this();

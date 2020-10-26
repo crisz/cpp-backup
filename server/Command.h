@@ -6,6 +6,20 @@ private:
     std::string command_name;
     std::map<std::string, std::string> parameters;
 public:
-    setName(std::string name);
-    addParameter(std::string par_name, std::string par_value);
-}
+    void setName(std::string name){
+        command_name=name;
+    }
+    void addParameter(std::string par_name, std::string par_value){
+        parameters[par_name]=par_value;
+    }
+    std::string getCommand_name(){
+        return command_name;
+    }
+    std::map<std::string, std::string> getParameters(){
+        return parameters;
+    }
+    void clear (){
+        command_name="";
+        parameters.clear();
+    }
+};
