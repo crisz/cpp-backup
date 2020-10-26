@@ -39,7 +39,7 @@ private:
     void handle_accept(SingleUserConnection::pointer new_connection, const boost::system::error_code& error) {
         if (!error) {
             std::cout << "A client connected" << std::endl;
-            new_connection->put_on_read();
+            new_connection->put_on_read_command();
         } else {
             // TODO: handle error: stampare qualcosa o generare un file di log
         }

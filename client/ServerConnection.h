@@ -37,7 +37,18 @@ public:
 
     void send(const std::string& m) {
         const char* message = (m).c_str();
-        int bytes_sent = ::send(this->sockfd, message, m.size()+1, 0);
+        int bytes_sent = ::send(this->sockfd, message, m.size(), 0);
+        
+        if (bytes_sent < 0) {
+            close(this->sockfd);
+            std::cout << ("Cannot send") << std::endl;
+            exit(-1);
+        }
+    }
+
+    void send(char* message, int size) {
+        // const char* message = (m).c_str();
+        int bytes_sent = ::send(this->sockfd, message, size, 0);
         
         if (bytes_sent < 0) {
             close(this->sockfd);
