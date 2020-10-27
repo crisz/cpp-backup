@@ -34,30 +34,18 @@ public:
 // REMVFILE FILEPATH 0123 <FULL PATH>
 // REMVFILE __RESULT 0002 OK
 
-    void commandParser(Command cmd, bool server) {
-        std::string commandName = cmd.getCommand_name();
-        auto a=cmd.getParameters();
-            if(commandName.compare("LOGINSNC")==0){
-                if(server)
-                    (a.find("USERNAME")!=a.end() && a.find("PASSWORD")!=a.end()) ? sendCredentials(a["USERNAME"],a["PASSWORD"]) : error();
-                else
-                    (a.find("__RESULT")!= a.end()) ? sendResult(a["Result"]): error();
-
+    void handleCommand() {
+            if(command_name.compare("LOGINSNC")==0) {
+                (parameters.find("USERNAME") != parameters.end() && parameters.find("PASSWORD") != parameters.end()) ? sendCredentials(parameters["USERNAME"],parameters["PASSWORD"]): error();
+            }else if(command_name.compare("REQRTREE")==0){
+                (parameters.find("FILEHASH")!=parameters.end() && parameters.find("FILEPATH")!=parameters.end()) ? sendTree(parameters["FILEHASH"],parameters["FILEPATH"]) : error();
             }
-
-            else if(commandName.compare("REQRTREE")==0){
-                (a.find("FILEHASH")!=a.end() && a.find("FILEPATH")!=a.end()) ? sendTree(a["FILEHASH"],a["FILEPATH"]) : error();
-            }
-
-            else if(commandName.compare("POSTFILE")==0){
-                if(server)
-                    (a.find("FILEPATH")!=a.end() && a.find("FILEDATA")!=a.end() && a.find("FILEHASH")!=a.end()) ? saveFile(a["FILEPATH"],a["FILEDATA"],a["FILEHASH"] ) : error();
-                else
-                    (a.find("__RESULT")!= a.end()) ? sendResult(a["Result"]): error();
-            }
-
-            else if(commandName.compare("REMVFILE")==0){
-                a.find("REMVFILE")!=a.end() ? removeFile(a["REMVFILE"]) : error();
+            else if(command_name.compare("POSTFILE")==0) {
+                    (parameters.find("FILEPATH") != parameters.end() && parameters.find("FILEDATA") != parameters.end() && parameters.find("FILEHASH") != parameters.end())
+                    ? saveFile(parameters["FILEPATH"], parameters["FILEDATA"], parameters["FILEHASH"]) : error();
+                }
+            else if(command_name.compare("REMVFILE")==0){
+                parameters.find("REMVFILE")!=parameters.end() ? removeFile(parameters["REMVFILE"]) : error();
             }
             else{
                 error();
@@ -65,10 +53,14 @@ public:
 
     }
 
-    void sendCredentials(std::string & username ,std::string & password );
-    void error();
-    void sendResult(std::string & r);
-    void sendTree(std::string & hash ,std::string & path );
-    void saveFile(std::string & path ,std::string & data,std::string & hash);
-    void removeFile(std::string & path);
+    void sendCredentials(std::string & username ,std::string & password ){
+        std::cout<<"Credenziali ricevute us: "<<username << " pass: "<< password<<std::endl;
+    }
+    void error(){
+        std::cout<<"Errore nel comando"<<std::endl;
+    }
+    void sendResult(std::string & r){}
+    void sendTree(std::string & hash ,std::string & path ){}
+    void saveFile(std::string & path ,std::string & data,std::string & hash){}
+    void removeFile(std::string & path){}
 };

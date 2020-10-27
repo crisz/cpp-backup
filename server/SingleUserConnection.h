@@ -40,8 +40,8 @@ public:
         auto on_read = boost::bind(&SingleUserConnection::handle_read_command, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
-        
-        boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(8), on_read);
+            boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(8), on_read);
+
     }
 
     void put_on_read_parameter_name() {
@@ -104,27 +104,33 @@ private:
         std::string parameter = oss.str();
 
         std::string message_name = parameter.substr(0, 8);
+        if(message_name.compare("STOPFLOW")==0){
+            std::cout<<"Fine comando raggiunto"<<std::endl;
+            currentCommand.handleCommand();
+            this->put_on_read_command();
+            return;
+        }
         const char* message_size_arr = parameter.substr(8, 12).c_str();
         int message_size = 0;
         int shift_value = 24;
 
-        std::cout << "size string is " << parameter.substr(8, 12) << std::endl;
+        //std::cout << "size string is " << parameter.substr(8, 12) << std::endl;
 
         for (int i=0; i<4; i++) {
             char x = (char)message_size_arr[i];
-            std::cout << "Summing: " << x << " with shift " << shift_value << std::endl;
+            //std::cout << "Summing: " << x << " with shift " << shift_value << std::endl;
             message_size += ((char)message_size_arr[i]) << shift_value;
             shift_value -= 8;
         }
 
-        std::cout << "Received parameter \n " << message_name << " with length " << message_size << std::endl;
+        //std::cout << "Received parameter \n " << message_name << " with length " << message_size << std::endl;
 
 
         this->put_on_read_parameter_value(message_name, message_size);
     }
 
     void handle_read_parameter_value(const boost::system::error_code& error, size_t bytes_transferred, std::string parameter_name) {
-        std::cout << "Received parameter value with size " << bytes_transferred << std::endl ;
+        //std::cout << "Received parameter value with size " << bytes_transferred << std::endl ;
 
         if (error && error != boost::asio::error::eof) {
             std::cout << "Error: " << error.message() << "\n";
@@ -132,21 +138,14 @@ private:
             return;
         }
 
-        std::cout << "reading oss " << std::endl;
-
         std::ostringstream oss;
-        std::cout << "1 " << std::endl;
-
         oss << &buffer;
-        std::cout << "2  " << std::endl;
-
         std::string parameter_value = oss.str();
-
-        std::cout << "oss was read  " << std::endl;
 
 
         currentCommand.addParameter(parameter_name,parameter_value);
-        std::cout << "value for parameter " << parameter_name << " is " <<  parameter_value << std::endl;
+        std::cout << "value for parameter " << parameter_name << " is " <<  currentCommand.getParameters()[parameter_name]<< std::endl;
+        this->put_on_read_parameter_name();
 
         // TODO
         // mettiti di nuovo in read parameter name .put_on_read_parameter_name
@@ -171,7 +170,7 @@ private:
         messageP = oss.str();
 
         currentCommand.setName(messageP);
-        std::cout << "Message:" << messageP << std::endl;
+        std::cout << "Message:" << currentCommand.getCommand_name() << std::endl;
         if (messageP != "") {
             // std::shared_ptr<SingleUserConnection> this_ptr = shared_from_this();
             // this->handle_message_callback(this_ptr, messageP);

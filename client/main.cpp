@@ -97,20 +97,27 @@ int main(int argc, char** argv) {
         FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
         // std::cout << "Your username is " << us.username << std::endl;
         ServerConnection sc{us.address, us.port};
-        sc.send("CANECANEciaociao");
-        char len[4];
-        len[0] = 0;
-        len[1] = 0;
-        len[2] = 0;
-        len[3] = 9;
-        // std::string len_str(len);
-        // std::cout << "length is " << len_str.size() << std::endl;
-        sc.send(len, 4);
-        sc.send("blablabla");
+        for(int i=0;i<2;i++) {
+            sc.send("LOGINSNCUSERNAME");
+            char len[4];
+            len[0] = 0;
+            len[1] = 0;
+            len[2] = 0;
+            len[3] = 9;
+            // std::string len_str(len);
+            // std::cout << "length is " << len_str.size() << std::endl;
+            sc.send(len, 4);
+            sc.send("blablabla");
+
+            sc.send("PASSWORD");
+            sc.send(len, 4);
+            sc.send("blablabla");
+            sc.send("STOPFLOW0000");
+        }
         init_file_watcher(fw, sc);
         return 0;
     }
-
+// LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
     if (command == "restore") {
         // ...
         return 0;
