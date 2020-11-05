@@ -18,9 +18,9 @@ class SingleUserConnection : public std::enable_shared_from_this<SingleUserConne
 public:
     typedef std::shared_ptr<SingleUserConnection> pointer;
 
-    static pointer create(boost::asio::io_service &io_service, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) {
+    static pointer create(boost::asio::io_context &io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) {
         
-        return pointer(new SingleUserConnection(io_service, callback));
+        return pointer(new SingleUserConnection(io_context, callback));
     }
 
     tcp::socket &get_socket() {
@@ -61,8 +61,8 @@ public:
     }
 
 private:
-    SingleUserConnection(boost::asio::io_service& io_service, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :
-            socket(io_service)
+    SingleUserConnection(boost::asio::io_context& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :
+            socket(io_context)
     {
         this->handle_message_callback = callback;
 
