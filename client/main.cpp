@@ -4,7 +4,7 @@
 #include "FileWatcher.h"
 #include <boost/program_options.hpp>
 #include "UserSession.h"
-#include "ServerConnection.h"
+#include "ServerConnectionAsio.h"
 #include <boost/any.hpp>
 #include <iostream>
 
@@ -17,7 +17,7 @@ void die(std::string message) {
     exit(-1);
 }
 
-void init_file_watcher(FileWatcher &fw, ServerConnection& sc) {
+void init_file_watcher(FileWatcher &fw, ServerConnectionAsio& sc) {
     fw.on_file_changed([&sc](std::string path_to_watch, FileStatus status) -> void {
         if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_to_watch)) && status != FileStatus::erased) {
             return;
@@ -96,7 +96,7 @@ int main(int argc, char** argv) {
 
         FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
         // std::cout << "Your username is " << us.username << std::endl;
-        ServerConnection sc{us.address, us.port};
+        ServerConnectionAsio sc{us.address, us.port};
         for(int i=0;i<2;i++) {
             sc.send("LOGINSNCUSERNAME");
             char len[4];
