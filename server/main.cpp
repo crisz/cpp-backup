@@ -67,11 +67,11 @@ int main(int argc, char** argv) {
     };
 
     try {
-        boost::asio::io_context io_context;
-        boost::asio::thread_pool pool(2); // TODO: spostare la gestione in un'altra classe
+        // boost::asio::io_context io_context;
+        boost::asio::thread_pool pool(1); // TODO: spostare la gestione in un'altra classe
         // proposta: MessageDispatcher.h
 
-        ConnectionPool server{io_context, so.port, [&pool] (std::shared_ptr<SingleUserConnection> user_connection, const std::string& message) {
+        ConnectionPool server{pool, so.port, [&pool] (std::shared_ptr<SingleUserConnection> user_connection, const std::string& message) {
             boost::asio::post(pool, [user_connection, message]() {
                 if (message == "ciao\n") {
                     user_connection->send_response("Ciao a te!\n");
@@ -84,7 +84,8 @@ int main(int argc, char** argv) {
                 }
             });
         }};
-        io_context.run();
+        // io_context.run();
+        pool.join();
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
     }

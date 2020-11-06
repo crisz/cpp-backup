@@ -15,15 +15,16 @@ void die(std::string message) {
 }
 
 class ConnectionPool {
-    boost::asio::io_context& io_context;
+    boost::asio::thread_pool& io_context;
     tcp::acceptor acceptor;
     std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback;
 public:
-    ConnectionPool(boost::asio::io_context& io_context, int port, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) : 
+    ConnectionPool(boost::asio::thread_pool& io_context, int port, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) : 
             io_context(io_context),
             acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {
 
         this->callback = callback;
+        acceptor.listen(0);
         this->start_accept();
     }
 
@@ -38,8 +39,11 @@ private:
 
     void handle_accept(SingleUserConnection::pointer new_connection, const boost::system::error_code& error) {
         if (!error) {
-            std::cout << "A client connected" << std::endl;
-            new_connection->put_on_read_command();
+            std::thread t([new_connection]() {
+                std::cout << "A client connected" << std::endl;
+                new_connection->put_on_read_command();
+            });
+            t.detach();
         } else {
             // TODO: handle error: stampare qualcosa o generare un file di log
         }

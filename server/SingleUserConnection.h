@@ -18,7 +18,7 @@ class SingleUserConnection : public std::enable_shared_from_this<SingleUserConne
 public:
     typedef std::shared_ptr<SingleUserConnection> pointer;
 
-    static pointer create(boost::asio::io_context &io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) {
+    static pointer create(boost::asio::thread_pool &io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) {
         
         return pointer(new SingleUserConnection(io_context, callback));
     }
@@ -36,6 +36,10 @@ public:
     }
 
     void put_on_read_command() {
+        while(true) {
+            std::cout << "..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::seconds(20));
+        }
         currentCommand.clear();
         auto on_read = boost::bind(&SingleUserConnection::handle_read_command, shared_from_this(),
                                             boost::asio::placeholders::error,
@@ -61,7 +65,7 @@ public:
     }
 
 private:
-    SingleUserConnection(boost::asio::io_context& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :
+    SingleUserConnection(boost::asio::thread_pool& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :
             socket(io_context)
     {
         this->handle_message_callback = callback;
