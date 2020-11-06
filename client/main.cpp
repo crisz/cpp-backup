@@ -7,6 +7,7 @@
 #include "ServerConnectionAsio.h"
 #include <boost/any.hpp>
 #include <iostream>
+#include "TreesComparator.h"
 
 #define SYNCH_INTERVAL 1000
 
@@ -97,7 +98,7 @@ int main(int argc, char** argv) {
         FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
         // std::cout << "Your username is " << us.username << std::endl;
         ServerConnectionAsio sc{us.address, us.port};
-        for(int i=0;i<2;i++) {
+
             sc.send("LOGINSNCUSERNAME");
             char len[4];
             len[0] = 0;
@@ -113,7 +114,32 @@ int main(int argc, char** argv) {
             sc.send(len, 4);
             sc.send("blablabla");
             sc.send("STOPFLOW0000");
-        }
+
+
+        // Prova invio comando richiesta mappa serializzata
+        // sc.send("REQRTREESTOPFLOW0000");
+        // sc.receve();
+
+        //prova comando login con stream non funziona
+        /*
+        std::stringstream stream;
+        stream <<"LOGINSNCUSERNAME"<<std::hex <<std::setfill('0')<<std::setw(4)<<9<<"blablablaPASSWORD" <<std::setfill('0')<<std::setw(4)<<9<<"blablablaSTOPFLOW0000";
+        std::string result( stream.str());
+        std::cout<<result<<std::endl;
+        sc.send(result);
+        */
+/*
+        TreesComparator tc{us.dir};
+
+        std::map<std::string, std::string> server_tree;
+
+        server_tree["/home/giuseppe/Scrivania/client/b.txt"]= "222";
+        server_tree.erase("/home/giuseppe/Scrivania/client/c.txt");
+        server_tree.erase("/home/giuseppe/Scrivania/client/0.txt");
+        server_tree.erase("/home/giuseppe/Scrivania/client/z.txt");
+        server_tree["/home/giuseppe/Scrivania/client/d.txt"]= "222";
+        tc.compare(server_tree);
+ */
         init_file_watcher(fw, sc);
         return 0;
     }

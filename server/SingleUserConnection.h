@@ -7,7 +7,8 @@
 #include <thread>
 #include <string>
 #include <memory>
-#include "Command.h"
+#include "common/Command.h"
+#include "common/hash_file.h"
 
 using boost::asio::ip::tcp;
 class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection>{
@@ -106,7 +107,7 @@ private:
         std::string message_name = parameter.substr(0, 8);
         if(message_name.compare("STOPFLOW")==0){
             std::cout<<"Fine comando raggiunto"<<std::endl;
-            currentCommand.handleCommand();
+            this->send_response(currentCommand.handleCommand(true));
             this->put_on_read_command();
             return;
         }
