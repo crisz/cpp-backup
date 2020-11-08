@@ -5,6 +5,7 @@
 #include <boost/program_options.hpp>
 #include "UserSession.h"
 #include "ServerConnectionAsio.h"
+#include "Command.h"
 #include <boost/any.hpp>
 #include <iostream>
 
@@ -17,8 +18,9 @@ void die(std::string message) {
     exit(-1);
 }
 
-void init_file_watcher(FileWatcher &fw, ServerConnectionAsio& sc) {
-    fw.on_file_changed([&sc](std::string path_to_watch, FileStatus status) -> void {
+void init_file_watcher(FileWatcher &fw) {
+    // std::shared_ptr<ServerConnectionAsio> sc = ServerConnectionAsio::get_instance();
+    fw.on_file_changed([](std::string path_to_watch, FileStatus status) -> void {
         if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_to_watch)) && status != FileStatus::erased) {
             return;
         }
@@ -26,7 +28,6 @@ void init_file_watcher(FileWatcher &fw, ServerConnectionAsio& sc) {
         switch (status) {
             case FileStatus::created:
                 std::cout << "File created: " << path_to_watch << std::endl;
-                sc.send(path_to_watch);
                 break;
             case FileStatus::modified:
                 std::cout << "File modified: " << path_to_watch << std::endl;
@@ -95,26 +96,22 @@ int main(int argc, char** argv) {
         if (parse_sync_options(argc, argv, us)) return 0;
 
         FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
-        // std::cout << "Your username is " << us.username << std::endl;
-        ServerConnectionAsio sc{us.address, us.port};
-        for(int i=0;i<2;i++) {
-            sc.send("LOGINSNCUSERNAME");
-            char len[4];
-            len[0] = 0;
-            len[1] = 0;
-            len[2] = 0;
-            len[3] = 9;
-            // std::string len_str(len);
-            // std::cout << "length is " << len_str.size() << std::endl;
-            sc.send(len, 4);
-            sc.send("blablabla");
+        std::cout << "Your username is " << us.username << std::endl;
+        std::cout << "init connection" << std::endl;
+        ServerConnectionAsio::init(us.address, us.port);
+        std::cout << "connection started" << std::endl;
 
-            sc.send("PASSWORD");
-            sc.send(len, 4);
-            sc.send("blablabla");
-            sc.send("STOPFLOW0000");
+        Command c;
+        std::cout << "attempting login" << std::endl;
+
+        bool login_result = c.login(us.username, us.password).get();
+        if (login_result) {
+            std::cout << "Login effettuato con successo" << std::endl;
+        } else {
+            std::cout << "Login fallito " << std::endl;
         }
-        init_file_watcher(fw, sc);
+
+        init_file_watcher(fw);
         return 0;
     }
 // LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW

@@ -34,3 +34,11 @@
 #CMakelist
 CMakeLists.txt
 /cmake-build-debug/
+
+client/main
+client/main.dSSM/*
+server/main
+server/main.dsYM/*
+main
+client/main.dSYM/Contents/Resources/DWARF/main
+client/main

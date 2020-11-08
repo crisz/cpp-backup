@@ -8,6 +8,8 @@
 #include <string>
 #include <memory>
 #include "Command.h"
+#include <arpa/inet.h>
+
 
 using boost::asio::ip::tcp;
 class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection>{
@@ -36,10 +38,7 @@ public:
     }
 
     void put_on_read_command() {
-        while(true) {
-            std::cout << "..." << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(20));
-        }
+    
         currentCommand.clear();
         auto on_read = boost::bind(&SingleUserConnection::handle_read_command, shared_from_this(),
                                             boost::asio::placeholders::error,
@@ -49,6 +48,7 @@ public:
     }
 
     void put_on_read_parameter_name() {
+        std::cout << "waiting for 12 bytes" << std::endl;
         auto on_read = boost::bind(&SingleUserConnection::handle_read_parameter_name, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
@@ -56,6 +56,8 @@ public:
     }
 
     void put_on_read_parameter_value(std::string parameter_name, int n) {
+        std::cout << "waiting for (pv) " << n << " bytes" << std::endl;
+
         auto on_read = boost::bind(&SingleUserConnection::handle_read_parameter_value, shared_from_this(),
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred,
@@ -110,7 +112,13 @@ private:
         std::string message_name = parameter.substr(0, 8);
         if(message_name.compare("STOPFLOW")==0){
             std::cout<<"Fine comando raggiunto"<<std::endl;
-            currentCommand.handleCommand();
+            boost::system::error_code ec;
+            boost::asio::write(socket, boost::asio::buffer("LOGINSNC", 8), ec);
+            boost::asio::write(socket, boost::asio::buffer("__RESULT", 8), ec);
+            boost::asio::write(socket, boost::asio::buffer(encode_length(2), 4), ec);
+            boost::asio::write(socket, boost::asio::buffer("OK", 2), ec);
+            boost::asio::write(socket, boost::asio::buffer("STOPFLOW", 8), ec);
+            // currentCommand.handleCommand();
             this->put_on_read_command();
             return;
         }
@@ -127,10 +135,12 @@ private:
             shift_value -= 8;
         }
 
+        int fixed_size = ntohl(message_size);
+
         //std::cout << "Received parameter \n " << message_name << " with length " << message_size << std::endl;
 
 
-        this->put_on_read_parameter_value(message_name, message_size);
+        this->put_on_read_parameter_value(message_name, fixed_size);
     }
 
     void handle_read_parameter_value(const boost::system::error_code& error, size_t bytes_transferred, std::string parameter_name) {
@@ -147,7 +157,7 @@ private:
         std::string parameter_value = oss.str();
 
 
-        currentCommand.addParameter(parameter_name,parameter_value);
+        currentCommand.addParameter(parameter_name, parameter_value);
         std::cout << "value for parameter " << parameter_name << " is " <<  currentCommand.getParameters()[parameter_name]<< std::endl;
         this->put_on_read_parameter_name();
 
@@ -179,9 +189,36 @@ private:
             // std::shared_ptr<SingleUserConnection> this_ptr = shared_from_this();
             // this->handle_message_callback(this_ptr, messageP);
             // this->currentCommand = messageP;
+            std::cout << "returning in read parameter name " << std::endl;
             this->put_on_read_parameter_name();
         } else {
             // TODO: this->handle_disconnection();
         }
+    }
+
+    char* encode_length(int size) {
+        char* result = new char[4];
+        int length = htonl(size); // htonl serve per non avere problemi di endianess
+        result[3] = (length & 0xFF);
+        result[2] = (length >> 8) & 0xFF;
+        result[1] = (length >> 16) & 0xFF;
+        result[0] = (length >> 24) & 0xFF;
+        return result;
+    }
+
+    int decode_length(char* message_size_arr) {
+        int message_size = 0;
+        int shift_value = 24;
+
+        //std::cout << "size string is " << parameter.substr(8, 12) << std::endl;
+
+        for (int i=0; i<4; i++) {
+            char x = (char)message_size_arr[i];
+            //std::cout << "Summing: " << x << " with shift " << shift_value << std::endl;
+            message_size += ((char)message_size_arr[i]) << shift_value;
+            shift_value -= 8;
+        }
+
+        return message_size;
     }
 };
