@@ -4,6 +4,7 @@
 #include <functional>
 #include "FileMetadata.h"
 #include "CommandDispatcher.h"
+#include "../common/Const.h"
 
 #define FILE_BUFFER_SIZE 256
 
@@ -19,7 +20,7 @@ public:
         std::cout << "Init login " << std::endl;
 
         parameters.erase(parameters.begin(), parameters.end());
-        command = "LOGINSNC";
+        command = LOGINSNC;
         parameters["USERNAME"] = username;
         parameters["PASSWORD"] = password;
         return std::async([this]() {
