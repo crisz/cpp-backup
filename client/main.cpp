@@ -6,7 +6,6 @@
 #include "UserSession.h"
 #include "ServerConnectionAsio.h"
 #include "Command.h"
-#include <boost/any.hpp>
 #include <iostream>
 #include "TreesComparator.h"
 

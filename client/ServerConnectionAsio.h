@@ -6,10 +6,6 @@
 #define CPP_BACKUP_SERVERCONNECTIONASIO_H
 #include <iostream>
 #include <boost/asio.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/iostreams/device/array.hpp>
-#include <boost/archive/binary_iarchive.hpp>
-#include <boost/serialization/map.hpp>
 
 
 
@@ -69,33 +65,13 @@ public:
         }
     }
 
-<<<<<<< HEAD
     char* read(int length) {
         char* buffer = new char[length];
         boost::system::error_code ec;
         boost::asio::read(s, boost::asio::buffer(buffer, length), boost::asio::transfer_exactly(length), ec);
         return buffer;
     }
-=======
-    void receve(){
-        boost::asio::streambuf buffer;
-        boost::asio::read(s,buffer,boost::asio::transfer_exactly(153));
-        std::ostringstream oss;
-        oss << &buffer;
-        oss.flush();
-        std::string data = oss.str();
-        boost::iostreams::basic_array_source<char>device(data.data(), data.size());
-        boost::iostreams::stream<boost::iostreams::basic_array_source<char>> istr(device);
-        boost::archive::binary_iarchive ia(istr);
-        std::map<std::string, std::string> m2;
-        ia >> m2;
 
-        for(auto a: m2){
-            std::cout<<a.first<<" : "<<a.second<<std::endl;
-        }
-    }
-
->>>>>>> origin/serverBoost-with-serialization
 };
 
 
