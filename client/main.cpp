@@ -86,6 +86,7 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
 }
 
 int main(int argc, char** argv) {
+
     if (argc <= 1) {
         die("A command between sync and <tbd> is required");
     }
