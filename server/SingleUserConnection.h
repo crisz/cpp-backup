@@ -7,9 +7,9 @@
 #include <thread>
 #include <string>
 #include <memory>
-#include "Command.h"
 #include <arpa/inet.h>
-
+#include "../common/Command.h"
+#include "../common/hash_file.h"
 
 using boost::asio::ip::tcp;
 class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection>{
@@ -112,13 +112,14 @@ private:
         std::string message_name = parameter.substr(0, 8);
         if(message_name.compare("STOPFLOW")==0){
             std::cout<<"Fine comando raggiunto"<<std::endl;
-            boost::system::error_code ec;
-            boost::asio::write(socket, boost::asio::buffer("LOGINSNC", 8), ec);
-            boost::asio::write(socket, boost::asio::buffer("__RESULT", 8), ec);
-            boost::asio::write(socket, boost::asio::buffer(encode_length(2), 4), ec);
-            boost::asio::write(socket, boost::asio::buffer("OK", 2), ec);
-            boost::asio::write(socket, boost::asio::buffer("STOPFLOW", 8), ec);
+            // boost::system::error_code ec;
+            // boost::asio::write(socket, boost::asio::buffer("LOGINSNC", 8), ec);
+            // boost::asio::write(socket, boost::asio::buffer("__RESULT", 8), ec);
+            // boost::asio::write(socket, boost::asio::buffer(encode_length(2), 4), ec);
+            // boost::asio::write(socket, boost::asio::buffer("OK", 2), ec);
+            // boost::asio::write(socket, boost::asio::buffer("STOPFLOW", 8), ec);
             // currentCommand.handleCommand();
+            this->send_response(currentCommand.handleCommand(true));
             this->put_on_read_command();
             return;
         }

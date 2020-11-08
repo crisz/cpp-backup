@@ -8,6 +8,7 @@
 #include "Command.h"
 #include <boost/any.hpp>
 #include <iostream>
+#include "TreesComparator.h"
 
 #define SYNCH_INTERVAL 1000
 
