@@ -6,6 +6,7 @@
 class CommandDispatcher {
 private:
     std::shared_ptr<ServerConnectionAsio> sc;
+    // std::string received_command;
 public:
     CommandDispatcher() {
         sc = ServerConnectionAsio::get_instance();
@@ -13,6 +14,7 @@ public:
 
     std::future<std::map<std::string, std::string>> dispatch(std::string& command, std::map<std::string, std::string>& parameters) {
         std::cout << "Sending command " << command << std::endl;
+        // lock acquire
         sc->send(command);
         
         for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
@@ -21,11 +23,15 @@ public:
 
         send_parameter("STOPFLOW", "");
 
+        // lock release
+
         return std::async([this]() {
+            // lock acquire
             std::cout << "Waiting for resopnse" << std::endl;
 
             std::map<std::string, std::string> result;
-            sc->read(8);
+            std::string received_command = sc->read(8);
+            // wait until received_command == command
             std::cout << "Starting listening" << std::endl;
 
             while(true) {
@@ -42,6 +48,7 @@ public:
 
                 result[parameter_name] = parameter_value;
             }
+            // lock release
         });
     }
 
