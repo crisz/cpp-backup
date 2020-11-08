@@ -66,6 +66,15 @@ public:
         boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(n), on_read);
     }
 
+
+    void write(char* message, int length) { // ipotesi 1: single user connection semplice. Complessità nel message dispatcher
+        
+    }
+
+    void send_response(std::command command, std::map<> parameters) { // ipotesi 2: single user connection più complicato. message dispatcher assente
+    
+    }
+
 private:
     SingleUserConnection(boost::asio::thread_pool& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :
             socket(io_context)
@@ -118,8 +127,8 @@ private:
             // boost::asio::write(socket, boost::asio::buffer(encode_length(2), 4), ec);
             // boost::asio::write(socket, boost::asio::buffer("OK", 2), ec);
             // boost::asio::write(socket, boost::asio::buffer("STOPFLOW", 8), ec);
-            // currentCommand.handleCommand();
-            this->send_response(currentCommand.handleCommand(true));
+            currentCommand.handle_command(this);
+            this->send_response(currentCommand.digest());
             this->put_on_read_command();
             return;
         }
@@ -166,6 +175,10 @@ private:
         // mettiti di nuovo in read parameter name .put_on_read_parameter_name
         // dentro il handle_read_parameter_name bisogna interrompere la ricorsione se il nome del parametro è STOPFLOW
         // oltre ad interrompere la ricorsione bisogna anche invocare la callback
+
+    }
+
+    void send_command(std::string, std::map<std::string, std::string>) {
 
     }
 

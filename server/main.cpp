@@ -12,8 +12,6 @@
 #include <boost/asio/thread_pool.hpp>
 #include <boost/asio/post.hpp>
 
-
-
 namespace po = boost::program_options;
 
 struct ServerOptions {
