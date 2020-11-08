@@ -6,6 +6,7 @@
 #include <boost/archive/binary_oarchive.hpp>
 #include "hash_file.h"
 #include <boost/serialization/map.hpp>
+#include <iomanip>
 
 class Command {
 private:
@@ -94,7 +95,6 @@ public:
         for(auto &file : boost::filesystem::recursive_directory_iterator(path)) {
             local_tree[file.path().string()] = hash_file(file.path().string());
         }
-        std::cout<<"sto mandando sto"<<std::endl;
 
         std::string buffer;
         boost::iostreams::back_insert_device<std::string> inserter(buffer);
@@ -102,6 +102,7 @@ public:
         boost::archive::binary_oarchive oa(ostr);
         oa << local_tree;
         ostr.flush();
+
         std::stringstream stream;
         stream <<"REQRTREERESPTREE"<<std::hex <<std::setfill('0')<<std::setw(4)<<buffer.size()<<buffer<<"STOPFLOW0000";
         std::string result( stream.str());
