@@ -1,7 +1,11 @@
 #include <string>
 #include <map>
 #include <boost/filesystem.hpp>
-#include "hash_file.h"
+#include "common/hash_file.h"
+#include "LoginManager.h"
+#include "SingleUserConnection.h"
+#include "MessageDispatcher.h"
+#include "../common/Constants.h"
 
 class Command {
 private:
@@ -34,9 +38,24 @@ public:
 // POSTFILE __RESULT 0002 OK
 
 // REMVFILE FILEPATH 0123 <FULL PATH>
-// REMVFILE __RESULT 0002 OK
+// REMVFILE __RESULT 000
 
-    std::string handleCommand(bool server) {
+    std::string handleCommand(SingleUserConnection* suc) {  // TODO: digest
+        // TODO: risolvere il problema del this (ad es. spostando la logica in command parser)
+        if (this->command_name == LOGINSNC) {
+            LoginManager lm;
+            std::string username = parameters[USERNAME];
+            std::string password = parameters[PASSWORD];
+            bool result = lm.check_login(username, password).get();
+            std::map<std::string, std::string> result_map;
+            result_map[__RESULT] = result ? "OK" : "KO";
+            MessageDispatcher md{suc};
+            md.dispatch(this->command_name,result_map);
+            this->clear();
+        }
+    }
+
+        /*
             if(command_name.compare("LOGINSNC")==0) {
                 if(server){
                     (parameters.find("USERNAME") != parameters.end() && parameters.find("PASSWORD") != parameters.end())
@@ -75,7 +94,9 @@ public:
             std::string prova="afadsfd";
             return prova;
 
+
     }
+         */
 
     void sendCredentials(std::string & username ,std::string & password ){
         std::cout<<"Credenziali ricevute us: "<<username << " pass: "<< password<<std::endl;

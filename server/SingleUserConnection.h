@@ -8,7 +8,7 @@
 #include <string>
 #include <memory>
 #include <arpa/inet.h>
-#include "../common/Command.h"
+#include "Command.h"
 #include "../common/hash_file.h"
 
 using boost::asio::ip::tcp;
@@ -197,29 +197,10 @@ private:
         }
     }
 
-    char* encode_length(int size) {
-        char* result = new char[4];
-        int length = htonl(size); // htonl serve per non avere problemi di endianess
-        result[3] = (length & 0xFF);
-        result[2] = (length >> 8) & 0xFF;
-        result[1] = (length >> 16) & 0xFF;
-        result[0] = (length >> 24) & 0xFF;
-        return result;
+    void write(char* message, int length) {
+
+
     }
 
-    int decode_length(char* message_size_arr) {
-        int message_size = 0;
-        int shift_value = 24;
 
-        //std::cout << "size string is " << parameter.substr(8, 12) << std::endl;
-
-        for (int i=0; i<4; i++) {
-            char x = (char)message_size_arr[i];
-            //std::cout << "Summing: " << x << " with shift " << shift_value << std::endl;
-            message_size += ((char)message_size_arr[i]) << shift_value;
-            shift_value -= 8;
-        }
-
-        return message_size;
-    }
 };
