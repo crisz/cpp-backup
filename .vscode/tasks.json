@@ -12,6 +12,7 @@
           "-stdlib=libc++",
           "-g",
           "${fileDirname}/*.cpp",
+          "${fileDirname}/../common/*.cpp",
           "-o",
           // "${fileDirname}/${fileBasenameNoExtension}",
           "${fileDirname}/main",

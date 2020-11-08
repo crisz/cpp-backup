@@ -1,10 +1,7 @@
 #include <string>
 #include <map>
 #include <boost/filesystem.hpp>
-#include <boost/iostreams/device/back_inserter.hpp>
-#include <boost/iostreams/stream.hpp>
-#include <boost/archive/binary_oarchive.hpp>
-#include "../common/hash_file.h"
+#include "hash_file.h"
 
 class Command {
 private:
