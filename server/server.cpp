@@ -242,7 +242,7 @@
 //                         history_lock.unlock();
 //                         s.quit(fd);
 //                     } else {
-//                         s.send(fd, "Command not found");
+//                         s.send(fd, "ServerCommand not found");
 //                     }
 //                     return;
 //                 }

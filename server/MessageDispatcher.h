@@ -2,61 +2,28 @@
 // Created by giuseppe on 08/11/20.
 //
 
-#ifndef CPP_BACKUP_MESSAGEDISPATCHER_H
-#define CPP_BACKUP_MESSAGEDISPATCHER_H
+#pragma once
 
-#include "SingleUserConnection.h"
+
+#include <map>
+#include <memory>
+#include "../common/Constants.h"
+class SingleUserConnection;
 
 class MessageDispatcher {
-SingleUserConnection* suc;
+
+std::shared_ptr<SingleUserConnection> suc;
 public:
-    MessageDispatcher(SingleUserConnection* suc): suc{suc}{}
-    void dispatch (std::string& command, std::map<std::string, std::string>& parameters){
+    MessageDispatcher(std::shared_ptr<SingleUserConnection>);
 
-        suc->send_respose(command);
+    void dispatch (std::string& command, std::map<std::string, std::string>& parameters);
 
-        for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
-            send_parameter(it->first, it->second);
-        }
+    void send_parameter(std::string key, std::string value) ;
 
-        send_parameter(STOPFLOW, "");
+    char* encode_length(int size) ;
 
-    }
+    int decode_length(char* message_size_arr);
 
-    void send_parameter(std::string key, std::string value) {
-        std::cout << "Sending parameter with key " << key << " and value " << value << std::endl;
-
-        suc->send(key);
-        suc->send(encode_length(value.size()), 4);
-        suc->send(value);
-    }
-
-    char* encode_length(int size) {
-        char* result = new char[4];
-        int length = htonl(size); // htonl serve per non avere problemi di endianess
-        result[3] = (length & 0xFF);
-        result[2] = (length >> 8) & 0xFF;
-        result[1] = (length >> 16) & 0xFF;
-        result[0] = (length >> 24) & 0xFF;
-        return result;
-    }
-
-    int decode_length(char* message_size_arr) {
-        int message_size = 0;
-        int shift_value = 24;
-
-        //std::cout << "size string is " << parameter.substr(8, 12) << std::endl;
-
-        for (int i=0; i<4; i++) {
-            char x = (char)message_size_arr[i];
-            //std::cout << "Summing: " << x << " with shift " << shift_value << std::endl;
-            message_size += ((char)message_size_arr[i]) << shift_value;
-            shift_value -= 8;
-        }
-
-        return message_size;
-    }
 };
 
 
-#endif //CPP_BACKUP_MESSAGEDISPATCHER_H

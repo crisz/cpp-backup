@@ -8,15 +8,18 @@
 #include <string>
 #include <memory>
 #include <arpa/inet.h>
-#include "Command.h"
+#include "ServerCommand.h"
 #include "../common/hash_file.h"
+#include "CommandParser.h"
 
 using boost::asio::ip::tcp;
+
 class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection>{
     tcp::socket socket;
     boost::asio::streambuf buffer;
     std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> handle_message_callback;
-    Command currentCommand;
+    ServerCommand currentCommand;
+    CommandParser commandParser;
 public:
     typedef std::shared_ptr<SingleUserConnection> pointer;
 
@@ -34,6 +37,13 @@ public:
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
         auto buffered_message = boost::asio::buffer(message, message.size());
+        boost::asio::async_write(socket, buffered_message, on_write);
+    }
+    void send_response(char* message, int size) {
+        auto on_write = boost::bind(&SingleUserConnection::handle_write, shared_from_this(),
+                                    boost::asio::placeholders::error,
+                                    boost::asio::placeholders::bytes_transferred);
+        auto buffered_message = boost::asio::buffer(message, size);
         boost::asio::async_write(socket, buffered_message, on_write);
     }
 
@@ -66,6 +76,7 @@ public:
         boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(n), on_read);
     }
 
+
 private:
     SingleUserConnection(boost::asio::thread_pool& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :
             socket(io_context)
@@ -75,28 +86,10 @@ private:
     }
 
     void handle_write(const boost::system::error_code& error, size_t bytes_transferred) {
-        std::cout << "write completed" << std::endl;
+        //std::cout << "write completed" << std::endl;
     }
 
     void handle_read_parameter_name(const boost::system::error_code& error, size_t bytes_transferred) {
-        // 1. boost::any
-        // std::cout << "Received parameter \n";
-        // if (name == "FILEHASH") {
-        //     tipo = boost::string;
-        // }
-
-        // 2. tutto std::string
-        // la conversione al tipo corretto viene fatto all'interno dell command dispatcher
-        // std::map<std::string, std::string>
-        // if map.key == 'file_content'
-
-
-        // 3. codificare tutti i comandi come oggetti
-        // login
-        // login.setUsername(parameterValue)
-        // login.setPassword(parameterValue)
-        // login.getUsername()
-        // login.getPassword()
 
         if (error && error != boost::asio::error::eof) {
             std::cout << "Error: " << error.message() << "\n";
@@ -119,7 +112,7 @@ private:
             // boost::asio::write(socket, boost::asio::buffer("OK", 2), ec);
             // boost::asio::write(socket, boost::asio::buffer("STOPFLOW", 8), ec);
             // currentCommand.handleCommand();
-            this->send_response(currentCommand.handleCommand(true));
+            commandParser.handleCommand(shared_from_this() ,currentCommand);
             this->put_on_read_command();
             return;
         }
@@ -197,10 +190,6 @@ private:
         }
     }
 
-    void write(char* message, int length) {
-
-
-    }
 
 
 };
