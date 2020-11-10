@@ -18,6 +18,8 @@ public:
 
     void dispatch (std::string& command, std::map<std::string, std::string>& parameters);
 
+    void dispatch_tree (std::string& command, std::map<std::string, std::string>& tree);
+
     void send_parameter(std::string key, std::string value) ;
 
     char* encode_length(int size) ;

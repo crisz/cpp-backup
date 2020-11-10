@@ -1,3 +1,4 @@
+#pragma once
 #include <boost/asio/post.hpp>
 #include <boost/bind/bind.hpp>
 #include <boost/shared_ptr.hpp>

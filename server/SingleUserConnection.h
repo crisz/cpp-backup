@@ -12,6 +12,7 @@
 #include "../common/hash_file.h"
 #include "CommandParser.h"
 
+
 using boost::asio::ip::tcp;
 
 class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection>{
@@ -20,6 +21,8 @@ class SingleUserConnection : public std::enable_shared_from_this<SingleUserConne
     std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> handle_message_callback;
     ServerCommand currentCommand;
     CommandParser commandParser;
+
+
 public:
     typedef std::shared_ptr<SingleUserConnection> pointer;
 
@@ -75,6 +78,7 @@ public:
         
         boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(n), on_read);
     }
+
 
 
 private:

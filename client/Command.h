@@ -4,6 +4,7 @@
 #include <functional>
 #include "FileMetadata.h"
 #include "CommandDispatcher.h"
+#include "../common/Constants.h"
 
 #define FILE_BUFFER_SIZE 256
 
@@ -19,18 +20,20 @@ public:
         std::cout << "Init login " << std::endl;
 
         parameters.erase(parameters.begin(), parameters.end());
-        command = "LOGINSNC";
-        parameters["USERNAME"] = username;
-        parameters["PASSWORD"] = password;
+        command = LOGINSNC;
+        parameters[USERNAME] = username;
+        parameters[PASSWORD] = password;
         return std::async([this]() {
             std::map<std::string, std::string> result = cd.dispatch(command, parameters).get();
-            std::cout << "result is " << result["__RESULT"] << std::endl;
-            return result["__RESULT"] == "OK" ? true : false;
+            std::cout << "result is " << result[__RESULT] << std::endl;
+            return result[__RESULT] == "OK" ? true : false;
         });
     }
 
     std::future<std::vector<FileMetadata>> require_tree() {
         std::future<std::vector<FileMetadata>> a;
+        command=REQRTREE;
+        cd.dispatch(command,parameters);
         return a;
     }
 

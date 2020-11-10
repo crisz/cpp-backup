@@ -19,6 +19,19 @@ void MessageDispatcher:: dispatch (std::string& command, std::map<std::string, s
 
 }
 
+void MessageDispatcher:: dispatch_tree (std::string& command, std::map<std::string, std::string>& tree){
+
+    suc->send_response(command);
+
+    for (auto it = tree.begin(); it != tree.end(); it++ ) {
+        //send_parameter(FILEPATH,it->first);
+        //send_parameter(FILEHASH, it->second);
+    }
+
+    send_parameter(STOPFLOW, "");
+
+}
+
 void MessageDispatcher::send_parameter(std::string key, std::string value) {
     std::cout << "Sending parameter with key " << key << " and value " << value << std::endl;
 

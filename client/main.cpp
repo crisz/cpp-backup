@@ -108,6 +108,8 @@ int main(int argc, char** argv) {
         bool login_result = c.login(us.username, us.password).get();
         if (login_result) {
             std::cout << "Login effettuato con successo" << std::endl;
+            //auto serverTree=c.require_tree().get();
+
         } else {
             std::cout << "Login fallito " << std::endl;
         }

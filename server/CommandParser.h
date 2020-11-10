@@ -3,17 +3,30 @@
 #include "SingleUserConnection.h"
 #include "MessageDispatcher.h"
 #include "ServerCommand.h"
+#include "TreeManager.h"
 
+// LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
+// LOGINSNC __RESULT 0002 OK STOPFLOW
+
+// REQRTREE
+// REQRTREE FILEHASH ABC9 <HASH> FILEPATH 0123 <FULL PATH> FILEHASH A123 <HASH> FILEPATH FILEHASH
+
+// POSTFILE FILEPATH 0123 <FULL PATH> FILEDATA <FULL DATA> FILEHASH A123 <HASH>
+// POSTFILE __RESULT 0002 OK
+
+// REMVFILE FILEPATH 0123 <FULL PATH>
+// REMVFILE __RESULT 0002 OK
 
 
 class CommandParser {
 public:
+
     void handleCommand(std::shared_ptr<SingleUserConnection> suc, ServerCommand& command) {  // TODO: digest
         // TODO: risolvere il problema del this (ad es. spostando la logica in command parser)
         std::string command_name=command.getCommand_name();
         auto parameters = command.getParameters();
         if (command_name == LOGINSNC) {
-            if(parameters.find("USERNAME") != parameters.end() && parameters.find("PASSWORD") != parameters.end()){
+            if(parameters.find(USERNAME) != parameters.end() && parameters.find(PASSWORD) != parameters.end()){
                 LoginManager lm;
                 std::string username = parameters[USERNAME];
                 std::string password = parameters[PASSWORD];
@@ -26,6 +39,13 @@ public:
             }else error();
 
         }else if(command_name == REQRTREE){
+            TreeManager tm;
+            std::cout<<boost::filesystem::current_path()<<std::endl;
+            std::map<std::string,std::string> tree =tm.obtain_tree("../server/users/andrea").get();
+            MessageDispatcher md{suc};
+            md.dispatch_tree(command_name,tree);
+            command.clear();
+
 
         } else if(command_name== POSTFILE) {
             if(parameters.find(FILEPATH) != parameters.end() &&
@@ -67,7 +87,6 @@ public:
         for(auto &file : boost::filesystem::recursive_directory_iterator(path)) {
             local_tree[file.path().string()] = hash_file(file.path().string());
         }
-        std::cout<<"sto mandando sto"<<std::endl;
 
         std::string buffer;
         // boost::iostreams::back_insert_device<std::string> inserter(buffer);
