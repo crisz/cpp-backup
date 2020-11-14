@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 #include <boost/filesystem.hpp>
-#include "common/hash_file.h"
+#include "../common/hash_file.h"
 #include "LoginManager.h"
 #include "MessageDispatcher.h"
 #include "../common/Constants.h"

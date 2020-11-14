@@ -5,6 +5,7 @@
 #include "FileMetadata.h"
 #include "CommandDispatcher.h"
 #include "../common/Constants.h"
+#include "../common/BufferFileManager.h"
 
 #define FILE_BUFFER_SIZE 256
 
@@ -32,14 +33,38 @@ public:
 
     std::future<std::vector<FileMetadata>> require_tree() {
         std::future<std::vector<FileMetadata>> a;
-        command=REQRTREE;
-        cd.dispatch(command,parameters);
+        command = REQRTREE;
+        parameters.erase(parameters.begin(), parameters.end());
+
+        cd.dispatch(command, parameters);
         return a;
     }
 
-    std::future<bool> post_file(FileMetadata& file_metadata, std::function<char*()> file_fn) {
-        std::future<bool> a;
-        return a;
+    std::future<bool> post_file(FileMetadata& file_metadata, const int buffer_size=256) {
+        // TODO: gestione degli errori lato server. Cosa succede se il client lascia l'invio a metà?
+ 
+        BufferFileManager bfm{buffer_size, file_metadata.path}; // RAII
+        command = POSTFILE;
+        parameters.erase(parameters.begin(), parameters.end());
+        parameters[FILEPATH] = file_metadata.path;
+        parameters[FILEHASH] = file_metadata.hash;
+
+        cd.dispatch_partial(command, parameters);
+        cd.send_raw(FILEDATA, sizeof(FILEDATA));
+        cd.send_raw(cd.encode_length(bfm.get_file_size()), 4);
+
+
+        std::promise<bool>& done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {
+            this->cd.send_raw(data, bytes_read);
+            bfm.signal();
+            if (done) {
+                this->cd.send_parameter("STOPFLOW", "");
+            }
+        });
+
+        bfm.run();
+        
+        return done.get_future();
     }
 
     std::future<bool> remove_file(FileMetadata& file_metadata) {

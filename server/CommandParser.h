@@ -36,18 +36,18 @@ public:
                 MessageDispatcher md{suc};
                 md.dispatch(command_name,result_map);
                 command.clear();
-            }else error();
+            } else error();
 
-        }else if(command_name == REQRTREE){
+        } else if (command_name == REQRTREE ){
             TreeManager tm;
-            std::cout<<boost::filesystem::current_path()<<std::endl;
+            std::cout << boost::filesystem::current_path() << std::endl;
             std::map<std::string,std::string> tree =tm.obtain_tree("../server/users/andrea").get();
             MessageDispatcher md{suc};
             md.dispatch_tree(command_name,tree);
             command.clear();
 
 
-        } else if(command_name== POSTFILE) {
+        } else if (command_name== POSTFILE) {
             if(parameters.find(FILEPATH) != parameters.end() &&
                parameters.find(FILEDATA) != parameters.end() &&
                parameters.find(FILEHASH) != parameters.end()){
@@ -63,12 +63,12 @@ public:
                 md.dispatch(command_name,result_map);
                 command.clear();
 
-            }else error();
+            } else error();
 
-        }else if(command_name == REMVFILE){
+        } else if (command_name == REMVFILE){
             if(parameters.find(FILEPATH)!=parameters.end()){
 
-            }else error();
+            } else error();
         }
 
     }

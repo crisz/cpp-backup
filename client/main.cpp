@@ -8,6 +8,8 @@
 #include "Command.h"
 #include <iostream>
 #include "TreesComparator.h"
+#include "FileMetadata.h"
+
 
 #define SYNCH_INTERVAL 1000
 
@@ -108,7 +110,14 @@ int main(int argc, char** argv) {
         bool login_result = c.login(us.username, us.password).get();
         if (login_result) {
             std::cout << "Login effettuato con successo" << std::endl;
-            //auto serverTree=c.require_tree().get();
+            FileMetadata fm;
+            fm.path = "./main.cpp";
+            try {
+                c.post_file(fm).get();
+                std::cout << "READ DONE!!" << std::endl;
+            } catch (...) {
+                std::cout << "An error occurred " << std::endl;
+            }
 
         } else {
             std::cout << "Login fallito " << std::endl;

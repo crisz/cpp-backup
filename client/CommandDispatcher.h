@@ -12,7 +12,7 @@ public:
         sc = ServerConnectionAsio::get_instance();
     }
 
-    std::future<std::map<std::string, std::string>> dispatch(std::string& command, std::map<std::string, std::string>& parameters) {
+    void dispatch_partial(std::string& command, std::map<std::string, std::string>& parameters) {
         std::cout << "Sending command " << command << std::endl;
         // lock acquire
         sc->send(command);
@@ -20,6 +20,10 @@ public:
         for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
             send_parameter(it->first, it->second);
         }
+    }
+
+    std::future<std::map<std::string, std::string>> dispatch(std::string& command, std::map<std::string, std::string>& parameters) {
+        this->dispatch_partial(command, parameters);
 
         send_parameter("STOPFLOW", "");
 
@@ -52,6 +56,11 @@ public:
         });
     }
 
+    void send_raw(const char* raw_data, int size) {
+        std::cout << "Sending " << raw_data << std::endl;
+        // sc->send(raw_data, size);
+    }
+
     void send_parameter(std::string key, std::string value) {
         std::cout << "Sending parameter with key " << key << " and value " << value << std::endl;
 
@@ -60,26 +69,19 @@ public:
         sc->send(value);
     }
 
-    char* encode_length(int size) {
+    char* encode_length(long size) {
         std::cout << "ecndoing length " << size << std::endl;
         char* result = new char[4];
-        int length = htonl(size); // htonl serve per non avere problemi di endianess
+        long length = htonl(size); // htonl serve per non avere problemi di endianess
         result[3] = (length & 0xFF);
         result[2] = (length >> 8) & 0xFF;
         result[1] = (length >> 16) & 0xFF;
         result[0] = (length >> 24) & 0xFF;
-        std::cout << "0: " << (int)result[0] << std::endl;
-        std::cout << "1: " << (int)result[1] << std::endl;
-        std::cout << "2: " << (int)result[2] << std::endl;
-        std::cout << "3: " << (int)result[3] << std::endl;
-
-  
-
         return result;
     }
 
-    int decode_length(char* message_size_arr) {
-        int message_size = 0;
+    long decode_length(char* message_size_arr) {
+        long message_size = 0;
         int shift_value = 24;
 
         //std::cout << "size string is " << parameter.substr(8, 12) << std::endl;
