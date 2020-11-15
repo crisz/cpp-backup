@@ -12,17 +12,19 @@ public:
         sc = ServerConnectionAsio::get_instance();
     }
 
-    void dispatch_partial(std::string& command, std::map<std::string, std::string>& parameters) {
+    void dispatch_partial(std::string& command, const std::multimap<std::string, std::string>& parameters) {
         std::cout << "Sending command " << command << std::endl;
         // lock acquire
         sc->send(command);
+
+        // std::this_thread::sleep_for(std::chrono::milliseconds(4000));
         
         for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
             send_parameter(it->first, it->second);
         }
     }
 
-    std::future<std::map<std::string, std::string>> dispatch(std::string& command, std::map<std::string, std::string>& parameters) {
+    std::future<std::multimap<std::string, std::string>> dispatch(std::string& command, const std::multimap<std::string, std::string>& parameters) {
         this->dispatch_partial(command, parameters);
 
         send_parameter("STOPFLOW", "");
@@ -33,7 +35,7 @@ public:
             // lock acquire
             std::cout << "Waiting for resopnse" << std::endl;
 
-            std::map<std::string, std::string> result;
+            std::multimap<std::string, std::string> result;
             std::string received_command = sc->read(8);
             // wait until received_command == command
             std::cout << "Starting listening" << std::endl;
@@ -50,7 +52,7 @@ public:
 
                 std::cout << "Received parameter value " << parameter_value << std::endl;
 
-                result[parameter_name] = parameter_value;
+                result.insert(std::pair<std::string, std::string>(parameter_name, parameter_value));
             }
             // lock release
         });
@@ -58,13 +60,14 @@ public:
 
     void send_raw(const char* raw_data, int size) {
         std::cout << "Sending " << raw_data << std::endl;
-        // sc->send(raw_data, size);
+        sc->send(raw_data, size);
     }
 
     void send_parameter(std::string key, std::string value) {
         std::cout << "Sending parameter with key " << key << " and value " << value << std::endl;
 
         sc->send(key);
+        sleep(5);
         sc->send(encode_length(value.size()), 4);
         sc->send(value);
     }
@@ -77,6 +80,11 @@ public:
         result[2] = (length >> 8) & 0xFF;
         result[1] = (length >> 16) & 0xFF;
         result[0] = (length >> 24) & 0xFF;
+        std::cout << "0: " << (int)result[0] << std::endl;
+        std::cout << "1: " << (int)result[1] << std::endl;
+        std::cout << "2: " << (int)result[2] << std::endl;
+        std::cout << "3: " << (int)result[3] << std::endl;
+
         return result;
     }
 
