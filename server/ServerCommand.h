@@ -20,7 +20,7 @@ public:
         command_name=name;
     }
     void addParameter(std::string par_name, std::string par_value){
-        parameters[par_name]=par_value;
+        parameters.insert(std::pair<std::string, std::string>(par_name, par_value));
     }
     std::string getCommand_name(){
         return command_name;

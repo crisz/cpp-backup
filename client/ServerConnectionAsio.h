@@ -54,7 +54,7 @@ public:
 
     }
 
-    void send(char* message, int size) {
+    void send(const char* message, int size) {
         // const char* message = (m).c_str();
         std::cout << "Sending " << message << " with size " << size << std::endl;
         boost::system::error_code ec;
