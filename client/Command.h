@@ -28,9 +28,10 @@ public:
         parameters.insert(std::pair<std::string, std::string>(USERNAME, username));
         parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
         return std::async([this, command, parameters] () {
+            std::cout << "Trying to dispatch login " << std::endl;
             std::multimap<std::string, std::string> result = cd.dispatch(command, parameters).get();
-            std::cout << "result is " << result.find(__RESULT)->second << std::endl;
-            return result.find(__RESULT)->second == "OK" ? true : false;
+            std::cout << "result is " << result.find("__RESULT")->second << std::endl;
+            return result.find("__RESULT")->second == "OK" ? true : false;
         });
     }
 
@@ -54,18 +55,18 @@ public:
         parameters.erase(parameters.begin(), parameters.end());
         parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_metadata.path));
         parameters.insert(std::pair<std::string, std::string>("FILEHASH", file_metadata.hash));
-        std::recursive_mutex& m = cd.get_mutex();
-        std::unique_lock ul(m);
+        std::cout << "ACQUIRING LOCK RAW NOW" << std::endl;
+        cd.lock_raw();
         cd.dispatch_partial(command, parameters);
         cd.send_raw("FILEDATA", 8);
         cd.send_raw(cd.encode_length(bfm.get_file_size()), 4);
 
         std::promise<bool>& done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {
-            std::unique_lock ul(cd.get_mutex());
             this->cd.send_raw(data, bytes_read);
             bfm.signal();
             if (done) {
                 this->cd.send_parameter("STOPFLOW", "");
+                this->cd.unlock_raw();
             }
         });
 

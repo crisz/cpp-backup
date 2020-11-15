@@ -95,6 +95,7 @@ public:
 
         // std::thread t([this, buffer_size, number_of_reads]() { // TODO: indagare il motivo per cui non va bene
             boost::system::error_code ec; // TODO: gestire errore
+            char* _buffer = new char[buffer_size + 1];
             for (int i=0; i<number_of_reads; i++) {
                 std::cout << "!!!" << i << " out of " << number_of_reads << std::endl;
                 if (i == number_of_reads - 1) {
@@ -102,32 +103,40 @@ public:
                 }
                 std::cout << "buffer size is  " << buffer_size << std::endl;
 
-                char* _buffer = new char[buffer_size];
                 int bytes_read = boost::asio::read(socket, boost::asio::buffer(_buffer, buffer_size), boost::asio::transfer_exactly(buffer_size), ec);
                 std::cout << "buffer size is  " << buffer_size << " and I read " << bytes_read << std::endl;
-
+                _buffer[buffer_size] = 0;
                 std::cout << "Received buffer " << _buffer << std::endl;
 
                 this->commandParser.send_file_chunk(_buffer, bytes_read).get();
                 std::cout << "Chunk saved" << _buffer << std::endl;
-                delete[] _buffer;
 
             }
 
             std::cout << "end of read from client " << std::endl;
             this->commandParser.end_send_file();
+            // ignoriamo il valore poiché è sempre STOPFLOW0000. 
+            boost::asio::read(socket, boost::asio::buffer(_buffer, buffer_size), boost::asio::transfer_exactly(12), ec);
+            delete[] _buffer;
+            this->send_response("POSTFILE");
             this->send_response("__RESULT");
-            char len[4] = {0, 0, 0, 2};
-            this->send_response(len, 4);
+            this->send_response(encode_length(2), 4);
             this->send_response("OK");
             this->send_response("STOPFLOW");
-            len[3] = 0;
-            this->send_response(len, 4);
+            this->send_response(encode_length(0), 4);
             this->put_on_read_command();
         // });
         // t.detach();
     }
-
+    char* encode_length(int size) { // TODO: muovere in utils
+        char* result = new char[4];
+        int length = htonl(size); // htonl serve per non avere problemi di endianess
+        result[3] = (length & 0xFF);
+        result[2] = (length >> 8) & 0xFF;
+        result[1] = (length >> 16) & 0xFF;
+        result[0] = (length >> 24) & 0xFF;
+        return result;
+    }
 private:
     SingleUserConnection(boost::asio::thread_pool& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :
             socket(io_context)
@@ -167,7 +176,7 @@ private:
         std::string parameter = oss.str();
 
         std::string message_name = parameter.substr(0, 8);
-        if(message_name.compare(STOPFLOW)==0){
+        if(message_name.compare("STOPFLOW")==0){
             std::cout<<"Fine comando raggiunto"<<std::endl;
             // boost::system::error_code ec;
             // boost::asio::write(socket, boost::asio::buffer("LOGINSNC", 8), ec);

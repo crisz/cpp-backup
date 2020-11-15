@@ -16,8 +16,8 @@ class CommandDispatcher {
 private:
     std::shared_ptr<ServerConnectionAsio> sc;
     std::vector<ClientCommand> pending_commands;
-    std::recursive_mutex dispatch_mutex;
-    std::condition_variable_any cv;
+    std::mutex dispatch_mutex;
+    std::condition_variable cv;
 
 public:
     CommandDispatcher() {
@@ -25,8 +25,7 @@ public:
     }
 
     void dispatch_partial(std::string command, const std::multimap<std::string, std::string> parameters) {
-        std::unique_lock ul(dispatch_mutex);
-        std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring log in dispatch_partial " << command << std::endl;
+        // std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in dispatch_partial " << command << std::endl;
         // lock acquire
         sc->send(command);
 
@@ -35,13 +34,12 @@ public:
         for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
             send_parameter(it->first, it->second);
         }
-
-        std::cout << std::this_thread::get_id() << " ~~ " << "Releasing log in dispatch_partial" << command << std::endl;
     }
 
     std::future<std::multimap<std::string, std::string>> dispatch(std::string command, const std::multimap<std::string, std::string>& parameters) {
+        std::cout << command << " is trying to acquire lock" << std::endl;
         std::unique_lock ul(dispatch_mutex); 
-        std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring log in dispatch " << command << std::endl;
+        std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in dispatch " << command << std::endl;
 
 
         // copia e incolla dispatch_partial. Soluzione: recursive_mutex
@@ -57,7 +55,7 @@ public:
 
         // fine copia e incolla
         send_parameter("STOPFLOW", "");
-        std::cout << std::this_thread::get_id() << " ~~ " << "Releasing log in dispatch " << command << std::endl;
+        std::cout << std::this_thread::get_id() << " ~~ " << "Releasing lock in dispatch " << command << std::endl;
         ul.unlock();
         return wait_for_response(command);
     }
@@ -67,7 +65,7 @@ public:
     std::future<std::multimap<std::string, std::string>> wait_for_response(std::string command) {
         return std::async([this, command]() {
             std::unique_lock ul(dispatch_mutex);
-            std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring log in wait_for_response: " << command << std::endl;
+            std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in wait_for_response: " << command << std::endl;
             
             std::multimap<std::string, std::string> result;
             std::string received_command = sc->read_as_str(8);
@@ -96,7 +94,7 @@ public:
                         }
                     }
 
-                    std::cout << std::this_thread::get_id() << " ~~ " << "Releasing log in wait_for_response: " << command << std::endl;
+                    std::cout << std::this_thread::get_id() << " ~~ " << "Releasing lock in wait_for_response: " << command << std::endl;
                     return cc_result.parameters;
                 }
                 int length = decode_length(sc->read(4));
@@ -108,8 +106,14 @@ public:
         });
     }
 
-    std::recursive_mutex& get_mutex() {
-        return this->dispatch_mutex;
+    void lock_raw() {
+        std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock raw" << std::endl;
+        this->dispatch_mutex.lock();
+    }
+    
+    void unlock_raw() {
+        std::cout << std::this_thread::get_id() << " ~~ " << "Releasing lock raw" << std::endl;
+        this->dispatch_mutex.unlock();
     }
 
     void send_raw(const char* raw_data, int size) {
