@@ -9,7 +9,7 @@
 
 #define FILE_BUFFER_SIZE 256
 
-class Command {
+class Command { // TODO: rinominare
 private:
     std::string command;
     CommandDispatcher cd;
@@ -78,3 +78,4 @@ public:
 
 
 };
+
