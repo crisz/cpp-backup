@@ -68,8 +68,20 @@ public:
     char* read(int length) {
         char* buffer = new char[length];
         boost::system::error_code ec;
+        std::cout << "Waiting for read with length" << length << std::endl;
         boost::asio::read(s, boost::asio::buffer(buffer, length), boost::asio::transfer_exactly(length), ec);
+        std::cout << "returning buffer " << buffer << std::endl;
         return buffer;
+    }
+
+    std::string read_as_str(int length) {
+        char* buffer = new char[length+1];
+        boost::system::error_code ec;
+        std::cout << "Waiting for read with length" << length << std::endl;
+        boost::asio::read(s, boost::asio::buffer(buffer, length), boost::asio::transfer_exactly(length), ec);
+        buffer[length] = 0; 
+        std::cout << "returning buffer " << buffer << std::endl;
+        return std::string(buffer);
     }
 
 };

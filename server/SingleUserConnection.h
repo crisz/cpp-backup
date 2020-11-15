@@ -36,7 +36,8 @@ public:
         return socket;
     }
 
-    void send_response(const std::string& message) {
+    void send_response(const std::string message) {
+        std::cout << "Sending response " << message << " with length " << message.size() << std::endl;
         auto on_write = boost::bind(&SingleUserConnection::handle_write, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
@@ -44,6 +45,7 @@ public:
         boost::asio::async_write(socket, buffered_message, on_write);
     }
     void send_response(char* message, int size) {
+        std::cout << "Sending response " << message << " with length " << size << std::endl;
         auto on_write = boost::bind(&SingleUserConnection::handle_write, shared_from_this(),
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred);
@@ -114,12 +116,17 @@ public:
 
             std::cout << "end of read from client " << std::endl;
             this->commandParser.end_send_file();
+            this->send_response("__RESULT");
+            char len[4] = {0, 0, 0, 2};
+            this->send_response(len, 4);
+            this->send_response("OK");
+            this->send_response("STOPFLOW");
+            len[3] = 0;
+            this->send_response(len, 4);
+            this->put_on_read_command();
         // });
         // t.detach();
-        
     }
-
-
 
 private:
     SingleUserConnection(boost::asio::thread_pool& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :

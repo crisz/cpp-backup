@@ -107,23 +107,47 @@ int main(int argc, char** argv) {
 
         Command c;
         std::cout << "attempting login" << std::endl;
+        FileMetadata fm;
+        fm.path = "./test.txt";
+        fm.hash = hash_file(fm.path);
 
-        bool login_result = c.login(us.username, us.password).get();
-        if (login_result) {
-            std::cout << "Login effettuato con successo" << std::endl;
-            FileMetadata fm;
-            fm.path = "./main.cpp";
-            fm.hash = hash_file(fm.path);
-            try {
-                c.post_file(fm).get();
-                std::cout << "READ DONE!!" << std::endl;
-            } catch (...) {
-                std::cout << "An error occurred " << std::endl;
-            }
+       auto login1 = c.login(us.username, us.password);
+       auto post_file = c.post_file(fm);
+       auto login2 = c.login(us.username, us.password);
+       auto login3 = c.login(us.username, us.password);
+    //    auto login4 = c.login(us.username, us.password);
+    //    auto login5 = c.login(us.username, us.password);
+    //    auto login6 = c.login(us.username, us.password);
+       bool login_result_1 = login1.get();
+       bool login_result_2 = login2.get();
+       bool login_result_3 = login3.get();
+    //    bool login_result_4 = login4.get();
+    //    bool login_result_5 = login5.get();
+    //    bool login_result_6 = login6.get();
+       bool post_file_result = post_file.get();
 
-        } else {
-            std::cout << "Login fallito " << std::endl;
-        }
+       std::cout << "Login 1 effettuato con " << (login_result_1 ? "successo" : "fallimento") << std::endl;
+       std::cout << "Login 2 effettuato con " << (login_result_2 ? "successo" : "fallimento") << std::endl;
+       std::cout << "Login 3 effettuato con " << (login_result_3 ? "successo" : "fallimento") << std::endl;
+    //    std::cout << "Login 4 effettuato con " << (login_result_4 ? "successo" : "fallimento") << std::endl;
+    //    std::cout << "Login 5 effettuato con " << (login_result_5 ? "successo" : "fallimento") << std::endl;
+    //    std::cout << "Login 6 effettuato con " << (login_result_6 ? "successo" : "fallimento") << std::endl;
+       std::cout << "Post file effettuato con " << (post_file_result ? "successo" : "fallimento") << std::endl;
+        // if (login_result) {
+        //     std::cout << "Login effettuato con successo" << std::endl;
+        //     FileMetadata fm;
+        //     fm.path = "./main.cpp";
+        //     fm.hash = hash_file(fm.path);
+        //     try {
+        //         c.post_file(fm).get();
+        //         std::cout << "READ DONE!!" << std::endl;
+        //     } catch (...) {
+        //         std::cout << "An error occurred " << std::endl;
+        //     }
+
+        // } else {
+        //     std::cout << "Login fallito " << std::endl;
+        // }
 
         init_file_watcher(fw);
         return 0;

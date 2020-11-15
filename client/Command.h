@@ -20,11 +20,13 @@ public:
     std::future<bool> login(std::string username, std::string password) {
         std::cout << "Init login " << std::endl;
 
+        std::string command;
+        std::multimap<std::string, std::string> parameters;
         parameters.erase(parameters.begin(), parameters.end());
-        command = LOGINSNC;
+        command = "LOGINSNC";
         parameters.insert(std::pair<std::string, std::string>(USERNAME, username));
         parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
-        return std::async([this]() {
+        return std::async([this, command, parameters] () {
             std::multimap<std::string, std::string> result = cd.dispatch(command, parameters).get();
             std::cout << "result is " << result.find(__RESULT)->second << std::endl;
             return result.find(__RESULT)->second == "OK" ? true : false;
@@ -33,6 +35,7 @@ public:
 
     std::future<std::vector<FileMetadata>> require_tree() {
         std::future<std::vector<FileMetadata>> a;
+        
         command = REQRTREE;
         parameters.erase(parameters.begin(), parameters.end());
 
@@ -41,16 +44,18 @@ public:
     }
 
     std::future<bool> post_file(FileMetadata& file_metadata, const int buffer_size=256) {
-        // TODO: gestione degli errori lato server. Cosa succede se il client lascia l'invio a metà?
+        // TODO: gestione degli errori lato server. Cosa succede se il client lascia l'invio a metà? @Andrea
  
         BufferedFileReader bfm{10, file_metadata.path}; // RAII
-        command = POSTFILE;
+        std::string command;
+        std::multimap<std::string, std::string> parameters;
+        command = "POSTFILE";
         parameters.erase(parameters.begin(), parameters.end());
-        parameters.insert(std::pair<std::string, std::string>(FILEPATH, file_metadata.path));
-        parameters.insert(std::pair<std::string, std::string>(FILEHASH, file_metadata.hash));
+        parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_metadata.path));
+        parameters.insert(std::pair<std::string, std::string>("FILEHASH", file_metadata.hash));
 
         cd.dispatch_partial(command, parameters);
-        cd.send_raw(FILEDATA, 8);
+        cd.send_raw("FILEDATA", 8);
         cd.send_raw(cd.encode_length(bfm.get_file_size()), 4);
 
         std::promise<bool>& done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {

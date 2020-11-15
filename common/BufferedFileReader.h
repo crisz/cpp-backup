@@ -76,7 +76,7 @@ public:
         //if (length > 0) { // altrimenti? @Andrea
         bool done = false;
         do {
-            std::cout << "Reading " << buffer_size << " bytes ";
+            std::cout << "Reading " << buffer_size << " bytes from file system" << std::endl;
             stream.read(buffer, buffer_size);
             std::streamsize bytes_read = stream.gcount();
             done = buffer_size - bytes_read != 0;
