@@ -6,6 +6,7 @@
 #include <vector>
 #include <mutex>
 #include "../common/Constants.h"
+#include <condition_variable>
 
 struct ClientCommand {
     std::string command_name;
@@ -15,8 +16,9 @@ class CommandDispatcher {
 private:
     std::shared_ptr<ServerConnectionAsio> sc;
     std::vector<ClientCommand> pending_commands;
-    std::mutex dispatch_mutex;
-    std::condition_variable cv;
+    std::recursive_mutex dispatch_mutex;
+    std::condition_variable_any cv;
+
 public:
     CommandDispatcher() {
         sc = ServerConnectionAsio::get_instance();
@@ -106,8 +108,11 @@ public:
         });
     }
 
+    std::recursive_mutex& get_mutex() {
+        return this->dispatch_mutex;
+    }
+
     void send_raw(const char* raw_data, int size) {
-        
         sc->send(raw_data, size);
     }
 
