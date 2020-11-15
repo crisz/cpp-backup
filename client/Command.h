@@ -5,7 +5,7 @@
 #include "FileMetadata.h"
 #include "CommandDispatcher.h"
 #include "../common/Constants.h"
-#include "../common/BufferFileManager.h"
+#include "../common/BufferedFileReader.h"
 
 #define FILE_BUFFER_SIZE 256
 
@@ -13,7 +13,7 @@ class Command {
 private:
     std::string command;
     CommandDispatcher cd;
-    std::map<std::string, std::string> parameters;
+    std::multimap<std::string, std::string> parameters;
 
 public:
 
@@ -22,12 +22,12 @@ public:
 
         parameters.erase(parameters.begin(), parameters.end());
         command = LOGINSNC;
-        parameters[USERNAME] = username;
-        parameters[PASSWORD] = password;
+        parameters.insert(std::pair<std::string, std::string>(USERNAME, username));
+        parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
         return std::async([this]() {
-            std::map<std::string, std::string> result = cd.dispatch(command, parameters).get();
-            std::cout << "result is " << result[__RESULT] << std::endl;
-            return result[__RESULT] == "OK" ? true : false;
+            std::multimap<std::string, std::string> result = cd.dispatch(command, parameters).get();
+            std::cout << "result is " << result.find(__RESULT)->second << std::endl;
+            return result.find(__RESULT)->second == "OK" ? true : false;
         });
     }
 
@@ -43,16 +43,15 @@ public:
     std::future<bool> post_file(FileMetadata& file_metadata, const int buffer_size=256) {
         // TODO: gestione degli errori lato server. Cosa succede se il client lascia l'invio a metà?
  
-        BufferFileManager bfm{buffer_size, file_metadata.path}; // RAII
+        BufferedFileReader bfm{10, file_metadata.path}; // RAII
         command = POSTFILE;
         parameters.erase(parameters.begin(), parameters.end());
-        parameters[FILEPATH] = file_metadata.path;
-        parameters[FILEHASH] = file_metadata.hash;
+        parameters.insert(std::pair<std::string, std::string>(FILEPATH, file_metadata.path));
+        parameters.insert(std::pair<std::string, std::string>(FILEHASH, file_metadata.hash));
 
         cd.dispatch_partial(command, parameters);
-        cd.send_raw(FILEDATA, sizeof(FILEDATA));
+        cd.send_raw(FILEDATA, 8);
         cd.send_raw(cd.encode_length(bfm.get_file_size()), 4);
-
 
         std::promise<bool>& done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {
             this->cd.send_raw(data, bytes_read);

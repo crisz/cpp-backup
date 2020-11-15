@@ -9,6 +9,7 @@
 #include <iostream>
 #include "TreesComparator.h"
 #include "FileMetadata.h"
+#include "../common/hash_file.h"
 
 
 #define SYNCH_INTERVAL 1000
@@ -112,6 +113,7 @@ int main(int argc, char** argv) {
             std::cout << "Login effettuato con successo" << std::endl;
             FileMetadata fm;
             fm.path = "./main.cpp";
+            fm.hash = hash_file(fm.path);
             try {
                 c.post_file(fm).get();
                 std::cout << "READ DONE!!" << std::endl;

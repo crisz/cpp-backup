@@ -3,18 +3,18 @@
 #include <iostream>
 #include <future>
 
-class BufferFileManagerException : public std::exception {
+class BufferedFileReaderException : public std::exception {
 private:
     std::string message;
 public:
     int code;
-    BufferFileManagerException(std::string&& message, int code=0): message{message}, code{code} {};
+    BufferedFileReaderException(std::string&& message, int code=0): message{message}, code{code} {};
 	const char* what() const throw(){
-    	return ("An exception occurred in Buffer File Manager: " + message).c_str();
+    	return ("An exception occurred in BufferedFileReader: " + message).c_str();
     }
 };
 
-class BufferFileManager {
+class BufferedFileReader {
 private:
     int buffer_size;
     char* buffer;
@@ -27,27 +27,27 @@ private:
     bool busy = false;
     std::promise<bool> read_done;
 public:
-    BufferFileManager(int buffer_size, std::string& file_path):
+    BufferedFileReader(int buffer_size, std::string& file_path):
                 buffer_size{buffer_size}, file_path{file_path}, stream{file_path, std::ios::in | std::ios::binary} {
         buffer = new char[buffer_size + 1];
         if (stream.fail()) {
             stream.close();
-            throw BufferFileManagerException("File does not exist", -1);
+            throw BufferedFileReaderException("File does not exist", -1);
         }
         stream.seekg(0, stream.end);
         file_size = stream.tellg();
         stream.seekg(0, stream.beg);
     }
 
-    ~BufferFileManager() {
+    ~BufferedFileReader() {
         if (stream.fail()) {
             stream.close();
         }
         delete[] buffer;
     }
 
-    BufferFileManager(BufferFileManager& bfm) = delete; // TODO: copy & swaps
-    BufferFileManager(BufferFileManager&& bfm) = delete;
+    BufferedFileReader(BufferedFileReader& bfm) = delete; // TODO: copy & swaps
+    BufferedFileReader(BufferedFileReader&& bfm) = delete;
 
     void flush_buffer(bool done, int chars_read) {
         this->buffer[chars_read] = 0;

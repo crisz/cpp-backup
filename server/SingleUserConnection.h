@@ -11,6 +11,7 @@
 #include "ServerCommand.h"
 #include "../common/hash_file.h"
 #include "CommandParser.h"
+#include <tgmath.h>
 
 
 using boost::asio::ip::tcp;
@@ -65,6 +66,7 @@ public:
         auto on_read = boost::bind(&SingleUserConnection::handle_read_parameter_name, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
+        
         boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(12), on_read);
     }
 
@@ -77,6 +79,44 @@ public:
                                     parameter_name);
         
         boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(n), on_read);
+    }
+
+    void put_on_read_file_data(int file_size) {
+        std::cout << "PUT ON READ FILE DATA!!!!!!!!" << std::endl;
+        int buffer_size = 20;
+        int number_of_reads = ceil((double)file_size/(double)buffer_size);
+        std::cout << "start send file with size " << file_size << std::endl;
+
+        this->commandParser.start_send_file(file_size, currentCommand);
+
+        std::cout << "send file started" << std::endl;
+
+        // std::thread t([this, buffer_size, number_of_reads]() { // TODO: indagare il motivo per cui non va bene
+            boost::system::error_code ec; // TODO: gestire errore
+            for (int i=0; i<number_of_reads; i++) {
+                std::cout << "!!!" << i << " out of " << number_of_reads << std::endl;
+                if (i == number_of_reads - 1) {
+                    buffer_size = file_size % buffer_size;
+                }
+                std::cout << "buffer size is  " << buffer_size << std::endl;
+
+                char* _buffer = new char[buffer_size];
+                int bytes_read = boost::asio::read(socket, boost::asio::buffer(_buffer, buffer_size), boost::asio::transfer_exactly(buffer_size), ec);
+                std::cout << "buffer size is  " << buffer_size << " and I read " << bytes_read << std::endl;
+
+                std::cout << "Received buffer " << _buffer << std::endl;
+
+                this->commandParser.send_file_chunk(_buffer, bytes_read).get();
+                std::cout << "Chunk saved" << _buffer << std::endl;
+                delete[] _buffer;
+
+            }
+
+            std::cout << "end of read from client " << std::endl;
+            this->commandParser.end_send_file();
+        // });
+        // t.detach();
+        
     }
 
 
@@ -95,9 +135,14 @@ private:
 
     void handle_read_parameter_name(const boost::system::error_code& error, size_t bytes_transferred) {
 
-        if (error && error != boost::asio::error::eof) {
-            std::cout << "Error: " << error.message() << "\n";
-            // TODO: handle error
+        if (error) {
+            if (error == boost::asio::error::eof) {
+                std::cout << "Il cliente ha chiuso la connessione" << std::endl;
+            } else {
+                std::cout << "Errore nella lettura: " << error.message() << "\n"; // TODO: move to a generic function
+            }
+
+            // TODO: eliminare eventuale roba sporca rimasta
             return;
         }
 
@@ -107,7 +152,7 @@ private:
         std::string parameter = oss.str();
 
         std::string message_name = parameter.substr(0, 8);
-        if(message_name.compare("STOPFLOW")==0){
+        if(message_name.compare(STOPFLOW)==0){
             std::cout<<"Fine comando raggiunto"<<std::endl;
             // boost::system::error_code ec;
             // boost::asio::write(socket, boost::asio::buffer("LOGINSNC", 8), ec);
@@ -120,11 +165,18 @@ private:
             this->put_on_read_command();
             return;
         }
+
         const char* message_size_arr = parameter.substr(8, 12).c_str();
         int message_size = 0;
         int shift_value = 24;
 
         //std::cout << "size string is " << parameter.substr(8, 12) << std::endl;
+
+
+        std::cout << "0: " << (int)message_size_arr[0] << std::endl;
+        std::cout << "1: " << (int)message_size_arr[1] << std::endl;
+        std::cout << "2: " << (int)message_size_arr[2] << std::endl;
+        std::cout << "3: " << (int)message_size_arr[3] << std::endl;
 
         for (int i=0; i<4; i++) {
             char x = (char)message_size_arr[i];
@@ -135,10 +187,13 @@ private:
 
         int fixed_size = ntohl(message_size);
 
-        //std::cout << "Received parameter \n " << message_name << " with length " << message_size << std::endl;
+        std::cout << "Received parameter " << message_name << " with length " << fixed_size << std::endl;
 
-
-        this->put_on_read_parameter_value(message_name, fixed_size);
+        if (message_name.compare(FILEDATA) == 0) {
+            this->put_on_read_file_data(fixed_size);
+        } else {
+            this->put_on_read_parameter_value(message_name, fixed_size);
+        }
     }
 
     void handle_read_parameter_value(const boost::system::error_code& error, size_t bytes_transferred, std::string parameter_name) {
@@ -165,6 +220,7 @@ private:
         // oltre ad interrompere la ricorsione bisogna anche invocare la callback
 
     }
+
 
     void handle_read_command(const boost::system::error_code& error, size_t bytes_transferred) {
 

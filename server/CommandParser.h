@@ -4,6 +4,8 @@
 #include "MessageDispatcher.h"
 #include "ServerCommand.h"
 #include "TreeManager.h"
+#include "../common/BufferedFileWriter.h"
+#include <memory>
 
 // LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
 // LOGINSNC __RESULT 0002 OK STOPFLOW
@@ -19,6 +21,8 @@
 
 
 class CommandParser {
+private:
+    BufferedFileWriter* bfw;
 public:
 
     void handleCommand(std::shared_ptr<SingleUserConnection> suc, ServerCommand& command) {  // TODO: digest
@@ -70,7 +74,26 @@ public:
 
             } else error();
         }
+    }
 
+    void start_send_file(long file_size, ServerCommand& command) { // TODO: La gestione dei comandi va unificato in una classe. In queto momento sia CommandParser che SingleUserConnection stanno concorrendo alla gestione
+        auto parameters = command.getParameters();
+        // std::string file_path = parameters[FILEPATH];
+        std::string file_path = "./out.txt";
+        std::string file_hash = parameters[FILEHASH];
+        bfw = new BufferedFileWriter(file_path, file_hash, file_size);
+    }
+
+    std::future<void> send_file_chunk(char* buffer, int buffer_size) {
+        if (bfw == nullptr) {
+            throw "chiamare start_send_file prima"; // TODO: gestire meglio
+        }
+        return bfw->append(buffer, buffer_size);
+    }
+
+    void end_send_file() {
+        // TODO: controllare hash
+        delete bfw;
     }
 
 
