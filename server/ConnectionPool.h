@@ -8,6 +8,7 @@
 #include <thread>
 #include <string>
 #include <memory>
+#include "ServerConf.h"
 
 
 void die(std::string message) {
@@ -20,9 +21,9 @@ class ConnectionPool {
     tcp::acceptor acceptor;
     std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback;
 public:
-    ConnectionPool(boost::asio::thread_pool& io_context, int port, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) : 
+    ConnectionPool(boost::asio::thread_pool& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) : 
             io_context(io_context),
-            acceptor(io_context, tcp::endpoint(tcp::v4(), port)) {
+            acceptor(io_context, tcp::endpoint(tcp::v4(), ServerConf::get_instance().port)) {
 
         this->callback = callback;
         acceptor.listen(0);

@@ -1,7 +1,6 @@
 #pragma once
 #include <boost/asio/post.hpp>
 #include <boost/bind/bind.hpp>
-#include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
 #include <thread>
@@ -12,6 +11,8 @@
 #include "../common/hash_file.h"
 #include "CommandParser.h"
 #include <tgmath.h>
+#include "SessionContainer.h"
+#include "UserData.h"
 
 
 using boost::asio::ip::tcp;
@@ -28,11 +29,10 @@ public:
     typedef std::shared_ptr<SingleUserConnection> pointer;
 
     static pointer create(boost::asio::thread_pool &io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) {
-        
         return pointer(new SingleUserConnection(io_context, callback));
     }
 
-    tcp::socket &get_socket() {
+    tcp::socket& get_socket() {
         return socket;
     }
 
@@ -184,8 +184,14 @@ private:
             // boost::asio::write(socket, boost::asio::buffer(encode_length(2), 4), ec);
             // boost::asio::write(socket, boost::asio::buffer("OK", 2), ec);
             // boost::asio::write(socket, boost::asio::buffer("STOPFLOW", 8), ec);
-            // currentCommand.handleCommand();
-            commandParser.handleCommand(shared_from_this() ,currentCommand);
+            UserData ud;
+            ud.send_response_callback = [this](const std::string message) {
+                this->send_response(message);
+            };
+            ud.send_raw_response_callback = [this](char* message, int size) {
+                this->send_response(message, size);
+            };
+            commandParser.handleCommand(socket, currentCommand);
             this->put_on_read_command();
             return;
         }

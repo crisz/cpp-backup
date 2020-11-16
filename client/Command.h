@@ -31,18 +31,44 @@ public:
             std::cout << "Trying to dispatch login " << std::endl;
             std::multimap<std::string, std::string> result = cd.dispatch(command, parameters).get();
             std::cout << "result is " << result.find("__RESULT")->second << std::endl;
-            return result.find("__RESULT")->second == "OK" ? true : false;
+            return result.find("__RESULT")->second == "OK";
         });
     }
 
-    std::future<std::vector<FileMetadata>> require_tree() {
-        std::future<std::vector<FileMetadata>> a;
-        
-        command = REQRTREE;
+    std::future<std::vector<FileMetadata>> require_tree() {    
+        std::string command;
+        std::multimap<std::string, std::string> parameters;    
+        command = "REQRTREE";
         parameters.erase(parameters.begin(), parameters.end());
-
-        cd.dispatch(command, parameters);
-        return a;
+        return std::async([this, command, parameters] () {
+            std::vector<FileMetadata> tree;
+            std::cout << "WAITING FOR REQTREE" << std::endl;
+            std::multimap<std::string, std::string> result = cd.dispatch(command, parameters).get();
+            std::cout << "REQTREE RETURNED" << std::endl;
+            std::cout << result.size() << " elements" << std::endl;
+            FileMetadata fm;
+            for (std::pair<std::string, std::string> item: result) { // TODO: evitare copia
+                std::cout << "item.first = " << item.first << "; item.second = " << item.second << std::endl;
+                if (fm.hash != "" && fm.path != "") {
+                    tree.push_back(fm);
+                    fm.hash.clear();
+                    fm.path.clear();
+                }
+                if (item.first == "FILEHASH") {
+                    fm.hash = item.second;
+                    continue;
+                }
+                if (item.first == "FILEPATH") {
+                    fm.path = item.second;
+                    // fm.name = fm.path.split("/")[-1]; // TODO
+                    continue;
+                }
+            }
+            if (fm.hash != "" && fm.path != "") {
+                tree.push_back(fm);
+            }
+            return tree;
+        });
     }
 
     std::future<bool> post_file(FileMetadata& file_metadata, const int buffer_size=256) {
@@ -61,7 +87,7 @@ public:
         cd.send_raw("FILEDATA", 8);
         cd.send_raw(cd.encode_length(bfm.get_file_size()), 4);
 
-        std::promise<bool>& done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {
+        std::promise<bool>& read_done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {
             this->cd.send_raw(data, bytes_read);
             bfm.signal();
             if (done) {
@@ -71,8 +97,12 @@ public:
         });
 
         bfm.run();
-        
-        return done.get_future();
+        read_done.get_future().get();
+
+        return std::async([command, this]() {
+            std::multimap<std::string, std::string> post_file_result = cd.wait_for_response(command).get();
+            return post_file_result.find("__RESULT")->second == "OK";
+        });
     }
 
     std::future<bool> remove_file(FileMetadata& file_metadata) {

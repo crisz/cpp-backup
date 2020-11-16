@@ -2,7 +2,8 @@
 #include <boost/program_options.hpp>
 #include <iostream>
 #include <string>
-#include "file_system_helper.h"
+#include "ServerConf.h"
+#include "../common/file_system_helper.h"
 #include "ConnectionPool.h"
 #include "SingleUserConnection.h"
 #include <boost/asio/thread_pool.hpp>
@@ -16,12 +17,7 @@
 
 namespace po = boost::program_options;
 
-struct ServerOptions {
-    int port;
-    std::string dest;
-};
-
-int parse_options(int argc, char** argv, ServerOptions& so) {
+int parse_options(int argc, char** argv) {
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "Shows this help menu")
@@ -30,11 +26,14 @@ int parse_options(int argc, char** argv, ServerOptions& so) {
     ;
     po::variables_map vm;
     try {
+        ServerConf& sc = ServerConf::get_instance();
         auto clp = po::command_line_parser(argc, argv).options(desc);
         po::store(clp.run(), vm);
         po::notify(vm);
-        so.port = std::move(vm["port"].as<int>());
-        so.dest = std::move(vm["dest"].as<std::string>());
+        sc.port = std::move(vm["port"].as<int>());
+        sc.dest = std::move(vm["dest"].as<std::string>());
+        if (!check_dest_dir(sc.dest)) 
+            die("La cartella " + sc.dest + " non esiste o non è possibile aprirla in scrittura.");
         return 0;
     } catch (po::error& e) {
         if (!vm.count("help")) {
@@ -60,18 +59,14 @@ void handle_message(SingleUserConnection& user_connection, const std::string& me
 }
 
 int main(int argc, char** argv) {
-    ServerOptions so;
-    if (parse_options(argc, argv, so)) return 0;
-    if (!check_dest_dir(so.dest)) {
-        die("La cartella " + so.dest + " non esiste o non è possibile aprirla in scrittura.");
-    };
+    if (parse_options(argc, argv)) return 0;
 
     try {
         // boost::asio::io_context io_context;
         boost::asio::thread_pool pool(4); // TODO: spostare la gestione in un'altra classe
         // proposta: MessageDispatcher.h
 
-        ConnectionPool server{pool, so.port, [&pool] (std::shared_ptr<SingleUserConnection> user_connection, const std::string& message) {
+        ConnectionPool server{pool, [&pool] (std::shared_ptr<SingleUserConnection> user_connection, const std::string& message) {
             boost::asio::post(pool, [user_connection, message]() {
                 if (message == "ciao\n") {
                     user_connection->send_response("Ciao a te!\n");

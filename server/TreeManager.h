@@ -16,7 +16,9 @@ public:
         return std::async([path]() {
             std::map<std::string, std::string> local_tree;
             for(auto &file : boost::filesystem::recursive_directory_iterator(path)) {
-                local_tree[file.path().string()] = hash_file(file.path().string());
+                std::string file_path = file.path().string();
+                std::string file_name = file_path.erase(0, path.size());
+                local_tree[file_name] = hash_file(file.path().string());
             }
             return local_tree;
         });

@@ -7,25 +7,19 @@
 
 MessageDispatcher::MessageDispatcher(std::shared_ptr<SingleUserConnection> suc): suc{suc}{}
 
-void MessageDispatcher:: dispatch (std::string& command, std::map<std::string, std::string>& parameters){
+void MessageDispatcher:: dispatch(std::string& command, std::map<std::string, std::string>& parameters){
+    auto pbeg = parameters.begin();
+    auto pend = parameters.end();
+    std::multimap<std::string, std::string> multimap_parameters = std::multimap<std::string, std::string>(pbeg, pend);
+    return dispatch(command, multimap_parameters);
+}
+
+void MessageDispatcher:: dispatch(std::string& command, std::multimap<std::string, std::string>& parameters){
 
     suc->send_response(command);
 
     for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
         send_parameter(it->first, it->second);
-    }
-
-    send_parameter(STOPFLOW, "");
-
-}
-
-void MessageDispatcher:: dispatch_tree (std::string& command, std::map<std::string, std::string>& tree){
-
-    suc->send_response(command);
-
-    for (auto it = tree.begin(); it != tree.end(); it++ ) {
-        //send_parameter(FILEPATH,it->first);
-        //send_parameter(FILEHASH, it->second);
     }
 
     send_parameter(STOPFLOW, "");

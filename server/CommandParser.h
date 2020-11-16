@@ -5,7 +5,13 @@
 #include "ServerCommand.h"
 #include "TreeManager.h"
 #include "../common/BufferedFileWriter.h"
+#include <map>
+#include <boost/asio.hpp>
 #include <memory>
+
+#include "SessionContainer.h"
+#include "UserData.h"
+#include "ServerConf.h"
 
 // LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
 // LOGINSNC __RESULT 0002 OK STOPFLOW
@@ -19,13 +25,14 @@
 // REMVFILE FILEPATH 0123 <FULL PATH>
 // REMVFILE __RESULT 0002 OK
 
+using boost::asio::ip::tcp;
 
 class CommandParser {
 private:
     BufferedFileWriter* bfw;
 public:
 
-    void handleCommand(std::shared_ptr<SingleUserConnection> suc, ServerCommand& command) {  // TODO: digest
+    void handleCommand(tcp::socket& socket, ServerCommand& command) {  // TODO: digest
         // TODO: risolvere il problema del this (ad es. spostando la logica in command parser)
         std::string command_name=command.getCommand_name();
         auto parameters = command.getParameters();
@@ -37,17 +44,35 @@ public:
                 bool result = lm.check_login(username, password).get();
                 std::map<std::string, std::string> result_map;
                 result_map[__RESULT] = result ? "OK" : "KO";
-                MessageDispatcher md{suc};
-                md.dispatch(command_name,result_map);
+                if (result) {
+                    SessionContainer& sc = SessionContainer::get_instance();
+                    UserData ud;
+                    ud.username = username;
+                    sc.set_user_data(socket, ud);
+                }
+                // SingleUserConnection suc;
+
+                // MessageDispatcher md{suc};
+                // md.dispatch(command_name,result_map);
                 command.clear();
             } else error();
 
         } else if (command_name == REQRTREE ){
             TreeManager tm;
             std::cout << boost::filesystem::current_path() << std::endl;
-            std::map<std::string,std::string> tree =tm.obtain_tree("../server/users/andrea").get();
-            MessageDispatcher md{suc};
-            md.dispatch_tree(command_name,tree);
+            std::string dest_dir = ServerConf::get_instance().dest;
+            std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir + "/andrea").get();
+
+            std::multimap<std::string, std::string> parameters;
+            for (std::pair<std::string, std::string> item: tree) {
+                std::string file_path = item.first;
+                std::string file_hash = item.second;
+                parameters.insert(std::pair<std::string, std::string>("FILEHASH", file_hash));
+                parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_path));
+            }
+            // SingleUserConnection suc;
+            // MessageDispatcher md{suc};
+            // md.dispatch(command_name, parameters);
             command.clear();
 
 
@@ -63,8 +88,10 @@ public:
                 // bool result = pfm.check_post().get();
                 std::map<std::string, std::string> result_map;
                 // result_map[__RESULT] = result ? "OK" : "KO";
-                MessageDispatcher md{suc};
-                md.dispatch(command_name,result_map);
+                // SingleUserConnection suc;
+
+                // MessageDispatcher md{suc};
+                // md.dispatch(command_name,result_map);
                 command.clear();
 
             } else error();

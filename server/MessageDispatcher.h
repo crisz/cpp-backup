@@ -16,9 +16,9 @@ std::shared_ptr<SingleUserConnection> suc;
 public:
     MessageDispatcher(std::shared_ptr<SingleUserConnection>);
 
-    void dispatch (std::string& command, std::map<std::string, std::string>& parameters);
+    void dispatch(std::string& command, std::map<std::string, std::string>& parameters);
 
-    void dispatch_tree (std::string& command, std::map<std::string, std::string>& tree);
+    void dispatch (std::string& command, std::multimap<std::string, std::string>& parameters);
 
     void send_parameter(std::string key, std::string value) ;
 
