@@ -66,19 +66,7 @@ int main(int argc, char** argv) {
         boost::asio::thread_pool pool(4); // TODO: spostare la gestione in un'altra classe
         // proposta: MessageDispatcher.h
 
-        ConnectionPool server{pool, [&pool] (std::shared_ptr<SingleUserConnection> user_connection, const std::string& message) { // TODO: rimuovere callback
-            boost::asio::post(pool, [user_connection, message]() {
-                if (message == "ciao\n") {
-                    user_connection->send_response("Ciao a te!\n");
-                } else {
-                    std::cout << "Sto calcolando la risposta per " << message << std::endl;
-                    std::this_thread::sleep_for(std::chrono::seconds(5));
-                    std::cout << "Risposta calcolata per " << message << std::endl;
-
-                    user_connection->send_response(message + "!!\n");
-                }
-            });
-        }};
+        ConnectionPool server{pool};
         // io_context.run();
         pool.join();
     } catch (std::exception& e) {

@@ -19,13 +19,13 @@ void die(std::string message) {
 class ConnectionPool {
     boost::asio::thread_pool& io_context;
     tcp::acceptor acceptor;
-    std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback; // TODO: rimuovere
+    // std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback; // TODO: rimuovere
 public:
-    ConnectionPool(boost::asio::thread_pool& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) : 
+    ConnectionPool(boost::asio::thread_pool& io_context): //, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) : 
             io_context(io_context),
             acceptor(io_context, tcp::endpoint(tcp::v4(), ServerConf::get_instance().port)) {
 
-        this->callback = callback;
+        // this->callback = callback;
         acceptor.listen(0);
         this->start_accept();
     }
@@ -33,7 +33,7 @@ public:
 private:
     void start_accept() {
         std::cout << "waiting connection"<<std::endl;
-        SingleUserConnection::pointer new_connection = SingleUserConnection::create(io_context, this->callback);
+        SingleUserConnection::pointer new_connection = SingleUserConnection::create(io_context);
 
         auto on_accept = boost::bind(&ConnectionPool::handle_accept, this, new_connection, boost::asio::placeholders::error);
         acceptor.async_accept(new_connection->get_socket(), on_accept);

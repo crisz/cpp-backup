@@ -21,7 +21,6 @@ class SingleUserConnection : public std::enable_shared_from_this<SingleUserConne
                     // e CommandEncoder/CommandHandler/altro che contiene gli handle (handle_write, handle_read) e che utilizza il ServerSocketManager
     tcp::socket socket;
     boost::asio::streambuf buffer;
-    std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> handle_message_callback;
     ServerCommand currentCommand;
     CommandParser commandParser;
 
@@ -29,8 +28,8 @@ class SingleUserConnection : public std::enable_shared_from_this<SingleUserConne
 public:
     typedef std::shared_ptr<SingleUserConnection> pointer;
 
-    static pointer create(boost::asio::thread_pool &io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) {
-        return pointer(new SingleUserConnection(io_context, callback));
+    static pointer create(boost::asio::thread_pool &io_context) {
+        return pointer(new SingleUserConnection(io_context));
     }
 
     tcp::socket& get_socket() {
@@ -139,12 +138,7 @@ public:
         return result;
     }
 private:
-    SingleUserConnection(boost::asio::thread_pool& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) :
-            socket(io_context)
-    {
-        this->handle_message_callback = callback;
-
-    }
+    SingleUserConnection(boost::asio::thread_pool& io_context) : socket(io_context) {}
 
     void handle_write(const boost::system::error_code& error, size_t bytes_transferred) {
         //std::cout << "write completed" << std::endl;
