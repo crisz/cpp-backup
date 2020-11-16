@@ -108,8 +108,11 @@ int main(int argc, char** argv) {
         Command c;
         std::cout << "attempting login" << std::endl;
         FileMetadata fm;
-        fm.path = "./test.txt";
+        std::cout << "attempting login 1" << std::endl;
+        fm.path = "../client/test.txt";
+        std::cout << "attempting login 2" << std::endl;
         fm.hash = hash_file(fm.path);
+        std::cout << "attempting login 3" << std::endl;
 
        auto login1 = c.login(us.username, us.password);
        auto post_file = c.post_file(fm);

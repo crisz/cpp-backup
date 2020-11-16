@@ -95,6 +95,7 @@ public:
                     }
 
                     std::cout << std::this_thread::get_id() << " ~~ " << "Releasing lock in wait_for_response: " << command << std::endl;
+                    cv.notify_all();
                     return cc_result.parameters;
                 }
                 int length = decode_length(sc->read(4));
