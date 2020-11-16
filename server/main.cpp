@@ -63,7 +63,7 @@ int main(int argc, char** argv) {
 
     try {
         // boost::asio::io_context io_context;
-        boost::asio::thread_pool pool(1); // TODO: spostare la gestione in un'altra classe
+        boost::asio::thread_pool pool(4); // TODO: spostare la gestione in un'altra classe
         // proposta: MessageDispatcher.h
 
         ConnectionPool server{pool, [&pool] (std::shared_ptr<SingleUserConnection> user_connection, const std::string& message) {

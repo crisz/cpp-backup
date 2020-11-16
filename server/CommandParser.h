@@ -32,8 +32,7 @@ private:
     BufferedFileWriter* bfw;
 public:
 
-    void handleCommand(tcp::socket& socket, ServerCommand& command) {  // TODO: digest
-        // TODO: risolvere il problema del this (ad es. spostando la logica in command parser)
+    void handleCommand(tcp::socket& socket, ServerCommand& command) { // TODO: rinominare in digest
         std::string command_name=command.getCommand_name();
         MessageDispatcher md{socket};
         auto parameters = command.getParameters();

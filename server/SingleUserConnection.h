@@ -17,7 +17,8 @@
 
 using boost::asio::ip::tcp;
 
-class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection>{
+class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection> { // TODO: splittare in ServerSocketManager (che contiene tutte le scritture e le letture)
+                    // e CommandEncoder/CommandHandler/altro che contiene gli handle (handle_write, handle_read) e che utilizza il ServerSocketManager
     tcp::socket socket;
     boost::asio::streambuf buffer;
     std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> handle_message_callback;
@@ -293,6 +294,4 @@ private:
                       << (currentCommand.getParameters().cbegin())->second << std::endl;
         }
     }
-
-
 };

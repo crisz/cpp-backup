@@ -39,14 +39,12 @@ public:
         stream.seekg(0, stream.beg);
     }
 
-    ~BufferedFileReader() {
-        if (stream.fail()) {
-            stream.close();
-        }
+    ~BufferedFileReader() { // TODO: copy & swaps
+        stream.close(); // TODO: testare (ad. es. cout)
         delete[] buffer;
     }
 
-    BufferedFileReader(BufferedFileReader& bfm) = delete; // TODO: copy & swaps
+    BufferedFileReader(BufferedFileReader& bfm) = delete; 
     BufferedFileReader(BufferedFileReader&& bfm) = delete;
 
     void flush_buffer(bool done, int chars_read) {

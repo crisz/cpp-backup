@@ -10,7 +10,7 @@
 #include "TreesComparator.h"
 #include "FileMetadata.h"
 #include "../common/hash_file.h"
-#include "../common/file_system_helper.h" // TODO: spostare in common
+#include "../common/file_system_helper.h" 
 
 
 #define SYNCH_INTERVAL 1000
