@@ -158,10 +158,14 @@ int main(int argc, char** argv) {
         init_file_watcher(fw);
         return 0;
     }
-// LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
-    if (command == "restore") {
+    if (command == "restore") { // TODO: implementare
         // ...
         return 0;
+    }
+    if (command == "signup") { // TODO: implementare
+        // crea la cartella dell'utente con solo il file .credentials
+        // oppure aggiunge la riga nel file degli utenti
+
     }
 }
 

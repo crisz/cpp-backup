@@ -17,7 +17,6 @@ private:
     std::multimap<std::string, std::string> parameters;
 
 public:
-
     std::future<bool> login(std::string username, std::string password) {
         std::cout << "Init login " << std::endl;
 
