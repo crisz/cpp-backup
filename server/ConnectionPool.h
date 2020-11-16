@@ -19,7 +19,7 @@ void die(std::string message) {
 class ConnectionPool {
     boost::asio::thread_pool& io_context;
     tcp::acceptor acceptor;
-    std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback;
+    std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback; // TODO: rimuovere
 public:
     ConnectionPool(boost::asio::thread_pool& io_context, std::function<void(std::shared_ptr<SingleUserConnection> user_connection, const std::string& message)> callback) : 
             io_context(io_context),
