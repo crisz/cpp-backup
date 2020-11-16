@@ -97,7 +97,7 @@ public:
             boost::system::error_code ec; // TODO: gestire errore
             char* _buffer = new char[buffer_size + 1];
             for (int i=0; i<number_of_reads; i++) {
-                std::cout << "!!!" << i << " out of " << number_of_reads << std::endl;
+                std::cout << std::this_thread::get_id() << "!!!" << i << " out of " << number_of_reads << std::endl;
                 if (i == number_of_reads - 1) {
                     buffer_size = file_size % buffer_size;
                 }
@@ -191,6 +191,7 @@ private:
             ud.send_raw_response_callback = [this](char* message, int size) {
                 this->send_response(message, size);
             };
+            SessionContainer::get_instance().set_user_data(socket, ud);
             commandParser.handleCommand(socket, currentCommand);
             this->put_on_read_command();
             return;

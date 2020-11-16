@@ -35,6 +35,7 @@ public:
     void handleCommand(tcp::socket& socket, ServerCommand& command) {  // TODO: digest
         // TODO: risolvere il problema del this (ad es. spostando la logica in command parser)
         std::string command_name=command.getCommand_name();
+        MessageDispatcher md{socket};
         auto parameters = command.getParameters();
         if (command_name == LOGINSNC) {
             if(parameters.find(USERNAME) != parameters.end() && parameters.find(PASSWORD) != parameters.end()){
@@ -46,14 +47,13 @@ public:
                 result_map[__RESULT] = result ? "OK" : "KO";
                 if (result) {
                     SessionContainer& sc = SessionContainer::get_instance();
-                    UserData ud;
+                    UserData ud = sc.get_user_data(socket);
                     ud.username = username;
+                    std::cout << username << " si è connesso al server. Ci sono " << sc.get_number_users_connected() << " utenti connessi " << std::endl;
                     sc.set_user_data(socket, ud);
                 }
-                // SingleUserConnection suc;
 
-                // MessageDispatcher md{suc};
-                // md.dispatch(command_name,result_map);
+                md.dispatch(command_name,result_map);
                 command.clear();
             } else error();
 
@@ -61,7 +61,8 @@ public:
             TreeManager tm;
             std::cout << boost::filesystem::current_path() << std::endl;
             std::string dest_dir = ServerConf::get_instance().dest;
-            std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir + "/andrea").get();
+            // std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir + "/andrea").get();
+            std::map<std::string, std::string> tree = tm.obtain_tree("./users/andrea").get(); // TODO: decommentare sopra
 
             std::multimap<std::string, std::string> parameters;
             for (std::pair<std::string, std::string> item: tree) {
@@ -71,8 +72,7 @@ public:
                 parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_path));
             }
             // SingleUserConnection suc;
-            // MessageDispatcher md{suc};
-            // md.dispatch(command_name, parameters);
+            md.dispatch(command_name, parameters);
             command.clear();
 
 
@@ -91,7 +91,7 @@ public:
                 // SingleUserConnection suc;
 
                 // MessageDispatcher md{suc};
-                // md.dispatch(command_name,result_map);
+                md.dispatch(command_name,result_map);
                 command.clear();
 
             } else error();

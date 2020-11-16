@@ -27,4 +27,17 @@ public:
     void set_user_data(tcp::socket& socket, UserData user_data) {
         container[&socket] = user_data;
     }
+
+    void add_user(tcp::socket& socket) {
+        UserData ud;
+        container[&socket] = ud;
+    }
+
+    void remove_user(tcp::socket& socket) { // TODO: va richiamato al logout e quando il client va in errore
+        container.erase(&socket);
+    }
+
+    int get_number_users_connected() {
+        return container.size();
+    }
 };

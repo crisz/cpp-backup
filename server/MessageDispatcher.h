@@ -3,18 +3,21 @@
 //
 
 #pragma once
-
+#include <boost/asio.hpp>
 
 #include <map>
 #include <memory>
 #include "../common/Constants.h"
-class SingleUserConnection;
+#include "SessionContainer.h"
+#include "UserData.h"
+#include "ServerConf.h"
+using boost::asio::ip::tcp;
 
 class MessageDispatcher {
-
-std::shared_ptr<SingleUserConnection> suc;
+private:
+    UserData ud;
 public:
-    MessageDispatcher(std::shared_ptr<SingleUserConnection>);
+    MessageDispatcher(tcp::socket& socket);
 
     void dispatch(std::string& command, std::map<std::string, std::string>& parameters);
 

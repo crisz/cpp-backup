@@ -5,7 +5,9 @@
 #include "MessageDispatcher.h"
 #include "SingleUserConnection.h"
 
-MessageDispatcher::MessageDispatcher(std::shared_ptr<SingleUserConnection> suc): suc{suc}{}
+MessageDispatcher::MessageDispatcher(tcp::socket& socket) {
+    this->ud = SessionContainer::get_instance().get_user_data(socket);
+}
 
 void MessageDispatcher:: dispatch(std::string& command, std::map<std::string, std::string>& parameters){
     auto pbeg = parameters.begin();
@@ -14,9 +16,9 @@ void MessageDispatcher:: dispatch(std::string& command, std::map<std::string, st
     return dispatch(command, multimap_parameters);
 }
 
-void MessageDispatcher:: dispatch(std::string& command, std::multimap<std::string, std::string>& parameters){
+void MessageDispatcher::dispatch(std::string& command, std::multimap<std::string, std::string>& parameters){
 
-    suc->send_response(command);
+    ud.send_response_callback(command);
 
     for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
         send_parameter(it->first, it->second);
@@ -29,9 +31,9 @@ void MessageDispatcher:: dispatch(std::string& command, std::multimap<std::strin
 void MessageDispatcher::send_parameter(std::string key, std::string value) {
     std::cout << "Sending parameter with key " << key << " and value " << value << std::endl;
 
-    suc->send_response(key);
-    suc->send_response(encode_length(value.size()), 4);
-    suc->send_response(value);
+    ud.send_response_callback(key);
+    ud.send_raw_response_callback(encode_length(value.size()), 4);
+    ud.send_response_callback(value);
 }
 
 char* MessageDispatcher::encode_length(int size) {
