@@ -10,8 +10,8 @@
 
 #define FILE_BUFFER_SIZE 256
 
-class ClientCommand { // TODO: rinominare fatto, rinominato in ClientCommand vedere se va bene perchè
-private:               //TODO: nella classe command dspacher era presente una struct con lo stesso nome che èstata rinominata in IncomingCommand
+class ClientCommand {
+private:
     std::string command;
     CommandDispatcher cd;
     std::multimap<std::string, std::string> parameters;
@@ -72,7 +72,6 @@ public:
     }
 
     std::future<bool> post_file(FileMetadata& file_metadata, const int buffer_size=256) {
-        // TODO: gestione degli errori lato server. Cosa succede se il client lascia l'invio a metà? @Andrea -> @CRIS in che senso?
  
         BufferedFileReader bfm{10, file_metadata.path}; // RAII
         std::string command;

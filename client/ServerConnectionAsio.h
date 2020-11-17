@@ -49,7 +49,7 @@ public:
         boost::asio::write(s, boost::asio::buffer(message, m.size()),ec);
         if (ec){
             std::cout << "Cannot send" << std::endl;
-            exit(1); // TODO: gestire eccezione
+            exit(1); // TODO: gestire eccezione a piacimento
         }
 
     }

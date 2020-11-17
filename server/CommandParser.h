@@ -105,7 +105,7 @@ public:
     void start_send_file(long file_size, ServerCommand& command) { // TODO: La gestione dei comandi va unificato in una classe. In queto momento sia CommandParser che SingleUserConnection stanno concorrendo alla gestione
         auto parameters = command.getParameters();
         // std::string file_path = parameters[FILEPATH];
-        std::string file_path = "./out.txt";
+        std::string file_path = "../server/out.txt";
         std::string file_hash = parameters[FILEHASH];
         bfw = new BufferedFileWriter(file_path, file_hash, file_size);
     }
@@ -149,6 +149,12 @@ public:
         // std::cout<<buffer.size()<<std::endl;
         // std::cout<<result<<std::endl;
         return buffer;
+    }
+
+    void rollback_command(ServerCommand & command){
+        if(command.getCommand_name()=="POSTFILE"){
+            //TODO: implementare
+        }
     }
 
 

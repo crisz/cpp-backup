@@ -100,7 +100,7 @@ public:
             for (int i=0; i<number_of_reads; i++) {
                 std::cout << std::this_thread::get_id() << "!!!" << i << " out of " << number_of_reads << std::endl;
                 if (i == number_of_reads - 1) {
-                    buffer_size = file_size % buffer_size;
+                    buffer_size = file_size - i * buffer_size;
                 }
                 std::cout << "buffer size is  " << buffer_size << std::endl;
 
@@ -121,7 +121,7 @@ public:
             std::cout << "end of read from client " << std::endl;
             this->commandParser.end_send_file();
             // ignoriamo il valore poiché è sempre STOPFLOW0000. 
-            boost::asio::read(socket, boost::asio::buffer(_buffer, buffer_size), boost::asio::transfer_exactly(12), ec);
+            boost::asio::read(socket, boost::asio::buffer(_buffer,12), boost::asio::transfer_exactly(12), ec);
             delete[] _buffer;
             this->send_response("POSTFILE");
             this->send_response("__RESULT");
@@ -228,10 +228,6 @@ private:
         std::cout << "value for parameter " << parameter_name << " is " <<  currentCommand.getParameters()[parameter_name]<< std::endl;
         this->put_on_read_parameter_name();
 
-        // TODO
-        // mettiti di nuovo in read parameter name .put_on_read_parameter_name
-        // dentro il handle_read_parameter_name bisogna interrompere la ricorsione se il nome del parametro è STOPFLOW
-        // oltre ad interrompere la ricorsione bisogna anche invocare la callback
 
     }
 
@@ -264,7 +260,12 @@ private:
 
 
     void handle_error(const boost::system::error_code& error) {
+
         std::cout << "Error: " << error.message() << "\n";
+        if(currentCommand.getCommand_name()=="POSTFILE"){
+           // remove_file();
+        }
+
         if (error == boost::asio::error::eof) {
             std::cout << "Il cliente ha chiuso la connessione" << std::endl;
             return;
@@ -277,4 +278,5 @@ private:
                       << (currentCommand.getParameters().cbegin())->second << std::endl;
         }
     }
+
 };
