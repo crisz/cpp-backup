@@ -5,7 +5,7 @@
 #include <boost/program_options.hpp>
 #include "UserSession.h"
 #include "ServerConnectionAsio.h"
-#include "Command.h"
+#include "ClientCommand.h"
 #include <iostream>
 #include "TreesComparator.h"
 #include "FileMetadata.h"
@@ -106,14 +106,14 @@ int main(int argc, char** argv) {
         ServerConnectionAsio::init(us.address, us.port);
         std::cout << "connection started" << std::endl;
 
-        Command c;
-
-        // std::vector<FileMetadata> server_tree = c.require_tree().get();
-        // std::cout << "GOT RESULT FOR REQUIRE_TREE" << std::endl;
-        // for (FileMetadata& fm: server_tree) {
-        //     std::cout << fm.path << " ~ " << fm.hash << std::endl;
-        // }
-
+        ClientCommand c;
+/*
+         std::vector<FileMetadata> server_tree = c.require_tree().get();
+         std::cout << "GOT RESULT FOR REQUIRE_TREE" << std::endl;
+         for (FileMetadata& fm: server_tree) {
+             std::cout << fm.path << " ~ " << fm.hash << std::endl;
+         }
+*/
         std::cout << "attempting login" << std::endl;
         FileMetadata fm;
         fm.path = us.dir + "/test.txt";
@@ -123,7 +123,7 @@ int main(int argc, char** argv) {
         fm.hash = hash_file(fm.path);
 
        auto login1 = c.login(us.username, us.password);
-       auto post_file1 = c.post_file(fm);
+      auto post_file1 = c.post_file(fm);
     //    auto post_file2 = c.post_file(fm);
     //    auto login2 = c.login(us.username, us.password);
     //    auto login3 = c.login(us.username, us.password);

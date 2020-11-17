@@ -95,6 +95,7 @@ public:
 
         // std::thread t([this, buffer_size, number_of_reads]() { // TODO: indagare il motivo per cui non va bene
             boost::system::error_code ec; // TODO: gestire errore
+
             char* _buffer = new char[buffer_size + 1];
             for (int i=0; i<number_of_reads; i++) {
                 std::cout << std::this_thread::get_id() << "!!!" << i << " out of " << number_of_reads << std::endl;
@@ -104,6 +105,10 @@ public:
                 std::cout << "buffer size is  " << buffer_size << std::endl;
 
                 int bytes_read = boost::asio::read(socket, boost::asio::buffer(_buffer, buffer_size), boost::asio::transfer_exactly(buffer_size), ec);
+                if(ec) {
+                    handle_error(ec);
+                    return;
+                }
                 std::cout << "buffer size is  " << buffer_size << " and I read " << bytes_read << std::endl;
                 _buffer[buffer_size] = 0;
                 std::cout << "Received buffer " << _buffer << std::endl;
@@ -145,23 +150,8 @@ private:
     }
 
     void handle_read_parameter_name(const boost::system::error_code& error, size_t bytes_transferred) {
-
-
-/*
         if (error) {
-            if (error == boost::asio::error::eof) {
-                std::cout << "Il cliente ha chiuso la connessione" << std::endl;
-            } else {
-                std::cout << "Errore nella lettura: " << error.message() << "\n"; // TODO: move to a generic function
-            }
-
-            // TODO: eliminare eventuale roba sporca rimasta
-    */
-        if (error && error == boost::asio::error::eof) {
-            std::cout << "Error: " << error.message() << "\n";
-            handle_error();
-
-            // TODO: handle error
+            handle_error(error);//TODO: implementare una gestione degli errori sensata con la disconnessione
             return;
         }
 
@@ -224,11 +214,8 @@ private:
 
     void handle_read_parameter_value(const boost::system::error_code& error, size_t bytes_transferred, std::string parameter_name) {
         //std::cout << "Received parameter value with size " << bytes_transferred << std::endl ;
-
-        if (error && error == boost::asio::error::eof) {
-            std::cout << "Error: " << error.message() << "\n";
-            handle_error();
-            // TODO: handle error
+        if (error) {
+            handle_error(error);
             return;
         }
 
@@ -250,12 +237,9 @@ private:
 
 
     void handle_read_command(const boost::system::error_code& error, size_t bytes_transferred) {
-
         std::cout << "Received command \n";
-
-        if (error && error == boost::asio::error::eof) {
-            std::cout << "Error: " << error.message() << "\n";
-            handle_error();
+        if (error) {
+            handle_error(error);
             // TODO: handle error
             return;
         }
@@ -279,10 +263,15 @@ private:
     }
 
 
-    void handle_error() {
+    void handle_error(const boost::system::error_code& error) {
+        std::cout << "Error: " << error.message() << "\n";
+        if (error == boost::asio::error::eof) {
+            std::cout << "Il cliente ha chiuso la connessione" << std::endl;
+            return;
+        }
         std::cout << "Error on command :" << currentCommand.getCommand_name() << std::endl;
         if (currentCommand.getParameters().empty()) {
-            std::cout << "non ci sono parametri" << std::endl;
+            std::cout << "Non ci sono parametri associati al comando"<<std::endl;
         } else {
             std::cout << "Last parameter read: " << (currentCommand.getParameters().cbegin())->first << " with value : "
                       << (currentCommand.getParameters().cbegin())->second << std::endl;

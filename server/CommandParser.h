@@ -61,7 +61,7 @@ public:
             std::cout << boost::filesystem::current_path() << std::endl;
             std::string dest_dir = ServerConf::get_instance().dest;
             // std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir + "/andrea").get();
-            std::map<std::string, std::string> tree = tm.obtain_tree("./users/andrea").get(); // TODO: decommentare sopra
+            std::map<std::string, std::string> tree = tm.obtain_tree("../server/users/andrea").get(); // TODO: decommentare sopra
 
             std::multimap<std::string, std::string> parameters;
             for (std::pair<std::string, std::string> item: tree) {
@@ -127,7 +127,7 @@ public:
         std::cout<<"Credenziali ricevute us: "<<username << " pass: "<< password<<std::endl;
     }
     void error(){
-        std::cout<<"Errore nel comando"<<std::endl;
+        std::cout<<"Errore nel comando "<<std::endl;
     }
     void sendResult(std::string & r){}
 
@@ -151,8 +151,5 @@ public:
         return buffer;
     }
 
-    void saveFile(std::string & path ,std::string & data,std::string & hash){}
-    void removeFile(std::string & path){}
-    void saveTree(){}
 
 };

@@ -10,8 +10,8 @@
 
 #define FILE_BUFFER_SIZE 256
 
-class Command { // TODO: rinominare
-private:
+class ClientCommand { // TODO: rinominare fatto, rinominato in ClientCommand vedere se va bene perchè
+private:               //TODO: nella classe command dspacher era presente una struct con lo stesso nome che èstata rinominata in IncomingCommand
     std::string command;
     CommandDispatcher cd;
     std::multimap<std::string, std::string> parameters;
@@ -46,7 +46,7 @@ public:
             std::cout << "REQTREE RETURNED" << std::endl;
             std::cout << result.size() << " elements" << std::endl;
             FileMetadata fm;
-            for (std::pair<std::string, std::string> item: result) { // TODO: evitare copia
+            for (const std::pair< const std::string, std::string>& item: result) {
                 std::cout << "item.first = " << item.first << "; item.second = " << item.second << std::endl;
                 if (fm.hash != "" && fm.path != "") {
                     tree.push_back(fm);
@@ -59,7 +59,8 @@ public:
                 }
                 if (item.first == "FILEPATH") {
                     fm.path = item.second;
-                    // fm.name = fm.path.split("/")[-1]; // TODO
+                    std::size_t found = fm.path.find_last_of("/\\");
+                    fm.name=fm.path.substr(found+1);
                     continue;
                 }
             }
@@ -71,7 +72,7 @@ public:
     }
 
     std::future<bool> post_file(FileMetadata& file_metadata, const int buffer_size=256) {
-        // TODO: gestione degli errori lato server. Cosa succede se il client lascia l'invio a metà? @Andrea
+        // TODO: gestione degli errori lato server. Cosa succede se il client lascia l'invio a metà? @Andrea -> @CRIS in che senso?
  
         BufferedFileReader bfm{10, file_metadata.path}; // RAII
         std::string command;
@@ -84,6 +85,7 @@ public:
         cd.lock_raw();
         cd.dispatch_partial(command, parameters);
         cd.send_raw("FILEDATA", 8);
+
         cd.send_raw(cd.encode_length(bfm.get_file_size()), 4);
 
         std::promise<bool>& read_done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {

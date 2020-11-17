@@ -8,14 +8,14 @@
 #include "../common/Constants.h"
 #include <condition_variable>
 
-struct ClientCommand {
+struct IncomingCommand {
     std::string command_name;
     std::multimap<std::string, std::string> parameters;
 };
 class CommandDispatcher {
 private:
     std::shared_ptr<ServerConnectionAsio> sc;
-    std::vector<ClientCommand> pending_commands;
+    std::vector<IncomingCommand> pending_commands;
     std::mutex dispatch_mutex;
     std::condition_variable cv;
 
@@ -76,7 +76,7 @@ public:
                     
                     //leggiamo 4 caratteri perché il server manda STOPFLOW0000
                     sc->read(4); // TODO: risolvere in maniera alternativa
-                    ClientCommand cc;
+                    IncomingCommand cc;
                     cc.command_name = received_command;
                     cc.parameters = result;
                     this->pending_commands.push_back(cc);
@@ -86,7 +86,7 @@ public:
                         }
                         return false;
                     });
-                    ClientCommand cc_result;
+                    IncomingCommand cc_result;
                     for (auto pending_command: this->pending_commands) {
                         if (pending_command.command_name == command) {
                             cc_result = pending_command;
