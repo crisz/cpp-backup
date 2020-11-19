@@ -36,6 +36,7 @@ public:
         }
         stream.seekg(0, stream.end);
         file_size = stream.tellg();
+        std::cout<<"Dimensione del file: " << file_size << std::endl;
         stream.seekg(0, stream.beg);
     }
 

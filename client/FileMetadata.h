@@ -6,4 +6,5 @@ struct FileMetadata {
     int size;
     std::string hash;
     std::string name; // considerare se includerlo nel path
+    std::string path_to_send; //foto/albero.jpeg
 };

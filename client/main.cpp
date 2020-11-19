@@ -117,25 +117,32 @@ int main(int argc, char** argv) {
         std::cout << "attempting login" << std::endl;
         FileMetadata fm;
         fm.path = us.dir + "/test.txt";
+        std::size_t found = us.dir.find_last_of("/\\");
+        fm.path_to_send=fm.path.substr(found);
         if (!check_dest_dir(fm.path)) {
             die("Il file " + fm.path + " non esiste");
         }
         fm.hash = hash_file(fm.path);
 
        auto login1 = c.login(us.username, us.password);
-      auto post_file1 = c.post_file(fm);
+
     //    auto post_file2 = c.post_file(fm);
     //    auto login2 = c.login(us.username, us.password);
     //    auto login3 = c.login(us.username, us.password);
 
-       bool login_result_1 = login1.get();
-       bool post_file_result_1 = post_file1.get();
+        bool login_result_1 = login1.get();
+        if(login_result_1){
+            auto post_file1 = c.post_file(fm);
+            bool post_file_result_1 = post_file1.get();
+            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
+        }
+
     //    bool login_result_3 = login3.get();
     //    bool post_file_result_2 = post_file2.get();
     //    bool login_result_2 = login2.get();
 
-       std::cout << "Login 1 effettuato con " << (login_result_1 ? "successo" : "fallimento") << std::endl;
-       std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
+
+
     //    std::cout << "Login 2 effettuato con " << (login_result_2 ? "successo" : "fallimento") << std::endl;
     //    std::cout << "Login 3 effettuato con " << (login_result_3 ? "successo" : "fallimento") << std::endl;
     //    std::cout << "Post file effettuato con " << (post_file_result_2 ? "successo" : "fallimento") << std::endl;

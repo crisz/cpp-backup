@@ -8,7 +8,6 @@
 #include <map>
 #include <boost/asio.hpp>
 #include <memory>
-
 #include "SessionContainer.h"
 #include "UserData.h"
 #include "ServerConf.h"
@@ -30,6 +29,7 @@ using boost::asio::ip::tcp;
 class CommandParser {
 private:
     BufferedFileWriter* bfw;
+
 public:
 
     void handleCommand(tcp::socket& socket, ServerCommand& command) { // TODO: rinominare in digest
@@ -60,8 +60,9 @@ public:
             TreeManager tm;
             std::cout << boost::filesystem::current_path() << std::endl;
             std::string dest_dir = ServerConf::get_instance().dest;
-            // std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir + "/andrea").get();
-            std::map<std::string, std::string> tree = tm.obtain_tree("../server/users/andrea").get(); // TODO: decommentare sopra
+            SessionContainer& sc = SessionContainer::get_instance();
+            UserData ud = sc.get_user_data(socket);
+            std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir+ud.username).get();
 
             std::multimap<std::string, std::string> parameters;
             for (std::pair<std::string, std::string> item: tree) {
@@ -102,10 +103,14 @@ public:
         }
     }
 
-    void start_send_file(long file_size, ServerCommand& command) { // TODO: La gestione dei comandi va unificato in una classe. In queto momento sia CommandParser che SingleUserConnection stanno concorrendo alla gestione
+    void start_send_file(tcp::socket& socket, long file_size, ServerCommand& command) { // TODO: La gestione dei comandi va unificato in una classe. In queto momento sia CommandParser che SingleUserConnection stanno concorrendo alla gestione
         auto parameters = command.getParameters();
         // std::string file_path = parameters[FILEPATH];
-        std::string file_path = "../server/out.txt";
+        std::string dest_dir = ServerConf::get_instance().dest;
+        SessionContainer& sc = SessionContainer::get_instance();
+        UserData ud = sc.get_user_data(socket);
+        std::string file_path = dest_dir+ud.username+parameters[FILEPATH];
+        std::cout<<"FILEPATH!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<< file_path<<std::endl;
         std::string file_hash = parameters[FILEHASH];
         bfw = new BufferedFileWriter(file_path, file_hash, file_size);
     }

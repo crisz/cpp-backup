@@ -89,7 +89,7 @@ public:
         int number_of_reads = ceil((double)file_size/(double)buffer_size);
         std::cout << "start send file with size " << file_size << std::endl;
 
-        this->commandParser.start_send_file(file_size, currentCommand);
+        this->commandParser.start_send_file(socket, file_size, currentCommand);
 
         std::cout << "send file started" << std::endl;
 

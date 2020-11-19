@@ -78,7 +78,7 @@ public:
         std::multimap<std::string, std::string> parameters;
         command = "POSTFILE";
         parameters.erase(parameters.begin(), parameters.end());
-        parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_metadata.path));
+        parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_metadata.path_to_send));
         parameters.insert(std::pair<std::string, std::string>("FILEHASH", file_metadata.hash));
         std::cout << "ACQUIRING LOCK RAW NOW" << std::endl;
         cd.lock_raw();
