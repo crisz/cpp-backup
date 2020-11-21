@@ -22,26 +22,37 @@ void die(std::string message) {
     exit(-1);
 }
 
-void init_file_watcher(FileWatcher &fw) {
+void init_file_watcher(FileWatcher &fw, ClientCommand& c) {
+
     // std::shared_ptr<ServerConnectionAsio> sc = ServerConnectionAsio::get_instance();
-    fw.on_file_changed([](std::string path_to_watch, FileStatus status) -> void {
-        if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_to_watch)) && status != FileStatus::erased) {
+    fw.on_file_changed([&fw, &c](std::string path_matched, FileStatus status) -> void {
+        if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_matched)) && status != FileStatus::erased) {
             return;
         }
+        FileMetadata fm;
+        fm.path = path_matched;
+        std::size_t found = fw.path_to_watch.string().find_last_of("/\\");
+        fm.path_to_send=fm.path.substr(found);
 
-        switch (status) {
-            case FileStatus::created:
-                std::cout << "File created: " << path_to_watch << std::endl;
-                break;
-            case FileStatus::modified:
-                std::cout << "File modified: " << path_to_watch << std::endl;
-                break;
-            case FileStatus::erased:
-                std::cout << "File erased: " << path_to_watch << '\n';
-                break;
-            default:
-                std::cout << "Error! Unknown file status.\n";
+        if(status==FileStatus::created) {
+            std::cout << "File created: " << fm.path_to_send << std::endl;
+            auto post_file1 = c.post_file(fm);
+            bool post_file_result_1 = post_file1.get();
+            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
+        }else if (status==FileStatus::modified){
+            std::cout << "File modified: " << fm.path_to_send << std::endl;
+            auto post_file1 = c.post_file(fm);
+            bool post_file_result_1 = post_file1.get();
+            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
+        }else if (status==FileStatus::erased) {
+            std::cout << "File erased: " << fm.path_to_send << '\n';
+            auto remove_file= c.remove_file(fm);
+            bool remove_file_result=remove_file.get();
+            std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
+        }else {
+            std::cout << "Error! Unknown file status.\n";
         }
+
     });
 }
 
@@ -132,6 +143,7 @@ int main(int argc, char** argv) {
 
         bool login_result_1 = login1.get();
         if(login_result_1){
+            /*
             auto post_file1 = c.post_file(fm);
             bool post_file_result_1 = post_file1.get();
             std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
@@ -139,6 +151,7 @@ int main(int argc, char** argv) {
             bool remove_file_result=remove_file.get();
             std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
             auto req_tree= c.require_tree().get();
+             */
         }
 
     //    bool login_result_3 = login3.get();
@@ -166,7 +179,7 @@ int main(int argc, char** argv) {
         //     std::cout << "Login fallito " << std::endl;
         // }
 
-        init_file_watcher(fw);
+        init_file_watcher(fw, c);
         return 0;
     }
     if (command == "restore") { // TODO: implementare

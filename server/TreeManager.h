@@ -18,6 +18,7 @@ public:
             for(auto &file : boost::filesystem::recursive_directory_iterator(path)) {
                 std::string file_path = file.path().string();
                 std::string file_name = file_path.erase(0, path.size());
+                if(file_name.find(".")==1) continue;
                 local_tree[file_name] = hash_file(file.path().string());
             }
             return local_tree;

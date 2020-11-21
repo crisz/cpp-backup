@@ -63,6 +63,7 @@ public:
             std::string dest_dir = ServerConf::get_instance().dest;
             SessionContainer& sc = SessionContainer::get_instance();
             UserData ud = sc.get_user_data(socket);
+            std::cout<<"QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ"<<ud.username<< std::endl;
             std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir+ud.username).get();
 
             std::multimap<std::string, std::string> parameters;
