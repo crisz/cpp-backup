@@ -24,7 +24,7 @@ void MessageDispatcher::dispatch(std::string& command, std::multimap<std::string
         send_parameter(it->first, it->second);
     }
 
-    send_STOPFLOW();
+    send_parameter("STOPFLOW","");
 }
 
 void MessageDispatcher::send_parameter(std::string key, std::string value) {

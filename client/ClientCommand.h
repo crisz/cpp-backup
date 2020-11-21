@@ -106,8 +106,17 @@ public:
     }
 
     std::future<bool> remove_file(FileMetadata& file_metadata) {
-        std::future<bool> a;
-        return a;
+        std::string command;
+        std::multimap<std::string, std::string> parameters;
+        parameters.erase(parameters.begin(), parameters.end());
+        command = "REMVFILE";
+        parameters.insert(std::pair<std::string, std::string>(FILEPATH,file_metadata.path_to_send));
+        return std::async([this, command, parameters] () {
+            std::cout << "Trying to dispatch remove file " << std::endl;
+            std::multimap<std::string, std::string> result = cd.dispatch(command, parameters).get();
+            std::cout << "result is " << result.find("__RESULT")->second << std::endl;
+            return result.find("__RESULT")->second == "OK";
+        });
     }
 };
 

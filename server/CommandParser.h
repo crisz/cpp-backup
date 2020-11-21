@@ -11,6 +11,7 @@
 #include "SessionContainer.h"
 #include "UserData.h"
 #include "ServerConf.h"
+#include "RemovalManager.h"
 
 // LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
 // LOGINSNC __RESULT 0002 OK STOPFLOW
@@ -98,6 +99,16 @@ public:
 
         } else if (command_name == REMVFILE){
             if(parameters.find(FILEPATH)!=parameters.end()){
+                std::string dest_dir = ServerConf::get_instance().dest;
+                SessionContainer& sc = SessionContainer::get_instance();
+                UserData ud = sc.get_user_data(socket);
+                //std::string file_path = dest_dir+ud.username+parameters[FILEPATH];
+                RemovalManager rm;
+                auto result=rm.remove_file(dest_dir+ud.username+parameters[FILEPATH]).get();
+                std::map<std::string, std::string> result_map;
+                result_map[__RESULT] = result ? "OK" : "KO";
+                md.dispatch(command_name,result_map);
+                command.clear();
 
             } else error();
         }

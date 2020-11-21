@@ -135,6 +135,10 @@ int main(int argc, char** argv) {
             auto post_file1 = c.post_file(fm);
             bool post_file_result_1 = post_file1.get();
             std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
+            auto remove_file= c.remove_file(fm);
+            bool remove_file_result=remove_file.get();
+            std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
+            auto req_tree= c.require_tree().get();
         }
 
     //    bool login_result_3 = login3.get();

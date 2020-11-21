@@ -120,7 +120,7 @@ public:
 
             std::cout << "end of read from client " << std::endl;
             this->commandParser.end_send_file();
-            // ignoriamo il valore poiché è sempre STOPFLOW0000. //TODO: Sistemato invio da server a client di STOPFLOW, ma l'invio da client a server è rimasto STOPFLOW0000
+            // ignoriamo il valore poiché è sempre STOPFLOW0000.
             boost::asio::read(socket, boost::asio::buffer(_buffer,12), boost::asio::transfer_exactly(12), ec);
             delete[] _buffer;
             this->send_response("POSTFILE");
@@ -169,14 +169,16 @@ private:
             // boost::asio::write(socket, boost::asio::buffer(encode_length(2), 4), ec);
             // boost::asio::write(socket, boost::asio::buffer("OK", 2), ec);
             // boost::asio::write(socket, boost::asio::buffer("STOPFLOW", 8), ec);
+            SessionContainer& sc=SessionContainer::get_instance();
             UserData ud;
+            if(sc.get_user_data(socket).username!="") ud.username= sc.get_user_data(socket).username;
             ud.send_response_callback = [this](const std::string message) {
                 this->send_response(message);
             };
             ud.send_raw_response_callback = [this](char* message, int size) {
                 this->send_response(message, size);
             };
-            SessionContainer::get_instance().set_user_data(socket, ud);
+            SessionContainer::get_instance().set_user_data(socket,ud);
             commandParser.handleCommand(socket, currentCommand);
             this->put_on_read_command();
             return;
