@@ -73,9 +73,7 @@ public:
                 std::string parameter_name = sc->read_as_str(8);
 
                 if (parameter_name == "STOPFLOW") {
-                    
-                    //leggiamo 4 caratteri perché il server manda STOPFLOW0000
-                    sc->read(4); // TODO: risolvere in maniera alternativa
+
                     IncomingCommand cc;
                     cc.command_name = received_command;
                     cc.parameters = result;

@@ -25,6 +25,8 @@ public:
 
     void send_parameter(std::string key, std::string value) ;
 
+    void send_STOPFLOW();
+
     char* encode_length(int size) ;
 
     int decode_length(char* message_size_arr);

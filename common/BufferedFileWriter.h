@@ -21,8 +21,7 @@ private:
     std::string file_hash;
     std::ofstream stream;
 public:
-    BufferedFileWriter(std::string& file_path, std::string& file_hash, long file_size): file_path{file_path}, file_hash{file_hash}
-                 {
+    BufferedFileWriter(std::string& file_path, std::string& file_hash, long file_size): file_path{file_path}, file_hash{file_hash}{
 
         std::size_t found = file_path.find_last_of("/\\");
         std::string path= file_path.substr(0,found);
@@ -30,14 +29,21 @@ public:
 
         if(!(boost::filesystem::exists(dir))){
             std::cout<<"Doesn't Exists"<<std::endl;
-
             if (boost::filesystem::create_directories(dir))
                 std::cout << "....Successfully Created !" << std::endl;
         }
 
+        if(boost::filesystem::exists(file_path)){
+           if(boost::filesystem::remove(file_path)){
+               std::cout<<"File già esistente, lo rimuovo!"<<std::endl;
+           }else{
+               std::cout<<"Error deleting file!"<<std::endl;
+           }
+        }
+
         stream = std::ofstream {file_path, std::ios::out | std::ios::binary | std::ios::app};
 
-        if (stream.fail()) { // TODO: dovrebbe eliminare il file se esiste e crearlo (vuoto) se non esiste
+        if (stream.fail()) {
             stream.close();
             throw BufferedFileWriterException("File " + file_path + " does not exist", -1);
         }
@@ -45,9 +51,7 @@ public:
     }
 
     ~BufferedFileWriter() {
-        if (stream.fail()) { // TODO: è necessario questo if?
-            stream.close();
-        }
+        //Non c'è bisogno di chiudere lo stream in qunato lo fa da solo non appena esce dallo scope
     }
 
     BufferedFileWriter(BufferedFileWriter& bfm) = delete; // TODO: copy & swaps

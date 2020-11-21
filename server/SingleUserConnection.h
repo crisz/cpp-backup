@@ -120,7 +120,7 @@ public:
 
             std::cout << "end of read from client " << std::endl;
             this->commandParser.end_send_file();
-            // ignoriamo il valore poiché è sempre STOPFLOW0000. 
+            // ignoriamo il valore poiché è sempre STOPFLOW0000. //TODO: Sistemato invio da server a client di STOPFLOW, ma l'invio da client a server è rimasto STOPFLOW0000
             boost::asio::read(socket, boost::asio::buffer(_buffer,12), boost::asio::transfer_exactly(12), ec);
             delete[] _buffer;
             this->send_response("POSTFILE");

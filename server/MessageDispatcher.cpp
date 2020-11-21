@@ -24,8 +24,7 @@ void MessageDispatcher::dispatch(std::string& command, std::multimap<std::string
         send_parameter(it->first, it->second);
     }
 
-    send_parameter(STOPFLOW, "");
-
+    send_STOPFLOW();
 }
 
 void MessageDispatcher::send_parameter(std::string key, std::string value) {
@@ -36,6 +35,12 @@ void MessageDispatcher::send_parameter(std::string key, std::string value) {
     ud.send_response_callback(value);
 }
 
+void MessageDispatcher::send_STOPFLOW() {
+    std::cout << "Sending STOPFLOW" << std::endl;
+
+    ud.send_response_callback(STOPFLOW);
+
+}
 char* MessageDispatcher::encode_length(int size) {
     char* result = new char[4];
     int length = htonl(size); // htonl serve per non avere problemi di endianess

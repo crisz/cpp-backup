@@ -48,8 +48,8 @@ public:
         boost::system::error_code ec;
         boost::asio::write(s, boost::asio::buffer(message, m.size()),ec);
         if (ec){
-            std::cout << "Cannot send" << std::endl;
-            exit(1); // TODO: gestire eccezione a piacimento
+            std::cout << "ERROR: Cannot send!" << std::endl;
+            exit(1);
         }
 
     }

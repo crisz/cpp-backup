@@ -143,16 +143,6 @@ public:
         }
 
         std::string buffer;
-        // boost::iostreams::back_insert_device<std::string> inserter(buffer);
-        // boost::iostreams::stream<boost::iostreams::back_insert_device<std::string>> ostr(inserter);
-        // boost::archive::binary_oarchive oa(ostr);
-        // oa << local_tree;
-        // ostr.flush();
-        // std::stringstream stream;
-        // stream <<"REQRTREERESPTREE"<<std::hex <<std::setfill('0')<<std::setw(4)<<buffer.size()<<buffer<<"STOPFLOW0000";
-        // std::string result( stream.str());
-        // std::cout<<buffer.size()<<std::endl;
-        // std::cout<<result<<std::endl;
         return buffer;
     }
 
