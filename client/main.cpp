@@ -34,13 +34,16 @@ void init_file_watcher(FileWatcher &fw, ClientCommand& c) {
         std::size_t found = fw.path_to_watch.string().find_last_of("/\\");
         fm.path_to_send=fm.path.substr(found);
 
+
         if(status==FileStatus::created) {
             std::cout << "File created: " << fm.path_to_send << std::endl;
+            fm.hash=hash_file(fm.path);
             auto post_file1 = c.post_file(fm);
             bool post_file_result_1 = post_file1.get();
             std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
         }else if (status==FileStatus::modified){
             std::cout << "File modified: " << fm.path_to_send << std::endl;
+            fm.hash=hash_file(fm.path);
             auto post_file1 = c.post_file(fm);
             bool post_file_result_1 = post_file1.get();
             std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
@@ -126,14 +129,14 @@ int main(int argc, char** argv) {
          }
 */
         std::cout << "attempting login" << std::endl;
-        FileMetadata fm;
-        fm.path = us.dir + "/test.txt";
-        std::size_t found = us.dir.find_last_of("/\\");
-        fm.path_to_send=fm.path.substr(found);
-        if (!check_dest_dir(fm.path)) {
-            die("Il file " + fm.path + " non esiste");
-        }
-        fm.hash = hash_file(fm.path);
+        //FileMetadata fm;
+        //fm.path = us.dir + "/test.txt";
+        //std::size_t found = us.dir.find_last_of("/\\");
+        //fm.path_to_send=fm.path.substr(found);
+        //if (!check_dest_dir(fm.path)) {
+        //   die("Il file " + fm.path + " non esiste");
+        //}
+        //fm.hash = hash_file(fm.path);
 
        auto login1 = c.login(us.username, us.password);
 
@@ -143,15 +146,17 @@ int main(int argc, char** argv) {
 
         bool login_result_1 = login1.get();
         if(login_result_1){
-            /*
-            auto post_file1 = c.post_file(fm);
-            bool post_file_result_1 = post_file1.get();
-            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-            auto remove_file= c.remove_file(fm);
-            bool remove_file_result=remove_file.get();
-            std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
-            auto req_tree= c.require_tree().get();
-             */
+
+            //auto post_file1 = c.post_file(fm);
+            //bool post_file_result_1 = post_file1.get();
+            //std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
+            //auto remove_file= c.remove_file(fm);
+            //bool remove_file_result=remove_file.get();
+            //std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
+            auto server_tree= c.require_tree().get();
+            TreesComparator tc{us.dir};
+            tc.compare(server_tree);
+
         }
 
     //    bool login_result_3 = login3.get();

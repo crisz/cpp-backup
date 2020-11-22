@@ -63,9 +63,7 @@ public:
             std::string dest_dir = ServerConf::get_instance().dest;
             SessionContainer& sc = SessionContainer::get_instance();
             UserData ud = sc.get_user_data(socket);
-            std::cout<<"QQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ"<<ud.username<< std::endl;
             std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir+ud.username).get();
-
             std::multimap<std::string, std::string> parameters;
             for (std::pair<std::string, std::string> item: tree) {
                 std::string file_path = item.first;
@@ -73,10 +71,9 @@ public:
                 parameters.insert(std::pair<std::string, std::string>("FILEHASH", file_hash));
                 parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_path));
             }
-            // SingleUserConnection suc;
+
             md.dispatch(command_name, parameters);
             command.clear();
-
 
         } else if (command_name== POSTFILE) {
             if(parameters.find(FILEPATH) != parameters.end() &&

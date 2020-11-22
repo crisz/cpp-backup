@@ -19,6 +19,7 @@ public:
                 std::string file_path = file.path().string();
                 std::string file_name = file_path.erase(0, path.size());
                 if(file_name.find(".")==1) continue;
+                if(boost::filesystem::is_directory(file.path().string())) continue;
                 local_tree[file_name] = hash_file(file.path().string());
             }
             return local_tree;
