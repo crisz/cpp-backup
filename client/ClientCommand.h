@@ -36,7 +36,7 @@ public:
 
     std::future<std::vector<FileMetadata>> require_tree() {    
         std::string command;
-        std::multimap<std::string, std::string> parameters;    
+        std::multimap<std::string, std::string> parameters;
         command = "REQRTREE";
         parameters.erase(parameters.begin(), parameters.end());
         return std::async([this, command, parameters] () {

@@ -154,6 +154,12 @@ int main(int argc, char** argv) {
             //bool remove_file_result=remove_file.get();
             //std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
             auto server_tree= c.require_tree().get();
+            std::cout<<"MAPPA RICEVUTA DAL SERVER NEL MAIN:" <<std::endl;
+
+            for(auto st: server_tree){
+                std::cout<<st.path<<std::endl;
+            }
+
             TreesComparator tc{us.dir};
             tc.compare(server_tree);
 
