@@ -7,7 +7,7 @@
 #include <future>
 #include <string>
 #include <map>
-#include <boost/filesystem/directory.hpp>
+#include <boost/filesystem.hpp>
 #include "../common/hash_file.h"
 
 class TreeManager {

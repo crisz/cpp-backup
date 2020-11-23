@@ -7,6 +7,7 @@
 #include <boost/filesystem.hpp>
 #include "../common/hash_file.h"
 #include "FileMetadata.h"
+#include "ClientCommand.h"
 
 // CLIENT                          SERVER
 // ./a.txt  ABC123                 ./a.txt  ABC123
