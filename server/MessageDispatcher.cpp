@@ -9,6 +9,17 @@ MessageDispatcher::MessageDispatcher(tcp::socket& socket) {
     this->ud = SessionContainer::get_instance().get_user_data(socket);
 }
 
+void MessageDispatcher::dispatch(std::string& command, std::vector<std::pair<std::string,std::string>>& parameters){
+
+    ud.send_response_callback(command);
+
+    for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
+        send_parameter(it->first, it->second);
+    }
+
+    send_parameter("STOPFLOW","");
+}
+
 void MessageDispatcher:: dispatch(std::string& command, std::map<std::string, std::string>& parameters){
     auto pbeg = parameters.begin();
     auto pend = parameters.end();

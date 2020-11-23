@@ -64,12 +64,12 @@ public:
             SessionContainer& sc = SessionContainer::get_instance();
             UserData ud = sc.get_user_data(socket);
             std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir+ud.username).get();
-            std::multimap<std::string, std::string> parameters;
+            std::vector<std::pair<std::string, std::string>> parameters;
             for (std::pair<std::string, std::string> item: tree) {
                 std::string file_path = item.first;
                 std::string file_hash = item.second;
-                parameters.insert(std::pair<std::string, std::string>("FILEHASH", file_hash));
-                parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_path));
+                parameters.push_back(std::pair<std::string, std::string>("FILEHASH", file_hash));
+                parameters.push_back(std::pair<std::string, std::string>("FILEPATH", file_path));
             }
 
             md.dispatch(command_name, parameters);

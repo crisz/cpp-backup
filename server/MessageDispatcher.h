@@ -23,6 +23,8 @@ public:
 
     void dispatch (std::string& command, std::multimap<std::string, std::string>& parameters);
 
+    void dispatch (std::string& command, std::vector<std::pair<std::string, std::string>>& parameters);
+
     void send_parameter(std::string key, std::string value) ;
 
     void send_STOPFLOW();
