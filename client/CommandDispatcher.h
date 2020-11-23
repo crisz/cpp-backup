@@ -1,3 +1,4 @@
+#pragma once
 #include <string>
 #include <map>
 #include "ServerConnectionAsio.h"
@@ -7,10 +8,11 @@
 #include <mutex>
 #include "../common/Constants.h"
 #include <condition_variable>
+#include "CommandDTO.h"
 
 struct IncomingCommand {
     std::string command_name;
-    std::multimap<std::string, std::string> parameters;
+    CommandDTO parameters;
 };
 class CommandDispatcher {
 private:
@@ -24,7 +26,7 @@ public:
         sc = ServerConnectionAsio::get_instance();
     }
 
-    void dispatch_partial(std::string command, const std::multimap<std::string, std::string> parameters) {
+    void dispatch_partial(std::string command, const CommandDTO parameters) {
         // std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in dispatch_partial " << command << std::endl;
         // lock acquire
         sc->send(command);
@@ -36,7 +38,7 @@ public:
         }
     }
 
-    std::future<std::multimap<std::string, std::string>> dispatch(std::string command, const std::multimap<std::string, std::string>& parameters) {
+    std::future<CommandDTO> dispatch(std::string command, const CommandDTO& parameters) {
         std::cout << command << " is trying to acquire lock" << std::endl;
         std::unique_lock ul(dispatch_mutex); 
         std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in dispatch " << command << std::endl;
@@ -62,12 +64,12 @@ public:
 
     
 
-    std::future<std::multimap<std::string, std::string>> wait_for_response(std::string command) {
+    std::future<CommandDTO> wait_for_response(std::string command) {
         return std::async([this, command]() {
             std::unique_lock ul(dispatch_mutex);
             std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in wait_for_response: " << command << std::endl;
             
-            std::multimap<std::string, std::string> result;
+            CommandDTO result;
             std::string received_command = sc->read_as_str(8);
             while(true) {
                 std::string parameter_name = sc->read_as_str(8);
