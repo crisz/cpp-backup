@@ -23,7 +23,7 @@ class TreesComparator {
 public:
     TreesComparator(std::string current_path) : current_path{current_path}{
         for(auto &file : boost::filesystem::recursive_directory_iterator(current_path)) {
-            std::cout<< "CURRENT PATH: "<< file.path().string()<< std::endl;
+
             FileMetadata fm;
             fm.path=file.path().string();
 
@@ -58,7 +58,6 @@ public:
         }
 
         for(auto ce : local_tree_map){
-            std::cout<< "MAPPA LOCALE: "<< std::endl;
             std::cout<< ce.second.path_to_send<<std::endl;
             local_trees_vect.push_back(ce.first);
         }
