@@ -160,8 +160,27 @@ int main(int argc, char** argv) {
             }
 
             TreesComparator tc{us.dir};
-            tc.compare(server_tree);
+            std::pair<std::vector<FileMetadata>,std::vector<FileMetadata>> result_trees_comparator =  tc.compare(server_tree).get();
+            auto file_to_remove =  result_trees_comparator.second;
+            auto file_to_post = result_trees_comparator.first;
 
+            std::cout<<"FILES TO REMOVE"<<std::endl;
+
+            for(auto fm_rm :file_to_remove){
+                std::cout<< fm_rm.path<<std::endl;
+                fm_rm.path_to_send=fm_rm.path;
+                auto remove_file= c.remove_file(fm_rm);
+                bool remove_file_result=remove_file.get();
+                std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
+            }
+
+            std::cout<<"FILES TO POST"<<std::endl;
+            for(auto fm_po: file_to_post){
+                std::cout<< fm_po.path_to_send <<std::endl;
+                auto post_file1 = c.post_file(fm_po);
+                bool post_file_result_1 = post_file1.get();
+                std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
+            }
         }
 
     //    bool login_result_3 = login3.get();

@@ -41,72 +41,53 @@ public:
         }
     }
 
-    void compare(std::vector<FileMetadata>& server_tree){
-        std::vector<std::string> server_trees_vect;
-        std::vector<std::string> local_trees_vect;
-        std::vector<std::string> intersection;
-        std::map<std::string, FileMetadata> server_tree_map;
+    std::future<std::pair<std::vector<FileMetadata>,std::vector<FileMetadata>>> compare(std::vector<FileMetadata>& server_tree){
+       return std::async([&](){
+            std::vector<std::string> server_trees_vect;
+            std::vector<std::string> local_trees_vect;
+            std::vector<std::string> intersection;
+            std::map<std::string, FileMetadata> server_tree_map;
 
-        std::cout<< "MAPPA RICEVUTA DAL SERVER: "<< std::endl;
-        for(auto se : server_tree){
-            std::cout<< se.path <<std::endl;
-            server_tree_map[se.path]= se;
-        }
-
-        for(auto se : server_tree_map){
-            server_trees_vect.push_back(se.first);
-        }
-
-        for(auto ce : local_tree_map){
-            std::cout<< ce.second.path_to_send<<std::endl;
-            local_trees_vect.push_back(ce.first);
-        }
-
-        std::set_intersection(local_trees_vect.begin(),local_trees_vect.end(),
-                              server_trees_vect.begin(),server_trees_vect.end(),
-                              back_inserter(intersection));
-
-        for(auto path: intersection){
-            if(server_tree_map.find(path)->first==local_tree_map.find(path)->first){
-                if(server_tree_map.find(path)->second.hash!=local_tree_map.find(path)->second.hash){
-                    file_to_post.push_back(local_tree_map.find(path)->second);
-                }
-                local_trees_vect.erase(std::find(local_trees_vect.begin(),local_trees_vect.end(),server_tree_map.find(path)->first));
-                server_trees_vect.erase(std::find(server_trees_vect.begin(),server_trees_vect.end(),server_tree_map.find(path)->first));
+            std::cout<< "MAPPA RICEVUTA DAL SERVER: "<< std::endl;
+            for(auto se : server_tree){
+                std::cout<< se.path <<std::endl;
+                server_tree_map[se.path]= se;
             }
-        }
 
-        //the remaining elements in the server_tree are the ones to remove
+            for(auto se : server_tree_map){
+                server_trees_vect.push_back(se.first);
+            }
+
+            for(auto ce : local_tree_map){
+                std::cout<< ce.second.path_to_send<<std::endl;
+                local_trees_vect.push_back(ce.first);
+            }
+
+            std::set_intersection(local_trees_vect.begin(),local_trees_vect.end(),
+                                  server_trees_vect.begin(),server_trees_vect.end(),
+                                  back_inserter(intersection));
+
+            for(auto path: intersection){
+                if(server_tree_map.find(path)->first==local_tree_map.find(path)->first){
+                    if(server_tree_map.find(path)->second.hash!=local_tree_map.find(path)->second.hash){
+                        file_to_post.push_back(local_tree_map.find(path)->second);
+                    }
+                    local_trees_vect.erase(std::find(local_trees_vect.begin(),local_trees_vect.end(),server_tree_map.find(path)->first));
+                    server_trees_vect.erase(std::find(server_trees_vect.begin(),server_trees_vect.end(),server_tree_map.find(path)->first));
+                }
+            }
+
+            //the remaining elements in the server_tree are the ones to remove
             for(auto se: server_trees_vect){
                 file_to_remove.push_back(server_tree_map[se]);
             }
 
-        //the remaining elements in the local_tree are the ones to add
+            //the remaining elements in the local_tree are the ones to add
             for(auto se: local_trees_vect){
                 file_to_post.push_back(local_tree_map[se]);
             }
-
-
-        //print the vectors
-        std::cout<<"FILES TO REMOVE"<<std::endl;
-
-        for(auto md : file_to_remove){
-            std::cout<< md.path<<std::endl;
-            ClientCommand c;
-            md.path_to_send=md.path;
-            auto remove_file= c.remove_file(md);
-            bool remove_file_result=remove_file.get();
-            std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
-        }
-
-        std::cout<<"FILES TO POST"<<std::endl;
-        for(auto md: file_to_post){
-            std::cout<< md.path_to_send <<std::endl;
-            ClientCommand c;
-            auto post_file1 = c.post_file(md);
-            bool post_file_result_1 = post_file1.get();
-            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-        }
+            return std::pair<std::vector<FileMetadata>,std::vector<FileMetadata>>(file_to_post,file_to_remove);
+        });
 
     }
 };
