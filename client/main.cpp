@@ -7,7 +7,7 @@
 #include "ServerConnectionAsio.h"
 #include "ClientCommand.h"
 #include <iostream>
-#include "TreesComparator.h"
+#include "TreesComparator1.h"
 #include "FileMetadata.h"
 #include "../common/hash_file.h"
 #include "../common/file_system_helper.h" 
@@ -159,14 +159,21 @@ int main(int argc, char** argv) {
                 std::cout<<st.path<<std::endl;
             }
 
-            TreesComparator tc{us.dir};
-            std::pair<std::vector<FileMetadata>,std::vector<FileMetadata>> result_trees_comparator =  tc.compare(server_tree).get();
+            TreesComparator1 tc{us.dir};
+            /*
+            std::pair<std::shared_ptr<std::vector<FileMetadata>>,std::shared_ptr<std::vector<FileMetadata>>> result_trees_comparator =  tc.compare(server_tree).get();
             auto file_to_remove =  result_trees_comparator.second;
             auto file_to_post = result_trees_comparator.first;
+            */
 
+            std::promise<std::shared_ptr<std::vector<FileMetadata>>> p_to_post;
+            std::promise<std::shared_ptr<std::vector<FileMetadata>>> p_to_remove;
+            auto f_file_to_remove=p_to_remove.get_future();
+            auto f_file_to_post=p_to_post.get_future();
+            tc.compare(server_tree,std::move(p_to_post), std::move(p_to_remove));
             std::cout<<"FILES TO REMOVE"<<std::endl;
-
-            for(auto fm_rm :file_to_remove){
+            auto file_to_remove= f_file_to_remove.get();
+            for(auto fm_rm :*file_to_remove){
                 std::cout<< fm_rm.path<<std::endl;
                 fm_rm.path_to_send=fm_rm.path;
                 auto remove_file= c.remove_file(fm_rm);
@@ -175,7 +182,8 @@ int main(int argc, char** argv) {
             }
 
             std::cout<<"FILES TO POST"<<std::endl;
-            for(auto fm_po: file_to_post){
+            auto file_to_post= f_file_to_post.get();
+            for(auto fm_po: *file_to_post){
                 std::cout<< fm_po.path_to_send <<std::endl;
                 auto post_file1 = c.post_file(fm_po);
                 bool post_file_result_1 = post_file1.get();
