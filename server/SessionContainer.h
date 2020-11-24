@@ -4,6 +4,7 @@
 #include <boost/asio.hpp>
 #include <string>
 #include "UserData.h"
+#include <iostream>
 
 using boost::asio::ip::tcp;
 
@@ -33,8 +34,9 @@ public:
         container[&socket] = ud;
     }
 
-    void remove_user(tcp::socket& socket) { // TODO: va richiamato al logout e quando il client va in errore
+    void remove_user(tcp::socket& socket) { // TODO: va richiamato al logout (e quando il client va in errore: credo lo abbia fatto)
         container.erase(&socket);
+        std::cout<<"Ci sono "<<container.size()<< " utenti connessi"<< std::endl;
     }
 
     int get_number_users_connected() {

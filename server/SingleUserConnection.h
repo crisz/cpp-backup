@@ -54,13 +54,11 @@ public:
     }
 
     void put_on_read_command() {
-    
         currentCommand.clear();
         auto on_read = boost::bind(&SingleUserConnection::handle_read_command, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
             boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(8), on_read);
-
     }
 
     void put_on_read_parameter_name() {
@@ -68,18 +66,15 @@ public:
         auto on_read = boost::bind(&SingleUserConnection::handle_read_parameter_name, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
-        
         boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(12), on_read);
     }
 
     void put_on_read_parameter_value(std::string parameter_name, int n) {
         std::cout << "waiting for (pv) " << n << " bytes" << std::endl;
-
         auto on_read = boost::bind(&SingleUserConnection::handle_read_parameter_value, shared_from_this(),
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred,
                                     parameter_name);
-        
         boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(n), on_read);
     }
 
@@ -94,7 +89,7 @@ public:
         std::cout << "send file started" << std::endl;
 
         // std::thread t([this, buffer_size, number_of_reads]() { // TODO: indagare il motivo per cui non va bene
-            boost::system::error_code ec; // TODO: gestire errore
+            boost::system::error_code ec;
 
             char* _buffer = new char[buffer_size + 1];
             for (int i=0; i<number_of_reads; i++) {
@@ -115,11 +110,11 @@ public:
 
                 this->commandParser.send_file_chunk(_buffer, bytes_read).get();
                 std::cout << "Chunk saved" << _buffer << std::endl;
-
             }
 
             std::cout << "end of read from client " << std::endl;
             this->commandParser.end_send_file();
+
             // ignoriamo il valore poiché è sempre STOPFLOW0000.
             boost::asio::read(socket, boost::asio::buffer(_buffer,12), boost::asio::transfer_exactly(12), ec);
             delete[] _buffer;
@@ -133,6 +128,7 @@ public:
         // });
         // t.detach();
     }
+
     char* encode_length(int size) { // TODO: muovere in utils
         char* result = new char[4];
         int length = htonl(size); // htonl serve per non avere problemi di endianess
@@ -142,6 +138,7 @@ public:
         result[0] = (length >> 24) & 0xFF;
         return result;
     }
+
 private:
     SingleUserConnection(boost::asio::thread_pool& io_context) : socket(io_context) {}
 
@@ -151,7 +148,7 @@ private:
 
     void handle_read_parameter_name(const boost::system::error_code& error, size_t bytes_transferred) {
         if (error) {
-            handle_error(error);//TODO: implementare una gestione degli errori sensata con la disconnessione
+            handle_error(error);
             return;
         }
 
@@ -163,7 +160,7 @@ private:
         std::string message_name = parameter.substr(0, 8);
         if(message_name.compare("STOPFLOW")==0){
             std::cout<<"Fine comando raggiunto"<<std::endl;
-            // boost::system::error_code ec;
+            // boost::system::error_code ec;  //TODO: @cris si può togliere?
             // boost::asio::write(socket, boost::asio::buffer("LOGINSNC", 8), ec);
             // boost::asio::write(socket, boost::asio::buffer("__RESULT", 8), ec);
             // boost::asio::write(socket, boost::asio::buffer(encode_length(2), 4), ec);
@@ -188,9 +185,6 @@ private:
         int message_size = 0;
         int shift_value = 24;
 
-        //std::cout << "size string is " << parameter.substr(8, 12) << std::endl;
-
-
         std::cout << "0: " << (int)message_size_arr[0] << std::endl;
         std::cout << "1: " << (int)message_size_arr[1] << std::endl;
         std::cout << "2: " << (int)message_size_arr[2] << std::endl;
@@ -198,7 +192,6 @@ private:
 
         for (int i=0; i<4; i++) {
             char x = (char)message_size_arr[i];
-            //std::cout << "Summing: " << x << " with shift " << shift_value << std::endl;
             message_size += ((char)message_size_arr[i]) << shift_value;
             shift_value -= 8;
         }
@@ -225,12 +218,9 @@ private:
         oss << &buffer;
         std::string parameter_value = oss.str();
 
-
         currentCommand.addParameter(parameter_name, parameter_value);
         std::cout << "value for parameter " << parameter_name << " is " <<  currentCommand.getParameters()[parameter_name]<< std::endl;
         this->put_on_read_parameter_name();
-
-
     }
 
 
@@ -238,7 +228,6 @@ private:
         std::cout << "Received command \n";
         if (error) {
             handle_error(error);
-            // TODO: handle error
             return;
         }
 
@@ -250,13 +239,11 @@ private:
         currentCommand.setName(messageP);
         std::cout << "Message:" << currentCommand.getCommand_name() << std::endl;
         if (messageP != "") {
-            // std::shared_ptr<SingleUserConnection> this_ptr = shared_from_this();
-            // this->handle_message_callback(this_ptr, messageP);
-            // this->currentCommand = messageP;
             std::cout << "returning in read parameter name " << std::endl;
             this->put_on_read_parameter_name();
         } else {
-            // TODO: this->handle_disconnection();
+            handle_disconnection();
+            return;
         }
     }
 
@@ -266,12 +253,21 @@ private:
         std::cout << "Error: " << error.message() << "\n";
         if(currentCommand.getCommand_name()=="POSTFILE"){
            // remove_file();
+            std::string dest_dir = ServerConf::get_instance().dest;
+            SessionContainer& sc = SessionContainer::get_instance();
+            UserData ud = sc.get_user_data(socket);
+            RemovalManager rm;
+            auto result=rm.remove_file(dest_dir+ud.username+currentCommand.getParameters()[FILEPATH]).get();
+            if (result){
+                std::cout<< "La POSTFILE del file "<<ud.username+currentCommand.getParameters()[FILEPATH]<< "è fallita"<< std::endl;
+            }
         }
 
         if (error == boost::asio::error::eof) {
-            std::cout << "Il cliente ha chiuso la connessione" << std::endl;
+            handle_disconnection();
             return;
         }
+
         std::cout << "Error on command :" << currentCommand.getCommand_name() << std::endl;
         if (currentCommand.getParameters().empty()) {
             std::cout << "Non ci sono parametri associati al comando"<<std::endl;
@@ -279,6 +275,11 @@ private:
             std::cout << "Last parameter read: " << (currentCommand.getParameters().cbegin())->first << " with value : "
                       << (currentCommand.getParameters().cbegin())->second << std::endl;
         }
+    }
+
+    void handle_disconnection(){
+        std::cout << "Il cliente ha chiuso la connessione" << std::endl;
+        SessionContainer::get_instance().remove_user(socket);
     }
 
 };
