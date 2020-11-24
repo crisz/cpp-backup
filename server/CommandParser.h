@@ -31,6 +31,15 @@ class CommandParser {
 private:
     BufferedFileWriter* bfw;
 
+    std:: string get_file_path (tcp::socket& socket, ServerCommand& command){
+        auto parameters = command.getParameters();
+        std::string dest_dir = ServerConf::get_instance().dest;
+        SessionContainer& sc = SessionContainer::get_instance();
+        UserData ud = sc.get_user_data(socket);
+        std::string file_path = dest_dir+ud.username+parameters[FILEPATH];
+        return file_path;
+    }
+
 public:
 
     void handleCommand(tcp::socket& socket, ServerCommand& command) { // TODO: rinominare in digest
@@ -97,12 +106,9 @@ public:
 
         } else if (command_name == REMVFILE){
             if(parameters.find(FILEPATH)!=parameters.end()){
-                std::string dest_dir = ServerConf::get_instance().dest;
-                SessionContainer& sc = SessionContainer::get_instance();
-                UserData ud = sc.get_user_data(socket);
-                //std::string file_path = dest_dir+ud.username+parameters[FILEPATH];
+                std::string file_path = get_file_path(socket,command);
                 RemovalManager rm;
-                auto result=rm.remove_file(dest_dir+ud.username+parameters[FILEPATH]).get();
+                auto result=rm.remove_file(file_path).get();
                 std::map<std::string, std::string> result_map;
                 result_map[__RESULT] = result ? "OK" : "KO";
                 md.dispatch(command_name,result_map);
@@ -114,11 +120,7 @@ public:
 
     void start_send_file(tcp::socket& socket, long file_size, ServerCommand& command) { // TODO: La gestione dei comandi va unificato in una classe. In queto momento sia CommandParser che SingleUserConnection stanno concorrendo alla gestione
         auto parameters = command.getParameters();
-        // std::string file_path = parameters[FILEPATH];
-        std::string dest_dir = ServerConf::get_instance().dest;
-        SessionContainer& sc = SessionContainer::get_instance();
-        UserData ud = sc.get_user_data(socket);
-        std::string file_path = dest_dir+ud.username+parameters[FILEPATH];
+        std::string file_path = get_file_path(socket,command);
         std::cout<<"FILEPATH!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<< file_path<<std::endl;
         std::string file_hash = parameters[FILEHASH];
         bfw = new BufferedFileWriter(file_path, file_hash, file_size);
@@ -131,8 +133,20 @@ public:
         return bfw->append(buffer, buffer_size);
     }
 
-    void end_send_file() {
-        // TODO: controllare hash
+    void end_send_file(tcp::socket& socket, ServerCommand& command) {
+        // TODO: controllare hash (capire perchè non funzione il seguente)
+        /*
+        std::string file_path = get_file_path(socket,command);
+        std::string receved_file_hash = command.getParameters()[FILEHASH];
+        std::string current_file_hash = hash_file(file_path);
+        std::cout<< "Hash ricevuto: " << receved_file_hash<< std::endl;
+        std::cout<< "Hash corrente: " << current_file_hash<< std::endl;
+        if(receved_file_hash!=current_file_hash){
+            std::cout<<"File: "<< file_path<< " corrotto, lo elimino!"<< std::endl;
+            RemovalManager rm;
+            rm.remove_file(file_path);
+        }
+         */
         delete bfw;
     }
 

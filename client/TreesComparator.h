@@ -58,6 +58,7 @@ public:
                 server_trees_vect.push_back(se.first);
             }
 
+           std::cout<< "MAPPA LOCALE: "<< std::endl;
             for(auto ce : local_tree_map){
                 std::cout<< ce.second.path_to_send<<std::endl;
                 local_trees_vect.push_back(ce.first);

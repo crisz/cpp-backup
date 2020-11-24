@@ -113,7 +113,7 @@ public:
             }
 
             std::cout << "end of read from client " << std::endl;
-            this->commandParser.end_send_file();
+            this->commandParser.end_send_file(socket, currentCommand);
 
             // ignoriamo il valore poiché è sempre STOPFLOW0000.
             boost::asio::read(socket, boost::asio::buffer(_buffer,12), boost::asio::transfer_exactly(12), ec);
