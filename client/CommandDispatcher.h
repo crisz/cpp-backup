@@ -66,6 +66,7 @@ public:
 
     std::future<CommandDTO> wait_for_response(std::string command) {
         return std::async([this, command]() {
+            std::cout << command << " is trying to take lock in wfr" << std::endl;
             std::unique_lock ul(dispatch_mutex);
             std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in wait_for_response: " << command << std::endl;
             
@@ -96,6 +97,8 @@ public:
 
                     std::cout << std::this_thread::get_id() << " ~~ " << "Releasing lock in wait_for_response: " << command << std::endl;
                     cv.notify_all();
+                    ul.unlock();
+                    std::cout << "unlocked and notified" << std::endl;
                     return cc_result.parameters;
                 }
                 int length = decode_length(sc->read(4));

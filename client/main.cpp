@@ -7,7 +7,7 @@
 #include "ServerConnectionAsio.h"
 #include "ClientCommand.h"
 #include <iostream>
-#include "TreesComparator.h"
+#include "TreesComparator1.h"
 #include "FileMetadata.h"
 #include "../common/hash_file.h"
 #include "../common/file_system_helper.h" 
@@ -121,66 +121,64 @@ int main(int argc, char** argv) {
         std::cout << "connection started" << std::endl;
 
         ClientCommand c;
-/*
-         std::vector<FileMetadata> server_tree = c.require_tree().get();
-         std::cout << "GOT RESULT FOR REQUIRE_TREE" << std::endl;
-         for (FileMetadata& fm: server_tree) {
-             std::cout << fm.path << " ~ " << fm.hash << std::endl;
-         }
-*/
         std::cout << "attempting login" << std::endl;
-        //FileMetadata fm;
-        //fm.path = us.dir + "/test.txt";
-        //std::size_t found = us.dir.find_last_of("/\\");
-        //fm.path_to_send=fm.path.substr(found);
-        //if (!check_dest_dir(fm.path)) {
-        //   die("Il file " + fm.path + " non esiste");
-        //}
-        //fm.hash = hash_file(fm.path);
 
-       auto login1 = c.login(us.username, us.password);
-
-    //    auto post_file2 = c.post_file(fm);
-    //    auto login2 = c.login(us.username, us.password);
-    //    auto login3 = c.login(us.username, us.password);
+        auto login1 = c.login(us.username, us.password);
 
         bool login_result_1 = login1.get();
-        if(login_result_1){
 
-            //auto post_file1 = c.post_file(fm);
-            //bool post_file_result_1 = post_file1.get();
-            //std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-            //auto remove_file= c.remove_file(fm);
-            //bool remove_file_result=remove_file.get();
-            //std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
-            auto server_tree= c.require_tree().get();
-
+        if( login_result_1 ){
+            auto server_tree = c.require_tree().get();
             for(auto st: server_tree){
                 std::cout<<st.path<<std::endl;
             }
 
-            TreesComparator tc{us.dir};
-            std::pair<std::vector<FileMetadata>,std::vector<FileMetadata>> result_trees_comparator =  tc.compare(server_tree).get();
+
+
+            TreesComparator1 tc{us.dir};
+
+
+            /*
+            std::pair<std::shared_ptr<std::vector<FileMetadata>>,std::shared_ptr<std::vector<FileMetadata>>> result_trees_comparator =  tc.compare(server_tree).get();
             auto file_to_remove =  result_trees_comparator.second;
             auto file_to_post = result_trees_comparator.first;
+            */
+
+            std::promise<std::shared_ptr<std::vector<FileMetadata>>> p_to_post;
+            std::promise<std::shared_ptr<std::vector<FileMetadata>>> p_to_remove;
+            auto arr = tc.compare(server_tree);
 
             std::cout<<"FILES TO REMOVE"<<std::endl;
+            auto file_to_post = arr[0];
+            auto file_to_remove = arr[1];
 
-            for(auto fm_rm :file_to_remove){
+            std::vector<std::future<bool>*> futures_to_wait;
+            
+            for (auto fm_rm: *file_to_remove) {
                 std::cout<< fm_rm.path<<std::endl;
                 fm_rm.path_to_send=fm_rm.path;
                 auto remove_file= c.remove_file(fm_rm);
-                bool remove_file_result=remove_file.get();
+                futures_to_wait.push_back(&remove_file);
+            }
+
+            for (auto future_to_wait: futures_to_wait) {
+                bool remove_file_result = future_to_wait->get();
                 std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
             }
 
             std::cout<<"FILES TO POST"<<std::endl;
-            for(auto fm_po: file_to_post){
+            futures_to_wait.clear();
+            for(auto fm_po: *file_to_post){
                 std::cout<< fm_po.path_to_send <<std::endl;
                 auto post_file1 = c.post_file(fm_po);
-                bool post_file_result_1 = post_file1.get();
+                futures_to_wait.push_back(&post_file1);
+            }
+
+            for (auto future_to_wait: futures_to_wait) {
+                bool post_file_result_1 = future_to_wait->get();
                 std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
             }
+
         }
 
     //    bool login_result_3 = login3.get();

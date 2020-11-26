@@ -48,6 +48,8 @@ public:
             std::cout << "REQTREE RETURNED" << std::endl;
             std::cout << result.size() << " elements" << std::endl;
             FileMetadata fm;
+            std::cout << fm.hash.size() << " hash size" << std::endl;
+
             for (const std::pair< const std::string, std::string>& item: result) {
                 std::cout << "item.first = " << item.first << "; item.second = " << item.second << std::endl;
                 if (fm.hash != "" && fm.path != "") {
@@ -99,10 +101,12 @@ public:
         });
 
         bfm.run();
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         read_done.get_future().get();
 
         return std::async([command, this]() {
             CommandDTO post_file_result = cd.wait_for_response(command).get();
+            std::cout << "wait for response returnded" << std::endl;
             return post_file_result.find(("__RESULT")).second == "OK";
         });
     }
