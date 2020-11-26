@@ -160,15 +160,10 @@ private:
         std::string message_name = parameter.substr(0, 8);
         if(message_name.compare("STOPFLOW")==0){
             std::cout<<"Fine comando raggiunto"<<std::endl;
-            // boost::system::error_code ec;  //TODO: @cris si può togliere?
-            // boost::asio::write(socket, boost::asio::buffer("LOGINSNC", 8), ec);
-            // boost::asio::write(socket, boost::asio::buffer("__RESULT", 8), ec);
-            // boost::asio::write(socket, boost::asio::buffer(encode_length(2), 4), ec);
-            // boost::asio::write(socket, boost::asio::buffer("OK", 2), ec);
-            // boost::asio::write(socket, boost::asio::buffer("STOPFLOW", 8), ec);
             SessionContainer& sc=SessionContainer::get_instance();
             UserData ud;
             if(sc.get_user_data(socket).username!="") ud.username= sc.get_user_data(socket).username;
+
             ud.send_response_callback = [this](const std::string message) {
                 this->send_response(message);
             };
@@ -176,7 +171,7 @@ private:
                 this->send_response(message, size);
             };
             SessionContainer::get_instance().set_user_data(socket,ud);
-            commandParser.handleCommand(socket, currentCommand);
+            commandParser.digest(socket, currentCommand);
             this->put_on_read_command();
             return;
         }
@@ -237,7 +232,7 @@ private:
         messageP = oss.str();
 
         currentCommand.setName(messageP);
-        std::cout << "Message:" << currentCommand.getCommand_name() << std::endl;
+        std::cout << "Message:" << currentCommand.get_command_name() << std::endl;
         if (messageP != "") {
             std::cout << "returning in read parameter name " << std::endl;
             this->put_on_read_parameter_name();
@@ -251,7 +246,7 @@ private:
     void handle_error(const boost::system::error_code& error) {
 
         std::cout << "Error: " << error.message() << "\n";
-        if(currentCommand.getCommand_name()=="POSTFILE"){
+        if(currentCommand.get_command_name()=="POSTFILE"){
            // remove_file();
             std::string dest_dir = ServerConf::get_instance().dest;
             SessionContainer& sc = SessionContainer::get_instance();
@@ -268,7 +263,7 @@ private:
             return;
         }
 
-        std::cout << "Error on command :" << currentCommand.getCommand_name() << std::endl;
+        std::cout << "Error on command :" << currentCommand.get_command_name() << std::endl;
         if (currentCommand.getParameters().empty()) {
             std::cout << "Non ci sono parametri associati al comando"<<std::endl;
         } else {

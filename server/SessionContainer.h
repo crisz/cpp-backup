@@ -34,9 +34,9 @@ public:
         container[&socket] = ud;
     }
 
-    void remove_user(tcp::socket& socket) { // TODO: va richiamato al logout (e quando il client va in errore: credo lo abbia fatto)
+    void remove_user(tcp::socket& socket) {
         container.erase(&socket);
-        std::cout<<"Ci sono "<<container.size()<< " utenti connessi"<< std::endl;
+        std::cout<<"Ci sono " << container.size() << " utenti connessi"<< std::endl;
     }
 
     int get_number_users_connected() {

@@ -22,7 +22,7 @@ public:
     void addParameter(std::string par_name, std::string par_value){
         parameters.insert(std::pair<std::string, std::string>(par_name, par_value));
     }
-    std::string getCommand_name(){
+    std::string get_command_name(){
         return command_name;
     }
     std::map<std::string, std::string> getParameters(){

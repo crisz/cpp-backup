@@ -54,7 +54,7 @@ public:
         //Non c'è bisogno di chiudere lo stream in qunato lo fa da solo non appena esce dallo scope
     }
 
-    BufferedFileWriter(BufferedFileWriter& bfm) = delete; // TODO: copy & swaps
+    BufferedFileWriter(BufferedFileWriter& bfm) = delete;
     BufferedFileWriter(BufferedFileWriter&& bfm) = delete;
 
     std::future<void> append(char* buffer, int size) {

@@ -31,7 +31,7 @@ class CommandParser {
 private:
     BufferedFileWriter* bfw;
 
-    std:: string get_file_path (tcp::socket& socket, ServerCommand& command){
+    std:: string get_file_path(tcp::socket& socket, ServerCommand& command) {
         auto parameters = command.getParameters();
         std::string dest_dir = ServerConf::get_instance().dest;
         SessionContainer& sc = SessionContainer::get_instance();
@@ -42,8 +42,8 @@ private:
 
 public:
 
-    void handleCommand(tcp::socket& socket, ServerCommand& command) { // TODO: rinominare in digest
-        std::string command_name=command.getCommand_name();
+    void digest(tcp::socket& socket, ServerCommand& command) {
+        std::string command_name=command.get_command_name();
         MessageDispatcher md{socket};
         auto parameters = command.getParameters();
         if (command_name == LOGINSNC) {
@@ -128,15 +128,15 @@ public:
 
     std::future<void> send_file_chunk(char* buffer, int buffer_size) {
         if (bfw == nullptr) {
-            throw "chiamare start_send_file prima"; // TODO: gestire meglio
+            throw "chiamare start_send_file prima"; // TODO std::exception
         }
         return bfw->append(buffer, buffer_size);
     }
 
     void end_send_file(tcp::socket& socket, ServerCommand& command) {
-        // TODO: controllare hash (capire perchè non funzione il seguente)
-        /*
-        std::string file_path = get_file_path(socket,command);
+        delete bfw;
+
+        std::string file_path = get_file_path(socket, command);
         std::string receved_file_hash = command.getParameters()[FILEHASH];
         std::string current_file_hash = hash_file(file_path);
         std::cout<< "Hash ricevuto: " << receved_file_hash<< std::endl;
@@ -146,8 +146,6 @@ public:
             RemovalManager rm;
             rm.remove_file(file_path);
         }
-         */
-        delete bfw;
     }
 
 
@@ -169,9 +167,11 @@ public:
         return buffer;
     }
 
-    void rollback_command(ServerCommand & command){
-        if(command.getCommand_name()=="POSTFILE"){
-            //TODO: implementare
+    void rollback_command(tcp::socket& socket, ServerCommand& command){
+        if(command.get_command_name() == "POSTFILE"){
+            std::string file_path = get_file_path(socket, command);
+            RemovalManager rm;
+            rm.remove_file(file_path);
         }
     }
 

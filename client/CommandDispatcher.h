@@ -64,8 +64,8 @@ public:
 
     
 
-    std::future<CommandDTO> wait_for_response(std::string command) {
-        return std::async([this, command]() {
+    std::future<CommandDTO> wait_for_response(std::string command, std::function<void(std::string)> fn = NULL) {
+        return std::async([this, command, &fn]() {
             std::cout << command << " is trying to take lock in wfr" << std::endl;
             std::unique_lock ul(dispatch_mutex);
             std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in wait_for_response: " << command << std::endl;
@@ -76,7 +76,7 @@ public:
                 std::string parameter_name = sc->read_as_str(8);
 
                 if (parameter_name == "STOPFLOW") {
-                    sc->read(4); // TODO: risolvere in maniera alternativa
+                    sc->read(4); // viene letta la dimensione che sarà sempre \0\0\0\0
                     IncomingCommand cc;
                     cc.command_name = received_command;
                     cc.parameters = result;
@@ -102,10 +102,17 @@ public:
                     return cc_result.parameters;
                 }
                 int length = decode_length(sc->read(4));
-                std::string parameter_value = sc->read_as_str(length);
-
-                
-                result.insert(std::pair<std::string, std::string>(parameter_name, parameter_value));
+                if (length > 1024) { // TODO: buffer size parametric
+                    while (length != 0 && fn) {
+                        int size_to_read = length > 1024 ? 1024 : length;
+                        length -= size_to_read;
+                        std::string parameter_value = sc->read_as_str(size_to_read);
+                        fn(parameter_value); // TODO: valutare lock finché il client non ha finito di scrivere su disco
+                    }
+                } else {
+                    std::string parameter_value = sc->read_as_str(length);
+                    result.insert(std::pair<std::string, std::string>(parameter_name, parameter_value));
+                }
             }
         });
     }

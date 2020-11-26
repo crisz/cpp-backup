@@ -41,8 +41,8 @@ public:
         stream.seekg(0, stream.beg);
     }
 
-    ~BufferedFileReader() { // TODO: copy & swaps
-        stream.close(); // TODO: testare (ad. es. cout)
+    ~BufferedFileReader() { 
+        stream.close();
         delete[] buffer;
     }
 

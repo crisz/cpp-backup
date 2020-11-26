@@ -12,8 +12,12 @@ public:
         parameters.push_back(parameter);
     }
 
-    // TODO: farlo diventare uno smart pointer
-    std::pair<std::string, std::string> find(std::string key) { // TODO: ottimizzare passaggio per copia/rif. in tutta la classe
+    void insert(std::string key, std::string value) {
+        this->insert(std::make_pair(key, value));
+    }
+
+
+    std::pair<std::string, std::string> find(std::string key) {
         for (auto el: parameters) {
             if (el.first == key) return el;
         }

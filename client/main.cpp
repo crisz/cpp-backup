@@ -133,11 +133,7 @@ int main(int argc, char** argv) {
                 std::cout<<st.path<<std::endl;
             }
 
-
-
             TreesComparator1 tc{us.dir};
-
-
             /*
             std::pair<std::shared_ptr<std::vector<FileMetadata>>,std::shared_ptr<std::vector<FileMetadata>>> result_trees_comparator =  tc.compare(server_tree).get();
             auto file_to_remove =  result_trees_comparator.second;
@@ -180,37 +176,11 @@ int main(int argc, char** argv) {
             }
 
         }
-
-    //    bool login_result_3 = login3.get();
-    //    bool post_file_result_2 = post_file2.get();
-    //    bool login_result_2 = login2.get();
-
-
-
-    //    std::cout << "Login 2 effettuato con " << (login_result_2 ? "successo" : "fallimento") << std::endl;
-    //    std::cout << "Login 3 effettuato con " << (login_result_3 ? "successo" : "fallimento") << std::endl;
-    //    std::cout << "Post file effettuato con " << (post_file_result_2 ? "successo" : "fallimento") << std::endl;
-        // if (login_result) {
-        //     std::cout << "Login effettuato con successo" << std::endl;
-        //     FileMetadata fm;
-        //     fm.path = "./main.cpp";
-        //     fm.hash = hash_file(fm.path);
-        //     try {
-        //         c.post_file(fm).get();
-        //         std::cout << "READ DONE!!" << std::endl;
-        //     } catch (...) {
-        //         std::cout << "An error occurred " << std::endl;
-        //     }
-
-        // } else {
-        //     std::cout << "Login fallito " << std::endl;
-        // }
-
         init_file_watcher(fw, c);
         return 0;
     }
-    if (command == "restore") { // TODO: implementare
-        // ...
+    if (command == "restore") {
+
         return 0;
     }
     if (command == "signup") { // TODO: implementare

@@ -124,5 +124,20 @@ public:
             return result.find(("__RESULT")).second == "OK";
         });
     }
+
+    std::future<bool> require_file(FileMetadata& file_metadata) {
+        std::string command;
+        CommandDTO parameters;
+        parameters.erase();
+        command = "REQRFILE";
+        parameters.insert("FILEPATH", file_metadata.path_to_send);
+        return std::async([this, command, parameters] () {
+            std::cout << "Trying to dispatch reqrfile file " << std::endl;
+            // cd.send_co
+            CommandDTO result = cd
+            // std::cout << "result is " << result.find(("__RESULT")).second << sstd::endl;
+            return result.find(("__RESULT")).second == "OK";
+        });
+    }
 };
 

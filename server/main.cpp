@@ -62,12 +62,10 @@ int main(int argc, char** argv) {
     if (parse_options(argc, argv)) return 0;
 
     try {
-        // boost::asio::io_context io_context;
-        boost::asio::thread_pool pool(4); // TODO: spostare la gestione in un'altra classe
-        // proposta: MessageDispatcher.h
+        size_t num_threads = std::thread::hardware_concurrency();
+        boost::asio::thread_pool pool(num_threads); // TODO: spostare la gestione in un'altra classe
 
         ConnectionPool server{pool};
-        // io_context.run();
         pool.join();
     } catch (std::exception& e) {
         std::cerr << e.what() << std::endl;
