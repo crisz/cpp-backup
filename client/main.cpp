@@ -152,17 +152,17 @@ int main(int argc, char** argv) {
             auto file_to_post = arr[0];
             auto file_to_remove = arr[1];
 
-            std::vector<std::future<bool>*> futures_to_wait;
+            std::vector<std::future<bool>> futures_to_wait;
             
             for (auto fm_rm: *file_to_remove) {
                 std::cout<< fm_rm.path<<std::endl;
                 fm_rm.path_to_send=fm_rm.path;
                 auto remove_file= c.remove_file(fm_rm);
-                futures_to_wait.push_back(&remove_file);
+                futures_to_wait.push_back(std::move(remove_file));
             }
 
-            for (auto future_to_wait: futures_to_wait) {
-                bool remove_file_result = future_to_wait->get();
+            for (int i=0; i<futures_to_wait.size(); i++) {
+                bool remove_file_result = futures_to_wait[i].get();
                 std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
             }
 
@@ -171,11 +171,11 @@ int main(int argc, char** argv) {
             for(auto fm_po: *file_to_post){
                 std::cout<< fm_po.path_to_send <<std::endl;
                 auto post_file1 = c.post_file(fm_po);
-                futures_to_wait.push_back(&post_file1);
+                futures_to_wait.push_back(std::move(post_file1));
             }
 
-            for (auto future_to_wait: futures_to_wait) {
-                bool post_file_result_1 = future_to_wait->get();
+            for (int i=0; i<futures_to_wait.size(); i++) {
+                bool post_file_result_1 = futures_to_wait[i].get();
                 std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
             }
 
