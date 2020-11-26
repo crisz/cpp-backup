@@ -143,7 +143,6 @@ int main(int argc, char** argv) {
             std::promise<std::shared_ptr<std::vector<FileMetadata>>> p_to_post;
             std::promise<std::shared_ptr<std::vector<FileMetadata>>> p_to_remove;
             auto arr = tc.compare(server_tree);
-
             std::cout<<"FILES TO REMOVE"<<std::endl;
             auto file_to_post = arr[0];
             auto file_to_remove = arr[1];
