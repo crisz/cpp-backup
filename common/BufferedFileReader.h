@@ -33,7 +33,7 @@ public:
         buffer = new char[buffer_size + 1];
         if (stream.fail()) {
             stream.close();
-            throw BufferedFileReaderException("File does not exist", -1);
+            throw BufferedFileReaderException("File " + file_path + " does not exist", -1);
         }
         stream.seekg(0, stream.end);
         file_size = stream.tellg();

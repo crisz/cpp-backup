@@ -5,11 +5,12 @@
 #include <future>
 #include <vector>
 #include <mutex>
-#include "../common/Constants.h"
-#include "../common/Constants.h"
-#include <condition_variable>
 #include "CommandDTO.h"
+#include "../common/Constants.h"
+#include "../common/Constants.h"
 #include "../common/BufferedFileWriter.h"
+#include "../common/encode_length_utils.h"
+#include <condition_variable>
 
 
 struct IncomingCommand {
@@ -25,6 +26,7 @@ private:
 
 public:
     CommandDispatcher() {
+        std::cout << "constr cd " << std::endl;
         sc = ServerConnectionAsio::get_instance();
     }
 
@@ -104,8 +106,8 @@ public:
                     return cc_result.parameters;
                 }
                 long length = decode_length(sc->read(4));
-                if (length > 1024) { // TODO: buffer size parametric
-                    while (length != 0 && fn) {
+                if (fn) { // TODO: buffer size parametric
+                    while (length != 0) { // Questo while serve per segnalare al controllo di flusso del tcp
                         int size_to_read = length > 1024 ? 1024 : length;
                         length -= size_to_read;
                         char* parameter_value = sc->read(size_to_read);

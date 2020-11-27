@@ -8,6 +8,7 @@
 #include "../common/Constants.h"
 #include "../common/BufferedFileReader.h"
 #include "../common/BufferedFileWriter.h"
+#include "../common/encode_length_utils.h"
 #include <mutex>
 #include "CommandDTO.h"
 
@@ -20,6 +21,9 @@ private:
     CommandDTO parameters;
 
 public:
+    ClientCommand() {
+        std::cout << "constr cc " << std::endl;
+    }
     std::future<bool> login(std::string username, std::string password) {
         std::cout << "Init login " << std::endl;
 
@@ -126,7 +130,7 @@ public:
         });
     }
 
-    void require_file(FileMetadata& file_metadata) {
+    std::future<void> require_file(FileMetadata& file_metadata) {
         std::string command;
         CommandDTO parameters;
         parameters.erase();
@@ -134,11 +138,16 @@ public:
         parameters.insert("FILEPATH", file_metadata.path_to_send);
         cd.lock_raw();
         cd.dispatch_partial(command, parameters);
+        cd.send_parameter("STOPFLOW", "");
         cd.unlock_raw();
 
-        std::async([command, this, &file_metadata]() {
+
+        return std::async([command, this, &file_metadata]() {
             BufferedFileWriter bfw{file_metadata.path, file_metadata.size}; // TODO: path deve essere trasformato per essere scritto dal client 
-            auto flush_buffer_fn = [&bfw](auto data, auto length) { bfw.append(data, length); };
+            auto flush_buffer_fn = [&bfw](auto data, auto length) { 
+                std::cout << "Received chunk " << data << std::endl;
+                bfw.append(data, length);
+            };
             CommandDTO reqr_file_result = cd.wait_for_response(command, flush_buffer_fn).get();
             std::cout << "wait for response returnded" << std::endl;
             // return post_file_result.find(("__RESULT")).second == "OK";

@@ -22,8 +22,7 @@ void die(std::string message) {
     exit(-1);
 }
 
-void init_file_watcher(FileWatcher &fw, ClientCommand& c) {
-
+void init_file_watcher(FileWatcher &fw, ClientCommand& c) { // Muovere in un file più opportuno
     // std::shared_ptr<ServerConnectionAsio> sc = ServerConnectionAsio::get_instance();
     fw.on_file_changed([&fw, &c](std::string path_matched, FileStatus status) -> void {
         if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_matched)) && status != FileStatus::erased) {
@@ -59,7 +58,7 @@ void init_file_watcher(FileWatcher &fw, ClientCommand& c) {
     });
 }
 
-int parse_sync_options(int argc, char** argv, UserSession& us) {
+int parse_sync_options(int argc, char** argv, UserSession& us) { // idem
     po::options_description desc("Allowed options");
     desc.add_options()
         ("help", "Shows this help menu")
@@ -108,9 +107,17 @@ int main(int argc, char** argv) {
     if (argc <= 1) {
         die("A command between sync and <tbd> is required");
     }
-    std::string command = argv[1];
 
-    ClientCommand c;
+    std::cout << "Numero di parametri: " << argc << std::endl;
+    std::cout << "1)" << argv[0] << std::endl;
+    std::cout << "2)" << argv[1] << std::endl;
+
+    std::string command = argv[1];
+    std::cout << "command is ->" << command << "<-" << std::endl;
+
+
+    std::cout << "cc" << std::endl;
+
 
     if (command == "sync") {
         UserSession us;
@@ -124,6 +131,7 @@ int main(int argc, char** argv) {
 
         std::cout << "attempting login" << std::endl;
 
+        ClientCommand c;
         auto login1 = c.login(us.username, us.password);
 
         bool login_result_1 = login1.get();
@@ -180,12 +188,22 @@ int main(int argc, char** argv) {
         return 0;
     }
     if (command == "restore") {
+        std::string address = "0.0.0.0";
+        ServerConnectionAsio::init(address, 3333);
+        ClientCommand c;
+
+        std::cout << "restore" << std::endl;
         c.login("cris", "password").get();
+        std::cout << "login!" << std::endl;
+
         FileMetadata fm;
+        std::cout << "fm" << std::endl;
+
         fm.name = "ciccio.txt";
         fm.path = "./ciccio.txt";
-        fm.path_to_send = "./ciccio.txt";
-        c.require_file(fm);
+        fm.path_to_send = "/ciccio.txt";
+        c.require_file(fm).get();
+        std::cout << "after get rqrfile" << std::endl;
         return 0;
     }
     if (command == "signup") { // TODO: implementare
