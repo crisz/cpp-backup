@@ -52,9 +52,10 @@ public:
     void flush_buffer(bool done, int chars_read) {
         this->buffer[chars_read] = 0;
         this->busy = true;
-        std::async([this, done, chars_read] () {
+        std::thread([this, done, chars_read] () {
             this->callback(done, this->buffer, chars_read);
-        });
+            return ;
+        }).detach();
     }
 
     long get_file_size() {
