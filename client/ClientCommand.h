@@ -7,6 +7,7 @@
 #include "CommandDispatcher.h"
 #include "../common/Constants.h"
 #include "../common/BufferedFileReader.h"
+#include "../common/BufferedFileWriter.h"
 #include <mutex>
 #include "CommandDTO.h"
 
@@ -126,18 +127,22 @@ public:
     }
 
     void require_file(FileMetadata& file_metadata) {
-        // std::string command;
-        // CommandDTO parameters;
-        // parameters.erase();
-        // command = "REQRFILE";
-        // parameters.insert("FILEPATH", file_metadata.path_to_send);
-        // return std::async([this, command, parameters] () {
-        //     std::cout << "Trying to dispatch reqrfile file " << std::endl;
-        //     // cd.send_co
-        //     // CommandDTO result = cd
-        //     // std::cout << "result is " << result.find(("__RESULT")).second << sstd::endl;
-        //     return result.find(("__RESULT")).second == "OK";
-        // });
+        std::string command;
+        CommandDTO parameters;
+        parameters.erase();
+        command = "REQRFILE";
+        parameters.insert("FILEPATH", file_metadata.path_to_send);
+        cd.lock_raw();
+        cd.dispatch_partial(command, parameters);
+        cd.unlock_raw();
+
+        std::async([command, this, &file_metadata]() {
+            BufferedFileWriter bfw{file_metadata.path, file_metadata.size}; // TODO: path deve essere trasformato per essere scritto dal client 
+            auto flush_buffer_fn = [&bfw](auto data, auto length) { bfw.append(data, length); };
+            CommandDTO reqr_file_result = cd.wait_for_response(command, flush_buffer_fn).get();
+            std::cout << "wait for response returnded" << std::endl;
+            // return post_file_result.find(("__RESULT")).second == "OK";
+        });
     }
 };
 

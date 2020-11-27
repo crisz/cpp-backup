@@ -110,6 +110,8 @@ int main(int argc, char** argv) {
     }
     std::string command = argv[1];
 
+    ClientCommand c;
+
     if (command == "sync") {
         UserSession us;
         if (parse_sync_options(argc, argv, us)) return 0;
@@ -120,7 +122,6 @@ int main(int argc, char** argv) {
         ServerConnectionAsio::init(us.address, us.port);
         std::cout << "connection started" << std::endl;
 
-        ClientCommand c;
         std::cout << "attempting login" << std::endl;
 
         auto login1 = c.login(us.username, us.password);
@@ -179,13 +180,15 @@ int main(int argc, char** argv) {
         return 0;
     }
     if (command == "restore") {
-
+        FileMetadata fm;
+        fm.name = "ciccio.txt";
+        fm.path = "./ciccio.txt";
+        fm.path_to_send = "./ciccio.txt";
+        c.require_file(fm);
         return 0;
     }
     if (command == "signup") { // TODO: implementare
-        // crea la cartella dell'utente con solo il file .credentials
-        // oppure aggiunge la riga nel file degli utenti
-
+        return 0;
     }
 }
 

@@ -5,6 +5,7 @@
 #include "ServerCommand.h"
 #include "TreeManager.h"
 #include "../common/BufferedFileWriter.h"
+#include "../common/BufferedFileReader.h"
 #include <map>
 #include <boost/asio.hpp>
 #include <memory>
@@ -65,8 +66,10 @@ public:
                 md.dispatch(command_name,result_map);
                 command.clear();
             } else error();
+            return;
+        } 
 
-        } else if (command_name == REQRTREE ){
+        if (command_name == REQRTREE ){
             TreeManager tm;
             std::cout << boost::filesystem::current_path() << std::endl;
             std::string dest_dir = ServerConf::get_instance().dest;
@@ -83,8 +86,9 @@ public:
 
             md.dispatch(command_name, parameters);
             command.clear();
-
-        } else if (command_name== POSTFILE) {
+            return;
+        }
+        if (command_name== POSTFILE) {
             if(parameters.find(FILEPATH) != parameters.end() &&
                parameters.find(FILEDATA) != parameters.end() &&
                parameters.find(FILEHASH) != parameters.end()){
@@ -103,19 +107,43 @@ public:
                 command.clear();
 
             } else error();
-
-        } else if (command_name == REMVFILE){
-            if(parameters.find(FILEPATH)!=parameters.end()){
-                std::string file_path = get_file_path(socket,command);
-                RemovalManager rm;
-                auto result=rm.remove_file(file_path).get();
-                std::map<std::string, std::string> result_map;
-                result_map[__RESULT] = result ? "OK" : "KO";
-                md.dispatch(command_name,result_map);
-                command.clear();
-
-            } else error();
+            return;
         }
+        if (command_name == REMVFILE) {
+            if (parameters.find(FILEPATH) == parameters.end()) {
+                error();
+                return;
+            }
+            std::string file_path = get_file_path(socket, command);
+            RemovalManager rm;
+            auto result = rm.remove_file(file_path).get();
+            std::map<std::string, std::string> result_map;
+            result_map[__RESULT] = result ? "OK" : "KO";
+            md.dispatch(command_name, result_map);
+            command.clear();
+            return;
+        }
+        
+        if (command_name == "REQRFILE") {
+            if (parameters.find(FILEPATH) == parameters.end()) {
+                error();
+                return;
+            }
+
+            md.send_command(command_name);
+
+            std::string file_path = get_file_path(socket, command);
+            BufferedFileReader bfr{1024, file_path}; // TODO: mettere in una costante
+
+            md.send_chunk("FILEDATA", 8);
+            md.send_chunk(bfr.get_file_size(), 4);
+            bfr.register_callback([](bool done, char* data, int length){
+                
+            });
+
+            return;
+        }
+
     }
 
     void start_send_file(tcp::socket& socket, long file_size, ServerCommand& command) { // TODO: La gestione dei comandi va unificato in una classe. In queto momento sia CommandParser che SingleUserConnection stanno concorrendo alla gestione
@@ -123,7 +151,7 @@ public:
         std::string file_path = get_file_path(socket,command);
         std::cout<<"FILEPATH!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<< file_path<<std::endl;
         std::string file_hash = parameters[FILEHASH];
-        bfw = new BufferedFileWriter(file_path, file_hash, file_size);
+        bfw = new BufferedFileWriter(file_path, file_size);
     }
 
     std::future<void> send_file_chunk(char* buffer, int buffer_size) {
@@ -148,12 +176,8 @@ public:
         }
     }
 
-
-    void sendCredentials(std::string & username ,std::string & password ){
-        std::cout<<"Credenziali ricevute us: "<<username << " pass: "<< password<<std::endl;
-    }
     void error(){
-        std::cout<<"Errore nel comando "<<std::endl;
+        std::cout << "Errore nel comando " << std::endl; // TODO
     }
     void sendResult(std::string & r){}
 

@@ -2,7 +2,6 @@
 #include <string>
 #include <map>
 #include "ServerConnectionAsio.h"
-#include <arpa/inet.h>
 #include <future>
 #include <vector>
 #include <mutex>
@@ -64,7 +63,7 @@ public:
 
     
 
-    std::future<CommandDTO> wait_for_response(std::string command, std::function<void(std::string)> fn = NULL) {
+    std::future<CommandDTO> wait_for_response(std::string command, std::function<void(char* buffer, int)> fn = NULL) {
         return std::async([this, command, &fn]() {
             std::cout << command << " is trying to take lock in wfr" << std::endl;
             std::unique_lock ul(dispatch_mutex);
@@ -106,8 +105,8 @@ public:
                     while (length != 0 && fn) {
                         int size_to_read = length > 1024 ? 1024 : length;
                         length -= size_to_read;
-                        std::string parameter_value = sc->read_as_str(size_to_read);
-                        fn(parameter_value); // TODO: valutare lock finché il client non ha finito di scrivere su disco
+                        char* parameter_value = sc->read(size_to_read);
+                        fn(parameter_value, size_to_read);
                     }
                 } else {
                     std::string parameter_value = sc->read_as_str(length);

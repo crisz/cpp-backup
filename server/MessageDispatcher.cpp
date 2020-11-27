@@ -9,34 +9,38 @@ MessageDispatcher::MessageDispatcher(tcp::socket& socket) {
     this->ud = SessionContainer::get_instance().get_user_data(socket);
 }
 
-void MessageDispatcher::dispatch(std::string& command, std::vector<std::pair<std::string,std::string>>& parameters){
-
-    ud.send_response_callback(command);
-
-    for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
-        send_parameter(it->first, it->second);
-    }
-
-    send_parameter("STOPFLOW","");
-}
-
-void MessageDispatcher:: dispatch(std::string& command, std::map<std::string, std::string>& parameters){
+void MessageDispatcher::dispatch(std::string& command, std::map<std::string, std::string>& parameters){
     auto pbeg = parameters.begin();
     auto pend = parameters.end();
     std::multimap<std::string, std::string> multimap_parameters = std::multimap<std::string, std::string>(pbeg, pend);
     return dispatch(command, multimap_parameters);
 }
 
-void MessageDispatcher::dispatch(std::string& command, std::multimap<std::string, std::string>& parameters){
-
-    ud.send_response_callback(command);
+void MessageDispatcher::dispatch(std::string& command, std::vector<std::pair<std::string,std::string>>& parameters){
+    this->send_command(command);
 
     for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
         send_parameter(it->first, it->second);
     }
 
-    send_parameter("STOPFLOW","");
+    this->stop_flow();
 }
+
+
+void MessageDispatcher::dispatch(std::string& command, std::multimap<std::string, std::string>& parameters){
+    this->send_command(command);
+
+    for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
+        this->send_parameter(it->first, it->second);
+    }
+
+    this->stop_flow();
+}
+
+void MessageDispatcher::send_command(std::string& command) {
+    ud.send_response_callback(command);
+}
+
 
 void MessageDispatcher::send_parameter(std::string key, std::string value) {
     std::cout << "Sending parameter with key " << key << " and value " << value << std::endl;
@@ -46,13 +50,15 @@ void MessageDispatcher::send_parameter(std::string key, std::string value) {
     ud.send_response_callback(value);
 }
 
-void MessageDispatcher::send_STOPFLOW() {
-    std::cout << "Sending STOPFLOW" << std::endl;
-
-    ud.send_response_callback(STOPFLOW);
-
+void MessageDispatcher::send_chunk(char* chunk_data, int chunk_length) {
+    ud.send_raw_response_callback(chunk_data, chunk_length);
 }
-char* MessageDispatcher::encode_length(int size) {
+
+void MessageDispatcher::stop_flow() {
+    send_parameter("STOPFLOW", "");
+}
+
+char* MessageDispatcher::encode_length(int size) { // TODO: to utils
     char* result = new char[4];
     int length = htonl(size); // htonl serve per non avere problemi di endianess
     result[3] = (length & 0xFF);
@@ -62,7 +68,7 @@ char* MessageDispatcher::encode_length(int size) {
     return result;
 }
 
-int MessageDispatcher::decode_length(char* message_size_arr) {
+int MessageDispatcher::decode_length(char* message_size_arr) { // TODO: to utils
     int message_size = 0;
     int shift_value = 24;
 

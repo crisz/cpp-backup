@@ -18,26 +18,28 @@ public:
 class BufferedFileWriter {
 private:
     std::string file_path;
-    std::string file_hash;
     std::ofstream stream;
 public:
-    BufferedFileWriter(std::string& file_path, std::string& file_hash, long file_size): file_path{file_path}, file_hash{file_hash}{
+    BufferedFileWriter(std::string& file_path, long file_size): file_path{file_path} {
 
         std::size_t found = file_path.find_last_of("/\\");
-        std::string path= file_path.substr(0,found);
+        std::string path = file_path.substr(0, found);
         boost::filesystem::path dir(path);
 
-        if(!(boost::filesystem::exists(dir))){
-            std::cout<<"Doesn't Exists"<<std::endl;
-            if (boost::filesystem::create_directories(dir))
+        if (!(boost::filesystem::exists(dir))) {
+            std::cout << "Doesn't Exists" << std::endl;
+            if (boost::filesystem::create_directories(dir)) {
                 std::cout << "....Successfully Created !" << std::endl;
+            } else {
+                throw BufferedFileWriterException("Cannot create file " + file_path, -2);
+            }
         }
 
-        if(boost::filesystem::exists(file_path)){
-           if(boost::filesystem::remove(file_path)){
-               std::cout<<"File già esistente, lo rimuovo!"<<std::endl;
-           }else{
-               std::cout<<"Error deleting file!"<<std::endl;
+        if (boost::filesystem::exists(file_path)) {
+            if (boost::filesystem::remove(file_path)) {
+                std::cout<<"File già esistente, lo rimuovo!"<<std::endl;
+            } else {
+                throw BufferedFileWriterException("Cannot delete file " + file_path, -3);
            }
         }
 
@@ -50,9 +52,9 @@ public:
 
     }
 
-    ~BufferedFileWriter() {
+    // ~BufferedFileWriter() {
         //Non c'è bisogno di chiudere lo stream in qunato lo fa da solo non appena esce dallo scope
-    }
+    // }
 
     BufferedFileWriter(BufferedFileWriter& bfm) = delete;
     BufferedFileWriter(BufferedFileWriter&& bfm) = delete;

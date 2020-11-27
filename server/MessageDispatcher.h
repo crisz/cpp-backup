@@ -21,13 +21,17 @@ public:
 
     void dispatch(std::string& command, std::map<std::string, std::string>& parameters);
 
-    void dispatch (std::string& command, std::multimap<std::string, std::string>& parameters);
+    void dispatch(std::string& command, std::multimap<std::string, std::string>& parameters);
 
-    void dispatch (std::string& command, std::vector<std::pair<std::string, std::string>>& parameters);
+    void dispatch(std::string& command, std::vector<std::pair<std::string, std::string>>& parameters);
 
-    void send_parameter(std::string key, std::string value) ;
+    void send_command(std::string& commands);
 
-    void send_STOPFLOW();
+    void send_parameter(std::string key, std::string value);
+
+    void send_chunk(char* chunk_data, int chunk_length);
+
+    void stop_flow();
 
     char* encode_length(int size) ;
 
