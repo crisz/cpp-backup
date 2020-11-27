@@ -6,8 +6,11 @@
 #include <vector>
 #include <mutex>
 #include "../common/Constants.h"
+#include "../common/Constants.h"
 #include <condition_variable>
 #include "CommandDTO.h"
+#include "../common/BufferedFileWriter.h"
+
 
 struct IncomingCommand {
     std::string command_name;
@@ -100,7 +103,7 @@ public:
                     std::cout << "unlocked and notified" << std::endl;
                     return cc_result.parameters;
                 }
-                int length = decode_length(sc->read(4));
+                long length = decode_length(sc->read(4));
                 if (length > 1024) { // TODO: buffer size parametric
                     while (length != 0 && fn) {
                         int size_to_read = length > 1024 ? 1024 : length;
@@ -135,31 +138,5 @@ public:
         sc->send(key);
         sc->send(encode_length(value.size()), 4);
         sc->send(value);
-    }
-
-    char* encode_length(long size) {
-        
-        char* result = new char[4];
-        long length = htonl(size); // htonl serve per non avere problemi di endianess
-        result[3] = (length & 0xFF);
-        result[2] = (length >> 8) & 0xFF;
-        result[1] = (length >> 16) & 0xFF;
-        result[0] = (length >> 24) & 0xFF;
-        
-        return result;
-    }
-
-    long decode_length(char* message_size_arr) {
-        long message_size = 0;
-        int shift_value = 24;
-
-        for (int i=0; i<4; i++) {
-            char x = (char)message_size_arr[i];
-            //
-            message_size += ((char)message_size_arr[i]) << shift_value;
-            shift_value -= 8;
-        }
-
-        return ntohl(message_size);
     }
 };

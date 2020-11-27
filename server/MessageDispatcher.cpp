@@ -50,36 +50,10 @@ void MessageDispatcher::send_parameter(std::string key, std::string value) {
     ud.send_response_callback(value);
 }
 
-void MessageDispatcher::send_chunk(char* chunk_data, int chunk_length) {
+void MessageDispatcher::send_chunk(const char* chunk_data, int chunk_length) {
     ud.send_raw_response_callback(chunk_data, chunk_length);
 }
 
 void MessageDispatcher::stop_flow() {
     send_parameter("STOPFLOW", "");
-}
-
-char* MessageDispatcher::encode_length(int size) { // TODO: to utils
-    char* result = new char[4];
-    int length = htonl(size); // htonl serve per non avere problemi di endianess
-    result[3] = (length & 0xFF);
-    result[2] = (length >> 8) & 0xFF;
-    result[1] = (length >> 16) & 0xFF;
-    result[0] = (length >> 24) & 0xFF;
-    return result;
-}
-
-int MessageDispatcher::decode_length(char* message_size_arr) { // TODO: to utils
-    int message_size = 0;
-    int shift_value = 24;
-
-    //std::cout << "size string is " << parameter.substr(8, 12) << std::endl;
-
-    for (int i=0; i<4; i++) {
-        char x = (char)message_size_arr[i];
-        //std::cout << "Summing: " << x << " with shift " << shift_value << std::endl;
-        message_size += ((char)message_size_arr[i]) << shift_value;
-        shift_value -= 8;
-    }
-
-    return message_size;
 }

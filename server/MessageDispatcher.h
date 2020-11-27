@@ -8,6 +8,7 @@
 #include <map>
 #include <memory>
 #include "../common/Constants.h"
+#include "../common/encode_length_utils.h"
 #include "SessionContainer.h"
 #include "UserData.h"
 #include "ServerConf.h"
@@ -29,13 +30,9 @@ public:
 
     void send_parameter(std::string key, std::string value);
 
-    void send_chunk(char* chunk_data, int chunk_length);
+    void send_chunk(const char* chunk_data, int chunk_length);
 
     void stop_flow();
-
-    char* encode_length(int size) ;
-
-    int decode_length(char* message_size_arr);
 
 };
 

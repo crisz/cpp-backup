@@ -13,6 +13,8 @@
 #include <tgmath.h>
 #include "SessionContainer.h"
 #include "UserData.h"
+#include "../common/encode_length_utils.h"
+
 
 
 using boost::asio::ip::tcp;
@@ -44,7 +46,8 @@ public:
         auto buffered_message = boost::asio::buffer(message, message.size());
         boost::asio::async_write(socket, buffered_message, on_write);
     }
-    void send_response(char* message, int size) {
+    
+    void send_response(const char* message, int size) {
         std::cout << "Sending response " << message << " with length " << size << std::endl;
         auto on_write = boost::bind(&SingleUserConnection::handle_write, shared_from_this(),
                                     boost::asio::placeholders::error,
@@ -129,15 +132,7 @@ public:
         // t.detach();
     }
 
-    char* encode_length(int size) { // TODO: muovere in utils
-        char* result = new char[4];
-        int length = htonl(size); // htonl serve per non avere problemi di endianess
-        result[3] = (length & 0xFF);
-        result[2] = (length >> 8) & 0xFF;
-        result[1] = (length >> 16) & 0xFF;
-        result[0] = (length >> 24) & 0xFF;
-        return result;
-    }
+
 
 private:
     SingleUserConnection(boost::asio::thread_pool& io_context) : socket(io_context) {}
@@ -167,7 +162,7 @@ private:
             ud.send_response_callback = [this](const std::string message) {
                 this->send_response(message);
             };
-            ud.send_raw_response_callback = [this](char* message, int size) {
+            ud.send_raw_response_callback = [this](const char* message, int size) {
                 this->send_response(message, size);
             };
             SessionContainer::get_instance().set_user_data(socket,ud);

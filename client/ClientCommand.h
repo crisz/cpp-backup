@@ -90,7 +90,7 @@ public:
         cd.dispatch_partial(command, parameters);
         cd.send_raw("FILEDATA", 8);
 
-        cd.send_raw(cd.encode_length(bfm.get_file_size()), 4);
+        cd.send_raw(encode_length(bfm.get_file_size()), 4);
 
         std::promise<bool>& read_done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {
             this->cd.send_raw(data, bytes_read);

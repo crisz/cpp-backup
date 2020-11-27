@@ -35,24 +35,24 @@ void init_file_watcher(FileWatcher &fw, ClientCommand& c) {
         fm.path_to_send=fm.path.substr(found);
 
 
-        if(status==FileStatus::created) {
+        if (status==FileStatus::created) {
             std::cout << "File created: " << fm.path_to_send << std::endl;
             fm.hash=hash_file(fm.path);
             auto post_file1 = c.post_file(fm);
             bool post_file_result_1 = post_file1.get();
             std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-        }else if (status==FileStatus::modified){
+        } else if (status==FileStatus::modified) {
             std::cout << "File modified: " << fm.path_to_send << std::endl;
             fm.hash=hash_file(fm.path);
             auto post_file1 = c.post_file(fm);
             bool post_file_result_1 = post_file1.get();
             std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-        }else if (status==FileStatus::erased) {
+        } else if (status==FileStatus::erased) {
             std::cout << "File erased: " << fm.path_to_send << '\n';
             auto remove_file= c.remove_file(fm);
             bool remove_file_result=remove_file.get();
             std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
-        }else {
+        } else {
             std::cout << "Error! Unknown file status.\n";
         }
 
@@ -180,6 +180,7 @@ int main(int argc, char** argv) {
         return 0;
     }
     if (command == "restore") {
+        c.login("cris", "password").get();
         FileMetadata fm;
         fm.name = "ciccio.txt";
         fm.path = "./ciccio.txt";

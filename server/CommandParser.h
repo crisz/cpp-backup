@@ -6,6 +6,7 @@
 #include "TreeManager.h"
 #include "../common/BufferedFileWriter.h"
 #include "../common/BufferedFileReader.h"
+#include "../common/encode_length_utils.h"
 #include <map>
 #include <boost/asio.hpp>
 #include <memory>
@@ -125,22 +126,42 @@ public:
         }
         
         if (command_name == "REQRFILE") {
+            std::cout << "REQRFILE CALLED!" << std::endl;
             if (parameters.find(FILEPATH) == parameters.end()) {
                 error();
                 return;
             }
 
-            md.send_command(command_name);
-
+            std::cout << "getting file path" << std::endl;
             std::string file_path = get_file_path(socket, command);
-            BufferedFileReader bfr{1024, file_path}; // TODO: mettere in una costante
+            std::cout << "file path is " << file_path << std::endl;
+
+            std::cout << "constructing bfr "  << std::endl;
+            BufferedFileReader bfr{10, file_path}; // TODO: mettere in una costante (mettere 1024)
+            std::cout << "bfr constructed"  << std::endl;
+
+            std::cout << "sending command name" << std::endl;
+            md.send_command(command_name);
+            
+            std::cout << "sending chunk filedata" << std::endl;
 
             md.send_chunk("FILEDATA", 8);
-            md.send_chunk(bfr.get_file_size(), 4);
-            bfr.register_callback([](bool done, char* data, int length){
-                
-            });
 
+            std::cout << "sending length" << std::endl;
+
+            md.send_chunk(encode_length(bfr.get_file_size()), 4);
+
+            bfr.register_callback([&md, &bfr](bool done, char* data, int length){
+                std::cout << "chunk received: " << data << std::endl;
+
+                md.send_chunk(data, length);
+                if (done) {
+                    md.stop_flow();
+                }
+                bfr.signal();
+            });
+            
+            bfr.run();
             return;
         }
 
