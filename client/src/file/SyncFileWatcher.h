@@ -6,7 +6,16 @@
 #define CPP_BACKUP_SYNCFILEWATCHER_H
 
 
+#include "../command/ClientCommand.h"
+#include "FileWatcher.h"
+
 class SyncFileWatcher {
+private:
+    FileWatcher & fw;
+    ClientCommand & c;
+public:
+    SyncFileWatcher(FileWatcher & fw , ClientCommand & c);
+    void run();
 
 };
 

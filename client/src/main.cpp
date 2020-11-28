@@ -12,6 +12,7 @@
 #include "common/hash_file.h"
 #include "common/file_system_helper.h"
 #include "options/options_utils.h"
+#include "file/SyncFileWatcher.h"
 
 
 #define SYNCH_INTERVAL 1000
@@ -23,7 +24,7 @@ void die(std::string message) {
     exit(-1);
 }
 
-void init_file_watcher(FileWatcher &fw, ClientCommand& c) { // Muovere in un file più opportuno
+/*void init_file_watcher(FileWatcher &fw, ClientCommand& c) { // Muovere in un file più opportuno
     // std::shared_ptr<ServerConnectionAsio> sc = ServerConnectionAsio::get_instance();
     fw.on_file_changed([&fw, &c](std::string path_matched, FileStatus status) -> void {
         if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_matched)) && status != FileStatus::erased) {
@@ -57,7 +58,7 @@ void init_file_watcher(FileWatcher &fw, ClientCommand& c) { // Muovere in un fil
         }
 
     });
-}
+}*/
 
 
 
@@ -143,9 +144,8 @@ int main(int argc, char** argv) {
             }
 
         }
-        init_file_watcher(fw, c);//todo:
-        //SyncFileWatcher sfw(command c);
-        //sfw.run()
+        SyncFileWatcher sfw{fw, c};
+        sfw.run();
         return 0;
     }
     if (command == "restore") {

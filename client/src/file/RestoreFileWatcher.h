@@ -4,10 +4,17 @@
 
 #ifndef CPP_BACKUP_RESTOREFILEWATCHER_H
 #define CPP_BACKUP_RESTOREFILEWATCHER_H
-
+#include "../command/ClientCommand.h"
+#include "FileWatcher.h"
 
 class RestoreFileWatcher {
-//TODO:
+private:
+    FileWatcher & fw;
+    ClientCommand & c;
+public:
+    RestoreFileWatcher(FileWatcher & fw , ClientCommand & c);
+    void run();
+
 };
 
 
