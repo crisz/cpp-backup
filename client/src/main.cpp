@@ -216,11 +216,19 @@ int main(int argc, char** argv) {
 
         return 0;
     }
+
     if (command == "signup") { // TODO: implementare
         UserSession us;
         if (parse_signup_options(argc, argv, us)) return 0;
         init_connection(us);
 
+        ClientCommand c;
+        auto signup = c.signup(us.username, us.password);
+        bool signup_result = signup.get();
+
+        if (!signup_result) die("Signup failed!");
+
+        std::cout<<"La registrazione è andata a buon fine! Benvenuto!"<< std::endl;
 
         return 0;
     }
@@ -241,6 +249,9 @@ int main(int argc, char** argv) {
 
 // LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
 // LOGINSNC __RESULT 0002 OK STOPFLOW
+
+// SIGNUPNU USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
+// SIGNUPNU __RESULT 0002 OK STOPFLOW
 
 // REQRTREE
 // REQRTREE FILEHASH ABC9 <HASH> FILEPATH 0123 <FULL PATH> FILEHASH A123 <HASH> FILEPATH FILEHASH
@@ -302,3 +313,5 @@ int main(int argc, char** argv) {
 
 // file.path:
 #pragma clang diagnostic pop
+
+

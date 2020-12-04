@@ -41,6 +41,22 @@ public:
         });
     }
 
+    std::future<bool> signup(std::string username, std::string password) {
+        std::cout << "Init signup " << std::endl;
+        std::string command;
+        CommandDTO parameters;
+        parameters.erase();
+        command = "SIGNUPNU";
+        parameters.insert(std::pair<std::string, std::string>(USERNAME, username));
+        parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
+        return std::async([this, command, parameters] () {
+            std::cout << "Trying to dispatch signup " << std::endl;
+            CommandDTO result = cd.dispatch(command, parameters).get();
+            std::cout << "result is " << result.find(("__RESULT")).second << std::endl;
+            return result.find(("__RESULT")).second == "OK";
+        });
+    }
+
     std::future<std::vector<FileMetadata>> require_tree() {
         std::string command;
         CommandDTO parameters;

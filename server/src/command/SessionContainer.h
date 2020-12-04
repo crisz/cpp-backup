@@ -16,30 +16,15 @@ private:
 
     std::map<tcp::socket*, UserData> container;
 public:
-    static SessionContainer& get_instance() {
-        static SessionContainer instance;
-        return instance;
-    }
+    static SessionContainer& get_instance();
 
-    UserData& get_user_data(tcp::socket& socket) {
-        return container[&socket];
-    }
+    UserData& get_user_data(tcp::socket& socket);
 
-    void set_user_data(tcp::socket& socket, UserData user_data) {
-        container[&socket] = user_data;
-    }
+    void set_user_data(tcp::socket& socket, UserData user_data);
 
-    void add_user(tcp::socket& socket) {
-        UserData ud;
-        container[&socket] = ud;
-    }
+    void add_user(tcp::socket& socket);
 
-    void remove_user(tcp::socket& socket) {
-        container.erase(&socket);
-        std::cout<<"Ci sono " << container.size() << " utenti connessi"<< std::endl;
-    }
+    void remove_user(tcp::socket& socket);
 
-    int get_number_users_connected() {
-        return container.size();
-    }
+    int get_number_users_connected();
 };

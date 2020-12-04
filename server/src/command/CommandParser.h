@@ -18,6 +18,9 @@
 // LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
 // LOGINSNC __RESULT 0002 OK STOPFLOW
 
+// SIGNUPNU USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
+// SIGNUPNU __RESULT 0002 OK STOPFLOW
+
 // REQRTREE
 // REQRTREE FILEHASH ABC9 <HASH> FILEPATH 0123 <FULL PATH> FILEHASH A123 <HASH> FILEPATH FILEHASH
 
@@ -26,6 +29,10 @@
 
 // REMVFILE FILEPATH 0123 <FULL PATH>
 // REMVFILE __RESULT 0002 OK
+
+#include <boost/asio/ip/tcp.hpp>
+#include <common/BufferedFileWriter.h>
+#include <server/src/pool/ServerCommand.h>
 
 using boost::asio::ip::tcp;
 
@@ -68,7 +75,7 @@ public:
                 command.clear();
             } else error();
             return;
-        } 
+        }
 
         if (command_name == REQRTREE ){
             TreeManager tm;
@@ -124,7 +131,7 @@ public:
             command.clear();
             return;
         }
-        
+
         if (command_name == "REQRFILE") {
             std::cout << "REQRFILE CALLED!" << std::endl;
             if (parameters.find(FILEPATH) == parameters.end()) {
@@ -142,7 +149,7 @@ public:
 
             std::cout << "sending command name" << std::endl;
             md.send_command(command_name);
-            
+
             std::cout << "sending chunk filedata" << std::endl;
 
             md.send_chunk("FILEDATA", 8);
@@ -160,7 +167,7 @@ public:
                 }
                 bfr.signal();
             });
-            
+
             bfr.run();
             return;
         }

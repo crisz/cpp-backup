@@ -11,43 +11,16 @@
 #include "ServerConf.h"
 
 
-void die(std::string message) {
-    std::cout << message << std::endl;
-    exit(-1);
-}
+void die(std::string message);
 
 class ConnectionPool {
     boost::asio::thread_pool& io_context;
     tcp::acceptor acceptor;
 public:
-    ConnectionPool(boost::asio::thread_pool& io_context): 
-            io_context(io_context),
-            acceptor(io_context, tcp::endpoint(tcp::v4(), ServerConf::get_instance().port)) {
-
-        acceptor.listen(0);
-        this->start_accept();
-    }
+    ConnectionPool(boost::asio::thread_pool& io_context);
 
 private:
-    void start_accept() {
-        std::cout << "waiting connection"<<std::endl;
-        SingleUserConnection::pointer new_connection = SingleUserConnection::create(io_context);
+    void start_accept();
 
-        auto on_accept = boost::bind(&ConnectionPool::handle_accept, this, new_connection, boost::asio::placeholders::error);
-        acceptor.async_accept(new_connection->get_socket(), on_accept);
-    }
-
-    void handle_accept(SingleUserConnection::pointer new_connection, const boost::system::error_code& error) {
-        if (!error) {
-            std::thread t([new_connection]() {
-                std::cout << "A client connected" << std::endl;
-                new_connection->put_on_read_command();
-            });
-            t.detach();
-        } else {
-            // TODO: handle error: stampare qualcosa o generare un file di log
-        }
-
-        start_accept();
-    }
+    void handle_accept(SingleUserConnection::pointer new_connection, const boost::system::error_code& error);
 };

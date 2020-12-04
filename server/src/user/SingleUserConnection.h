@@ -260,7 +260,7 @@ private:
 
         std::cout << "Error on command :" << currentCommand.get_command_name() << std::endl;
         if (currentCommand.getParameters().empty()) {
-            std::cout << "Non ci sono parametri associati al comando"<<std::endl;
+            std::cout << "Non ci sono parametri associati al comando"<< std::endl;
         } else {
             std::cout << "Last parameter read: " << (currentCommand.getParameters().cbegin())->first << " with value : "
                       << (currentCommand.getParameters().cbegin())->second << std::endl;
