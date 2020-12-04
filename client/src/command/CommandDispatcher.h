@@ -68,7 +68,7 @@ public:
 
     
 
-    std::future<CommandDTO> wait_for_response(std::string command, std::function<void(char* buffer, int)> fn = NULL) {
+    std::future<CommandDTO> wait_for_response(std::string command, std::function<void(char* buffer, int)> *fn = nullptr) {
         return std::async([this, command, &fn]() {
             std::cout << command << " is trying to take lock in wfr" << std::endl;
             std::unique_lock ul(dispatch_mutex);
@@ -111,7 +111,7 @@ public:
                         int size_to_read = length > 1024 ? 1024 : length;
                         length -= size_to_read;
                         char* parameter_value = sc->read(size_to_read);
-                        fn(parameter_value, size_to_read);
+                        (*fn)(parameter_value, size_to_read);
                     }
                 } else {
                     std::string parameter_value = sc->read_as_str(length);

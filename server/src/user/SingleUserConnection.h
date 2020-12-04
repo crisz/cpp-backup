@@ -265,6 +265,7 @@ private:
             std::cout << "Last parameter read: " << (currentCommand.getParameters().cbegin())->first << " with value : "
                       << (currentCommand.getParameters().cbegin())->second << std::endl;
         }
+        handle_disconnection();
     }
 
     void handle_disconnection(){

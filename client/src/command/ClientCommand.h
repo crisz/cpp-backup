@@ -144,11 +144,11 @@ public:
 
         return std::async([command, this, &file_metadata]() {
             BufferedFileWriter bfw{file_metadata.path, file_metadata.size}; // TODO: path deve essere trasformato per essere scritto dal client 
-            auto flush_buffer_fn = [&bfw](auto data, auto length) { 
+            std::function<void(char* buffer, int)> flush_buffer_fn = [&bfw](auto data, auto length) {
                 std::cout << "Received chunk " << data << std::endl;
                 bfw.append(data, length);
             };
-            CommandDTO reqr_file_result = cd.wait_for_response(command, flush_buffer_fn).get();
+            CommandDTO reqr_file_result = cd.wait_for_response(command, &flush_buffer_fn).get();
             std::cout << "wait for response returnded" << std::endl;
             // return post_file_result.find(("__RESULT")).second == "OK";
         });
