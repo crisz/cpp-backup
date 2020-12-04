@@ -1,9 +1,10 @@
 //
-// Created by giuseppe on 04/10/20.
+// Created by andrea on 24/11/20.
 //
 
 #ifndef CPP_BACKUP_TREESCOMPARATOR_H
 #define CPP_BACKUP_TREESCOMPARATOR_H
+
 #include <boost/filesystem.hpp>
 #include "common/hash_file.h"
 #include "FileMetadata.h"
@@ -16,16 +17,15 @@
 
 class TreesComparator {
     boost::filesystem::path current_path;
-    std::map<std::string, FileMetadata> local_tree_map;
-    std::vector<FileMetadata> file_to_remove;
-    std::vector<FileMetadata> file_to_post;
+    std::vector<FileMetadata> local_tree_vect;
 
 public:
     TreesComparator(std::string current_path) : current_path{current_path}{
+        std::cout << "current path is " << current_path << std::endl;
         for(auto &file : boost::filesystem::recursive_directory_iterator(current_path)) {
 
             FileMetadata fm;
-            fm.path=file.path().string();
+            fm.path = file.path().string();
 
             std::size_t found = current_path.find_last_of("/\\");
             std::string dir = current_path.substr(found);
@@ -33,63 +33,71 @@ public:
             std::size_t found2 = fm.path.find_last_of("/\\");
             std::string filename = fm.path.substr(found2);
 
-            std::string path_to_send = dir+filename;
+            std::string path_to_send = dir + filename;
 
-            fm.path_to_send=path_to_send;
-            fm.hash= hash_file(fm.path);
-            local_tree_map[path_to_send] = fm;
+            fm.path_to_send = path_to_send;
+            fm.hash = hash_file(fm.path);
+            std::cout << fm.hash << std::endl;
+            local_tree_vect.push_back(fm);
         }
     }
 
-    std::future<std::pair<std::vector<FileMetadata>,std::vector<FileMetadata>>> compare(std::vector<FileMetadata>& server_tree){
-       return std::async([&](){
-            std::vector<std::string> server_trees_vect;
-            std::vector<std::string> local_trees_vect;
-            std::vector<std::string> intersection;
-            std::map<std::string, FileMetadata> server_tree_map;
+    // modificati
+    // aggiunti
+    // rimossi
 
-            std::cout<< "MAPPA RICEVUTA DAL SERVER: "<< std::endl;
-            for(auto se : server_tree){
-                std::cout<< se.path <<std::endl;
-                server_tree_map[se.path]= se;
-            }
+    std::array<std::shared_ptr<std::vector<FileMetadata>>, 3> compare(std::vector<FileMetadata>& server_tree) {
 
-            for(auto se : server_tree_map){
-                server_trees_vect.push_back(se.first);
-            }
-
-           std::cout<< "MAPPA LOCALE: "<< std::endl;
-            for(auto ce : local_tree_map){
-                std::cout<< ce.second.path_to_send<<std::endl;
-                local_trees_vect.push_back(ce.first);
-            }
-
-            std::set_intersection(local_trees_vect.begin(),local_trees_vect.end(),
-                                  server_trees_vect.begin(),server_trees_vect.end(),
-                                  back_inserter(intersection));
-
-            for(auto path: intersection){
-                if(server_tree_map.find(path)->first==local_tree_map.find(path)->first){
-                    if(server_tree_map.find(path)->second.hash!=local_tree_map.find(path)->second.hash){
-                        file_to_post.push_back(local_tree_map.find(path)->second);
-                    }
-                    local_trees_vect.erase(std::find(local_trees_vect.begin(),local_trees_vect.end(),server_tree_map.find(path)->first));
-                    server_trees_vect.erase(std::find(server_trees_vect.begin(),server_trees_vect.end(),server_tree_map.find(path)->first));
+            auto set_intersection = [ this ](FileMetadata& fm) {
+                for (auto el: this->local_tree_vect) {
+                    if (el.path_to_send == fm.path) return true;
                 }
-            }
+                return false;
+            };
 
-            //the remaining elements in the server_tree are the ones to remove
-            for(auto se: server_trees_vect){
-                file_to_remove.push_back(server_tree_map[se]);
-            }
+            std::vector<FileMetadata> intersection;
+            std::copy_if(server_tree.begin(), server_tree.end(), back_inserter(intersection), set_intersection);
 
-            //the remaining elements in the local_tree are the ones to add
-            for(auto se: local_trees_vect){
-                file_to_post.push_back(local_tree_map[se]);
-            }
-            return std::pair<std::vector<FileMetadata>,std::vector<FileMetadata>>(file_to_post,file_to_remove);
-        });
+            auto is_file_new = [&intersection](FileMetadata& fm) {
+                for (auto el: intersection) {
+                    if (el.path == fm.path_to_send) return false;
+                }
+                return true;
+            };
 
+            auto is_file_changed = [&intersection](FileMetadata& fm) {
+                for (auto el: intersection) {
+                    if (el.path == fm.path_to_send) return el.hash != fm.hash;
+                }
+                return false;
+            };
+
+            auto is_file_removed = [&intersection](FileMetadata& fm) {
+                for (auto el: intersection) {
+                    if (el.path == fm.path) return false;
+                }
+                return true;
+            };
+
+
+            std::vector<FileMetadata> local_trees_vect;
+
+
+            std::array<std::shared_ptr<std::vector<FileMetadata>>, 3> ret_arr;
+
+            std::shared_ptr<std::vector<FileMetadata>> new_files = std::make_shared<std::vector<FileMetadata>>();
+            std::copy_if(local_trees_vect.begin(), local_trees_vect.end(), back_inserter(*new_files), is_file_new);
+            ret_arr[0] = std::move(new_files);
+
+            std::shared_ptr<std::vector<FileMetadata>> changed_files = std::make_shared<std::vector<FileMetadata>>();
+            std::copy_if(local_trees_vect.begin(), local_trees_vect.end(), back_inserter(*changed_files), is_file_changed);
+            ret_arr[1] = std::move(changed_files);
+
+            std::shared_ptr<std::vector<FileMetadata>> removed_files = std::make_shared<std::vector<FileMetadata>>();
+            std::copy_if(server_tree.begin(), server_tree.end(), back_inserter(*removed_files), is_file_removed);
+            ret_arr[2] = std::move(removed_files);
+
+            return ret_arr;
     }
 };
 

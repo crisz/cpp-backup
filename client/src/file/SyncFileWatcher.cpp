@@ -5,10 +5,9 @@
 #include "SyncFileWatcher.h"
 #include "common/hash_file.h"
 
-SyncFileWatcher::SyncFileWatcher(FileWatcher &fw, ClientCommand &c):fw{fw},c{c} {}//TODO: @cris il file watcher deve essere creato dentro questa classe?
+SyncFileWatcher::SyncFileWatcher(FileWatcher &fw, ClientCommand &c): fw{fw}, c{c} {}
 
 void SyncFileWatcher::run() {
-    // std::shared_ptr<ServerConnectionAsio> sc = ServerConnectionAsio::get_instance();
     this->fw.on_file_changed([this](std::string path_matched, FileStatus status) -> void {
         if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_matched)) && status != FileStatus::erased) {
             return;

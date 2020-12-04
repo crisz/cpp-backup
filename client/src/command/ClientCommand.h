@@ -41,7 +41,7 @@ public:
         });
     }
 
-    std::future<std::vector<FileMetadata>> require_tree() {    
+    std::future<std::vector<FileMetadata>> require_tree() {
         std::string command;
         CommandDTO parameters;
         command = "REQRTREE";
@@ -68,8 +68,10 @@ public:
                 }
                 if (item.first == "FILEPATH") {
                     fm.path = item.second;
+                    fm.path_to_send = fm.path;
+
                     std::size_t found = fm.path.find_last_of("/\\");
-                    fm.name=fm.path.substr(found+1);
+                    fm.name = fm.path.substr(found+1);
                     continue;
                 }
             }
@@ -81,7 +83,7 @@ public:
     }
 
     std::future<bool> post_file(FileMetadata& file_metadata, const int buffer_size=256) {
- 
+
         BufferedFileReader bfm{10, file_metadata.path}; // RAII
         std::string command;
         CommandDTO parameters;
@@ -141,14 +143,16 @@ public:
         cd.send_parameter("STOPFLOW", "");
         cd.unlock_raw();
 
+        std::string path = file_metadata.path;
+        long size = file_metadata.size;
 
-        return std::async([command, this, &file_metadata]() {
-            BufferedFileWriter bfw{file_metadata.path, file_metadata.size}; // TODO: path deve essere trasformato per essere scritto dal client 
+        return std::async([command, this, path, size]() {
+            BufferedFileWriter bfw{path, size};
             std::function<void(char* buffer, int)> flush_buffer_fn = [&bfw](auto data, auto length) {
                 std::cout << "Received chunk " << data << std::endl;
                 bfw.append(data, length);
             };
-            CommandDTO reqr_file_result = cd.wait_for_response(command, &flush_buffer_fn).get();
+            CommandDTO reqr_file_result = cd.wait_for_response(command, true, flush_buffer_fn).get();
             std::cout << "wait for response returnded" << std::endl;
             // return post_file_result.find(("__RESULT")).second == "OK";
         });

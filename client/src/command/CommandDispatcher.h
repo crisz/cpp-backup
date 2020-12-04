@@ -11,7 +11,7 @@
 #include "common/BufferedFileWriter.h"
 #include "common/encode_length_utils.h"
 #include <condition_variable>
-
+#define BUFFER_SIZE 1024
 
 struct IncomingCommand {
     std::string command_name;
@@ -36,7 +36,7 @@ public:
         sc->send(command);
 
         // std::this_thread::sleep_for(std::chrono::milliseconds(4000));
-        
+
         for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
             send_parameter(it->first, it->second);
         }
@@ -44,17 +44,17 @@ public:
 
     std::future<CommandDTO> dispatch(std::string command, const CommandDTO& parameters) {
         std::cout << command << " is trying to acquire lock" << std::endl;
-        std::unique_lock ul(dispatch_mutex); 
+        std::unique_lock ul(dispatch_mutex);
         std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in dispatch " << command << std::endl;
 
 
         // copia e incolla dispatch_partial. Soluzione: recursive_mutex
-        
+
         // lock acquire
         sc->send(command);
 
         // std::this_thread::sleep_for(std::chrono::milliseconds(4000));
-        
+
         for (auto it = parameters.begin(); it != parameters.end(); it++ ) {
             send_parameter(it->first, it->second);
         }
@@ -66,14 +66,14 @@ public:
         return wait_for_response(command);
     }
 
-    
 
-    std::future<CommandDTO> wait_for_response(std::string command, std::function<void(char* buffer, int)> *fn = nullptr) {
-        return std::async([this, command, &fn]() {
+
+    std::future<CommandDTO> wait_for_response(std::string command, bool buffered = false, std::function<void(char* buffer, int)> fn = nullptr) {
+        return std::async([this, command, &fn, buffered]() {
             std::cout << command << " is trying to take lock in wfr" << std::endl;
             std::unique_lock ul(dispatch_mutex);
             std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in wait_for_response: " << command << std::endl;
-            
+
             CommandDTO result;
             std::string received_command = sc->read_as_str(8);
             while(true) {
@@ -106,12 +106,13 @@ public:
                     return cc_result.parameters;
                 }
                 long length = decode_length(sc->read(4));
-                if (fn) { // TODO: buffer size parametric
+                if (buffered) {
+                    std::cout << "fn is defined: " << std::endl;
                     while (length != 0) { // Questo while serve per segnalare al controllo di flusso del tcp
-                        int size_to_read = length > 1024 ? 1024 : length;
+                        int size_to_read = length > BUFFER_SIZE ? BUFFER_SIZE : length;
                         length -= size_to_read;
                         char* parameter_value = sc->read(size_to_read);
-                        (*fn)(parameter_value, size_to_read);
+                        fn(parameter_value, size_to_read);
                     }
                 } else {
                     std::string parameter_value = sc->read_as_str(length);
@@ -125,7 +126,7 @@ public:
         std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock raw" << std::endl;
         this->dispatch_mutex.lock();
     }
-    
+
     void unlock_raw() {
         std::cout << std::this_thread::get_id() << " ~~ " << "Releasing lock raw" << std::endl;
         this->dispatch_mutex.unlock();

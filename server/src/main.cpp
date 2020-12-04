@@ -32,6 +32,11 @@ int parse_options(int argc, char** argv) {
         po::notify(vm);
         sc.port = std::move(vm["port"].as<int>());
         sc.dest = std::move(vm["dest"].as<std::string>());
+
+        if (sc.dest.back() != '/') {
+            sc.dest = sc.dest + '/';
+        }
+
         if (!check_dest_dir(sc.dest)) 
             die("La cartella " + sc.dest + " non esiste o non è possibile aprirla in scrittura.");
         return 0;

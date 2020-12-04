@@ -21,13 +21,13 @@ private:
     std::string file_path;
     std::ofstream stream;
 public:
-    BufferedFileWriter(std::string& file_path, long file_size): file_path{file_path} {
+    BufferedFileWriter(std::string file_path, long file_size): file_path{file_path} {
 
         std::size_t found = file_path.find_last_of("/\\");
         std::string path = file_path.substr(0, found);
         boost::filesystem::path dir(path);
 
-        if (!(boost::filesystem::exists(dir))) {
+        if (!(boost::filesystem::exists(dir))) { // TODO: chi ce lo dice che la cartella debba esserci sempre?
             std::cout << "Doesn't Exists" << std::endl;
             if (boost::filesystem::create_directories(dir)) {
                 std::cout << "....Successfully Created !" << std::endl;
@@ -37,8 +37,10 @@ public:
         }
 
         if (boost::filesystem::exists(file_path)) {
+            std::cout<<"File già esistente, lo rimuovo!"<<std::endl;
+
             if (boost::filesystem::remove(file_path)) {
-                std::cout<<"File già esistente, lo rimuovo!"<<std::endl;
+                std::cout<<"File rimosso con successo!"<<std::endl;
             } else {
                 throw BufferedFileWriterException("Cannot delete file " + file_path, -3);
            }
@@ -60,11 +62,11 @@ public:
     BufferedFileWriter(BufferedFileWriter& bfm) = delete;
     BufferedFileWriter(BufferedFileWriter&& bfm) = delete;
 
-    std::future<void> append(char* buffer, int size) {
-
-        return std::async([this, buffer, size] () {
-            stream.write(buffer, size);
-        });
+    void append(char* buffer, int size) {
+        // return std::async([this, buffer, size] () { // TODO
+        std::cout << "writing chunk on " << file_path << std::endl;
+        stream.write(buffer, size);
+        // });
     }
 
 };

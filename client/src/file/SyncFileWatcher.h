@@ -11,12 +11,11 @@
 
 class SyncFileWatcher {
 private:
-    FileWatcher & fw;
-    ClientCommand & c;
+    FileWatcher& fw;
+    ClientCommand& c;
 public:
-    SyncFileWatcher(FileWatcher & fw , ClientCommand & c);
+    SyncFileWatcher(FileWatcher& fw, ClientCommand& c);
     void run();
-
 };
 
 

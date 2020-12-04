@@ -7,7 +7,7 @@
 #include "client/src/server/ServerConnectionAsio.h"
 #include "client/src/command/ClientCommand.h"
 #include <iostream>
-#include "client/src/file/TreesComparator1.h"
+#include "client/src/file/TreesComparator.h"
 #include "client/src/file/FileMetadata.h"
 #include "common/hash_file.h"
 #include "common/file_system_helper.h"
@@ -15,163 +15,204 @@
 #include "file/SyncFileWatcher.h"
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
 #define SYNCH_INTERVAL 1000
-
-
+#define RESTORE_INTERVAL 1000
 
 void die(std::string message) {
     std::cout << message << std::endl;
     exit(-1);
 }
 
-/*void init_file_watcher(FileWatcher &fw, ClientCommand& c) { // Muovere in un file più opportuno
-    // std::shared_ptr<ServerConnectionAsio> sc = ServerConnectionAsio::get_instance();
-    fw.on_file_changed([&fw, &c](std::string path_matched, FileStatus status) -> void {
-        if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_matched)) && status != FileStatus::erased) {
-            return;
-        }
-        FileMetadata fm;
-        fm.path = path_matched;
-        std::size_t found = fw.path_to_watch.string().find_last_of("/\\");
-        fm.path_to_send=fm.path.substr(found);
-
-
-        if (status==FileStatus::created) {
-            std::cout << "File created: " << fm.path_to_send << std::endl;
-            fm.hash=hash_file(fm.path);
-            auto post_file1 = c.post_file(fm);
-            bool post_file_result_1 = post_file1.get();
-            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-        } else if (status==FileStatus::modified) {
-            std::cout << "File modified: " << fm.path_to_send << std::endl;
-            fm.hash=hash_file(fm.path);
-            auto post_file1 = c.post_file(fm);
-            bool post_file_result_1 = post_file1.get();
-            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-        } else if (status==FileStatus::erased) {
-            std::cout << "File erased: " << fm.path_to_send << '\n';
-            auto remove_file= c.remove_file(fm);
-            bool remove_file_result=remove_file.get();
-            std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
-        } else {
-            std::cout << "Error! Unknown file status.\n";
-        }
-
-    });
-}*/
-
+void init_connection(UserSession& us) {
+    try {
+        ServerConnectionAsio::init(us.address, us.port);
+    } catch (boost::system::system_error& error) {
+        std::cout << "Impossibile effettuare la connessione al server " << std::endl;
+        die(error.what());
+    } catch (...) {
+        die("Impossibile effettuare la connessione al server ");
+    }
+}
 
 
 int main(int argc, char** argv) {
 
     if (argc <= 1) {
-        die("A command between sync and <tbd> is required");
+        die("Please, choose a command among sync, restore and signup."
+            "Example: ./client sync"
+        );
     }
 
-    std::cout << "Numero di parametri: " << argc << std::endl;
-    std::cout << "1)" << argv[0] << std::endl;
-    std::cout << "2)" << argv[1] << std::endl;
+    std::ostringstream oss;
+    oss << "   ___ ___ ___     ___   _   ___ _  ___   _ ___ \n"
+           "  / __| _ \\ _ \\___| _ ) /_\\ / __| |/ / | | | _ \\\n"
+           " | (__|  _/  _/___| _ \\/ _ \\ (__| ' <| |_| |  _/\n"
+           "  \\___|_| |_|     |___/_/ \\_\\___|_|\\_\\\\___/|_|  \n"
+           "                                                ";
+
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    std::cout << oss.str() << std::endl;
 
     std::string command = argv[1];
-    std::cout << "command is ->" << command << "<-" << std::endl;
-
-
-    std::cout << "cc" << std::endl;
-
-
     if (command == "sync") {
         UserSession us;
         if (parse_sync_options(argc, argv, us)) return 0;
+        init_connection(us);
 
         FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
-        std::cout << "Your username is " << us.username << std::endl;
-        std::cout << "init connection" << std::endl;
-        ServerConnectionAsio::init(us.address, us.port);
-        std::cout << "connection started" << std::endl;
-
-        std::cout << "attempting login" << std::endl;
-
         ClientCommand c;
-        auto login1 = c.login(us.username, us.password);
+        auto login = c.login(us.username, us.password);
 
-        bool login_result_1 = login1.get();
+        bool login_result = login.get();
 
-        if( login_result_1 ){
-            auto server_tree = c.require_tree().get();
-            for(auto st: server_tree){
-                std::cout<<st.path<<std::endl;
-            }
+        if (!login_result) die("Invalid credentials");
 
-            TreesComparator1 tc{us.dir};
-            /*
-            std::pair<std::shared_ptr<std::vector<FileMetadata>>,std::shared_ptr<std::vector<FileMetadata>>> result_trees_comparator =  tc.compare(server_tree).get();
-            auto file_to_remove =  result_trees_comparator.second;
-            auto file_to_post = result_trees_comparator.first;
-            */
+        auto server_tree = c.require_tree().get();
 
-            std::promise<std::shared_ptr<std::vector<FileMetadata>>> p_to_post;
-            std::promise<std::shared_ptr<std::vector<FileMetadata>>> p_to_remove;
-            auto arr = tc.compare(server_tree);
-            std::cout<<"FILES TO REMOVE"<<std::endl;
-            auto file_to_post = arr[0];
-            auto file_to_remove = arr[1];
-
-            std::vector<std::future<bool>> futures_to_wait;
-            
-            for (auto fm_rm: *file_to_remove) {
-                std::cout<< fm_rm.path<<std::endl;
-                fm_rm.path_to_send=fm_rm.path;
-                auto remove_file= c.remove_file(fm_rm);
-                futures_to_wait.push_back(std::move(remove_file));
-            }
-
-            for (int i=0; i<futures_to_wait.size(); i++) {
-                bool remove_file_result = futures_to_wait[i].get();
-                std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
-            }
-
-            std::cout<<"FILES TO POST"<<std::endl;
-            futures_to_wait.clear();
-            for(auto fm_po: *file_to_post){
-                std::cout<< fm_po.path_to_send <<std::endl;
-                auto post_file1 = c.post_file(fm_po);
-                futures_to_wait.push_back(std::move(post_file1));
-            }
-
-            for (int i=0; i<futures_to_wait.size(); i++) {
-                bool post_file_result_1 = futures_to_wait[i].get();
-                std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-            }
-
+        for (auto st: server_tree) {
+            std::cout<<st.path<<std::endl;
         }
+
+        TreesComparator tc{us.dir};
+        auto arr = tc.compare(server_tree);
+
+        auto new_files = arr[0];
+        auto changed_files = arr[1];
+        auto removed_files = arr[2];
+
+        std::vector<FileMetadata> files_to_remove = *removed_files;
+        std::vector<FileMetadata> files_to_post = *new_files;
+        files_to_post.insert(
+           (files_to_post).end(),
+            std::make_move_iterator((*changed_files).begin()),
+            std::make_move_iterator((*changed_files).end())
+         );
+
+        std::vector<std::future<bool>> futures_to_wait;
+
+        for (auto fm_rm: files_to_remove) {
+            std::cout<< fm_rm.path<<std::endl;
+            fm_rm.path_to_send=fm_rm.path;
+            auto remove_file= c.remove_file(fm_rm);
+            futures_to_wait.push_back(std::move(remove_file));
+        }
+
+        for (int i=0; i<futures_to_wait.size(); i++) {
+            bool remove_file_result = futures_to_wait[i].get();
+            std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
+        }
+
+        std::cout<<"FILES TO POST"<<std::endl;
+        futures_to_wait.clear();
+        for(auto fm_po: files_to_post){
+            std::cout<< fm_po.path_to_send <<std::endl;
+            auto post_file1 = c.post_file(fm_po);
+            futures_to_wait.push_back(std::move(post_file1));
+        }
+
+        for (int i=0; i<futures_to_wait.size(); i++) {
+            bool post_file_result_1 = futures_to_wait[i].get();
+            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
+        }
+
         SyncFileWatcher sfw{fw, c};
         sfw.run();
         return 0;
     }
     if (command == "restore") {
-        std::string address = "0.0.0.0";
-        ServerConnectionAsio::init(address, 3333);
+        UserSession us;
+        if (parse_restore_options(argc, argv, us)) return 0;
+        init_connection(us);
         ClientCommand c;
 
-        std::cout << "restore" << std::endl;
-        c.login("cris", "password").get();
-        std::cout << "login!" << std::endl;
+        auto login = c.login(us.username, us.password);
 
-        FileMetadata fm;
-        std::cout << "fm" << std::endl;
+        bool login_result = login.get();
 
-        fm.name = "ciccio.txt";
-        fm.path = "./ciccio.txt";
-        fm.path_to_send = "/ciccio.txt";
-        c.require_file(fm).get();
-        std::cout << "after get rqrfile" << std::endl;
-        //SyncFileWatcher sfw(command c);
-        //sfw.run()
+        if (!login_result) die("Invalid credentials");
+
+        auto server_tree = c.require_tree().get();
+
+        for (auto st: server_tree) {
+            std::cout << st.path << std::endl;
+        }
+
+        TreesComparator tc{us.dir};
+        auto arr = tc.compare(server_tree);
+
+        auto new_files = arr[0];
+        auto changed_files = arr[1];
+        auto removed_files = arr[2];
+
+        std::vector<FileMetadata> files_to_require = *removed_files;
+        std::vector<FileMetadata> files_to_remove = *new_files;
+
+        files_to_require.insert(
+                (files_to_require).end(),
+                std::make_move_iterator((*changed_files).begin()),
+                std::make_move_iterator((*changed_files).end())
+        );
+
+
+        std::cout << "REQRFILE FOR: " << std::endl;
+        for (auto file: files_to_require) {
+            std::cout << file.path_to_send << std::endl;
+        }
+
+        std::cout << "delete FOR: " << std::endl;
+        for (auto file: files_to_remove) {
+            std::cout << file.path_to_send << std::endl;
+        }
+
+        for (auto file: files_to_remove) {
+            std::cout << "removing " << file.path << std::endl;
+            if (boost::filesystem::exists(file.path)) {
+                boost::filesystem::remove_all(file.path);
+            }
+        }
+
+        std::vector<std::future<void>> futures_to_wait;
+        for (auto file: files_to_require) {
+
+            boost::filesystem::path final_path = us.dir;
+            final_path = final_path / "..";
+            final_path = final_path / file.path_to_send;
+
+            file.path = final_path.c_str();
+
+            std::cout << "file.path = " << file.path << std::endl;
+            std::cout << "file.path_to_send = " << file.path_to_send << std::endl;
+
+            std::cout << "file.path is " << file.path << std::endl;
+            futures_to_wait.push_back(c.require_file(file));
+            //c.require_file(file).get();
+        }
+
+        for (auto& future: futures_to_wait) {
+            future.get();
+        }
+
+        std::cout << "Restore completato con successo " << std::endl;
+        std::cout << "Verrà ripetuto tra " << (RESTORE_INTERVAL / 1000) << " secondi" << std::endl;
+        std::this_thread::sleep_for(std::chrono::milliseconds(RESTORE_INTERVAL));
+
+
+
         return 0;
     }
     if (command == "signup") { // TODO: implementare
+        UserSession us;
+        if (parse_signup_options(argc, argv, us)) return 0;
+        init_connection(us);
+
+
         return 0;
     }
+
+    std::cout << "The command " << command << " is not valid " << std::endl;
 }
 
 
@@ -191,7 +232,7 @@ int main(int argc, char** argv) {
 // REQRTREE
 // REQRTREE FILEHASH ABC9 <HASH> FILEPATH 0123 <FULL PATH> FILEHASH A123 <HASH> FILEPATH FILEHASH
 
-// POSTFILE FILEPATH 0123 <FULL PATH> FILEDATA <FULL DATA> FILEHASH A123 <HASH> 
+// POSTFILE FILEPATH 0123 <FULL PATH> FILEDATA <FULL DATA> FILEHASH A123 <HASH>
 // POSTFILE __RESULT 0002 OK
 
 // REMVFILE FILEPATH 0123 <FULL PATH>
@@ -213,9 +254,14 @@ int main(int argc, char** argv) {
 // ./b.txt  DEF234                 ./b.txt  0DE1FF
 // ./c.txt  FGH129                 ./d.txt  0D032F
 
-
+// in caso di sync
 // toRemove = [d.txt];
 // toPost = [b.txt, c.txt];
+
+// in caso di restore
+// toRemove = [c.txt];
+// toRequire = [b.txt, d.txt]
+
 
 
 // - analizza le cartelle sul file system locale del client, lo confronta con l'albero ottenuto del server e crea due array:
@@ -230,3 +276,10 @@ int main(int argc, char** argv) {
 
 // - boost asio
 // - impl. comandi
+
+
+// us.dir: ../client/cris_dir
+// file.path_to_send: /cris_dir/
+
+// file.path:
+#pragma clang diagnostic pop
