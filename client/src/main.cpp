@@ -18,7 +18,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 #define SYNCH_INTERVAL 1000
-#define RESTORE_INTERVAL 1000
 
 void die(std::string message) {
     std::cout << message << std::endl;
@@ -101,7 +100,6 @@ int main(int argc, char** argv) {
             std::cout << file.path << std::endl;
         }
 
-        sleep(2);
 
 
         std::vector<std::future<bool>> futures_to_wait;
@@ -189,16 +187,23 @@ int main(int argc, char** argv) {
         std::vector<std::future<void>> futures_to_wait;
         for (auto file: files_to_require) {
 
-            boost::filesystem::path final_path = us.dir;
-            final_path = final_path / "..";
-            final_path = final_path / file.path_to_send;
+//            boost::filesystem::path final_path = us.dir;
+//            final_path = final_path / "..";
+//            final_path = final_path / file.path_to_send;
+//
+//            file.path = final_path.c_str();
 
-            file.path = final_path.c_str();
+            int count = 0;
+            size_t index = 0;
+            for (;; index++) {
+                if (file.path_to_send[index] == '/') count++;
+                if (count == 2) break;
+            }
+            file.path = us.dir + file.path_to_send.substr(index);
 
             std::cout << "file.path = " << file.path << std::endl;
             std::cout << "file.path_to_send = " << file.path_to_send << std::endl;
 
-            std::cout << "file.path is " << file.path << std::endl;
             futures_to_wait.push_back(c.require_file(file));
             //c.require_file(file).get();
         }
@@ -208,10 +213,6 @@ int main(int argc, char** argv) {
         }
 
         std::cout << "Restore completato con successo " << std::endl;
-        std::cout << "Verrà ripetuto tra " << (RESTORE_INTERVAL / 1000) << " secondi" << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(RESTORE_INTERVAL));
-
-
 
         return 0;
     }
@@ -288,6 +289,12 @@ int main(int argc, char** argv) {
 
 // - boost asio
 // - impl. comandi
+
+// ../client/cris_dir2/cris_dir/..
+//
+// /cris_dir/banana.txt
+
+// ../client/cris_dir2/../cris_dir/banana.txt
 
 
 // us.dir: ../client/cris_dir

@@ -25,7 +25,7 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
         int port = vm["port"].as<int>();
         us.username = std::move(username);
         us.password = std::move(password);
-        us.dir = std::move(dir);
+        us.dir = std::move(dir); // TODO: controllare che la cartella esista
         us.address = std::move(address);
         us.port = std::move(port);
         return 0;
