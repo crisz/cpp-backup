@@ -91,6 +91,19 @@ int main(int argc, char** argv) {
             std::make_move_iterator((*changed_files).end())
          );
 
+        std::cout<<"FILES TO POST"<<std::endl;
+        for (auto file: files_to_post) {
+            std::cout << file.path << std::endl;
+        }
+
+        std::cout<<"FILES TO REMOVE"<<std::endl;
+        for (auto file: files_to_remove) {
+            std::cout << file.path << std::endl;
+        }
+
+        sleep(2);
+
+
         std::vector<std::future<bool>> futures_to_wait;
 
         for (auto fm_rm: files_to_remove) {
@@ -105,7 +118,6 @@ int main(int argc, char** argv) {
             std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
         }
 
-        std::cout<<"FILES TO POST"<<std::endl;
         futures_to_wait.clear();
         for(auto fm_po: files_to_post){
             std::cout<< fm_po.path_to_send <<std::endl;

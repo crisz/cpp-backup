@@ -48,6 +48,10 @@ public:
 
     std::array<std::shared_ptr<std::vector<FileMetadata>>, 3> compare(std::vector<FileMetadata>& server_tree) {
 
+        std::cout << "printing local tree vect" << std::endl;
+        for (auto file: local_tree_vect) {
+            std::cout << "file in local tree vect " << file.path << std::endl;
+        }
             auto set_intersection = [ this ](FileMetadata& fm) {
                 for (auto el: this->local_tree_vect) {
                     if (el.path_to_send == fm.path) return true;
@@ -57,6 +61,10 @@ public:
 
             std::vector<FileMetadata> intersection;
             std::copy_if(server_tree.begin(), server_tree.end(), back_inserter(intersection), set_intersection);
+            std::cout << "printing intersection" << std::endl;
+            for (auto file: intersection) {
+                std::cout << "file in intersection " << file.path << std::endl;
+            }
 
             auto is_file_new = [&intersection](FileMetadata& fm) {
                 for (auto el: intersection) {
@@ -79,18 +87,14 @@ public:
                 return true;
             };
 
-
-            std::vector<FileMetadata> local_trees_vect;
-
-
             std::array<std::shared_ptr<std::vector<FileMetadata>>, 3> ret_arr;
 
             std::shared_ptr<std::vector<FileMetadata>> new_files = std::make_shared<std::vector<FileMetadata>>();
-            std::copy_if(local_trees_vect.begin(), local_trees_vect.end(), back_inserter(*new_files), is_file_new);
+            std::copy_if(local_tree_vect.begin(), local_tree_vect.end(), back_inserter(*new_files), is_file_new);
             ret_arr[0] = std::move(new_files);
 
             std::shared_ptr<std::vector<FileMetadata>> changed_files = std::make_shared<std::vector<FileMetadata>>();
-            std::copy_if(local_trees_vect.begin(), local_trees_vect.end(), back_inserter(*changed_files), is_file_changed);
+            std::copy_if(local_tree_vect.begin(), local_tree_vect.end(), back_inserter(*changed_files), is_file_changed);
             ret_arr[1] = std::move(changed_files);
 
             std::shared_ptr<std::vector<FileMetadata>> removed_files = std::make_shared<std::vector<FileMetadata>>();

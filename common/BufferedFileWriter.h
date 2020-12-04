@@ -62,11 +62,11 @@ public:
     BufferedFileWriter(BufferedFileWriter& bfm) = delete;
     BufferedFileWriter(BufferedFileWriter&& bfm) = delete;
 
-    void append(char* buffer, int size) {
-        // return std::async([this, buffer, size] () { // TODO
-        std::cout << "writing chunk on " << file_path << std::endl;
-        stream.write(buffer, size);
-        // });
+    std::future<void> append(char* buffer, int size) {
+        return std::async([this, buffer, size] () { // TODO
+            std::cout << "writing chunk on " << file_path << std::endl;
+            stream.write(buffer, size);
+        });
     }
 
 };
