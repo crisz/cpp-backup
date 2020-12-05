@@ -217,7 +217,7 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    if (command == "signup") { // TODO: implementare
+    if (command == "signup") {
         UserSession us;
         if (parse_signup_options(argc, argv, us)) return 0;
         init_connection(us);

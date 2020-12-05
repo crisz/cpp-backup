@@ -25,7 +25,11 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
         int port = vm["port"].as<int>();
         us.username = std::move(username);
         us.password = std::move(password);
-        us.dir = std::move(dir); // TODO: controllare che la cartella esista
+        if(!boost::filesystem::exists(dir)){
+            std::cout << "ERRORE: La cartella specificata non esiste! " << std::endl;
+            return -1;
+        }
+        us.dir = std::move(dir);
         us.address = std::move(address);
         us.port = std::move(port);
         return 0;

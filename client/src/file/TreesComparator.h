@@ -23,17 +23,16 @@ public:
     TreesComparator(std::string current_path) : current_path{current_path}{
         std::cout << "current path is " << current_path << std::endl;
         for(auto &file : boost::filesystem::recursive_directory_iterator(current_path)) {
-
+            if(!boost::filesystem::is_regular_file(file.path())){
+                continue;
+            }
             FileMetadata fm;
             fm.path = file.path().string();
 
             std::size_t found = current_path.find_last_of("/\\");
-            std::string dir = current_path.substr(found);
+            std::string filename = fm.path.substr(found);
 
-            std::size_t found2 = fm.path.find_last_of("/\\");
-            std::string filename = fm.path.substr(found2);
-
-            std::string path_to_send = dir + filename;
+            std::string path_to_send = filename;
 
             fm.path_to_send = path_to_send;
             fm.hash = hash_file(fm.path);

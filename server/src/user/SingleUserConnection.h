@@ -208,6 +208,7 @@ private:
         oss << &buffer;
         std::string parameter_value = oss.str();
 
+
         currentCommand.addParameter(parameter_name, parameter_value);
         std::cout << "value for parameter " << parameter_name << " is " <<  currentCommand.getParameters()[parameter_name]<< std::endl;
         this->put_on_read_parameter_name();

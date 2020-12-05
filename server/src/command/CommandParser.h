@@ -34,6 +34,8 @@
 #include <common/BufferedFileWriter.h>
 #include <server/src/pool/ServerCommand.h>
 
+#define BUFFER_SIZE 1024
+
 using boost::asio::ip::tcp;
 
 class CommandParser {
@@ -42,6 +44,7 @@ private:
 
     std:: string get_file_path(tcp::socket& socket, ServerCommand& command) {
         auto parameters = command.getParameters();
+
         std::string dest_dir = ServerConf::get_instance().dest;
         SessionContainer& sc = SessionContainer::get_instance();
         UserData ud = sc.get_user_data(socket);
@@ -144,7 +147,7 @@ public:
             std::cout << "file path is " << file_path << std::endl;
 
             std::cout << "constructing bfr "  << std::endl;
-            BufferedFileReader bfr{10, file_path}; // TODO: mettere in una costante (mettere 1024)
+            BufferedFileReader bfr{BUFFER_SIZE, file_path};
             std::cout << "bfr constructed"  << std::endl;
 
             std::cout << "sending command name" << std::endl;
