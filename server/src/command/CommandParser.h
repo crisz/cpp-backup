@@ -115,7 +115,6 @@ public:
                 parameters.push_back(std::pair<std::string, std::string>("FILEHASH", file_hash));
                 parameters.push_back(std::pair<std::string, std::string>("FILEPATH", file_path));
             }
-
             md.dispatch(command_name, parameters);
             command.clear();
             return;

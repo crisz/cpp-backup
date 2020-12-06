@@ -1,3 +1,9 @@
+//
+// Classe che si occupa del monitoraggio continuo della cartella specificata dall'utente
+// e agisce in modo opportuno in caso di modifiche
+//
+
+
 #pragma once
 #include <experimental/filesystem>
 #include <chrono>
@@ -8,7 +14,6 @@
 #include <iostream>
 #include <boost/filesystem.hpp>
 
-
  enum class FileStatus {created, modified, erased};
 
  class FileWatcher {
@@ -16,7 +21,6 @@
      std::unordered_map<std::string, std::time_t> paths_;
      bool running_ = true;
 
-     // Check if "paths_" contains a given key
      bool contains(const std::string &key);
 
  public:

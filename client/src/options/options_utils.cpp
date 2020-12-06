@@ -3,6 +3,9 @@
 //
 
 #include "options_utils.h"
+
+// Funzione che si occupa della stampa a video e della successiva gestione delle opzioni inserite dall'utente
+// nel caso in cui il comando inserito sia "sync"
 int parse_sync_options(int argc, char** argv, UserSession& us) {
     po::options_description desc("Allowed options");
     desc.add_options()
@@ -51,10 +54,14 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
     }
 }
 
+// Funzione che si occupa della stampa a video e della successiva gestione delle opzioni inserite dall'utente
+// nel caso in cui il comando inserito sia "restore"
 int parse_restore_options(int argc, char** argv, UserSession& us) {
     return parse_sync_options(argc, argv, us);
 }
 
+// Funzione che si occupa della stampa a video e della successiva gestione delle opzioni inserite dall'utente
+// nel caso in cui il comando inserito sia "signup"
 int parse_signup_options(int argc, char** argv, UserSession& us) {
     po::options_description desc("Allowed options");
     desc.add_options()

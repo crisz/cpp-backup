@@ -1,12 +1,17 @@
 //
 // Created by Andrea Vara on 27/11/20.
 //
+// Classa che wrappa la classe FileWatcher ed esegue le operazioni necessarie per mantenere sincronizata
+// la cartella locale con quella del serve
+//
 
 #include "SyncFileWatcher.h"
 #include "common/hash_file.h"
 
 SyncFileWatcher::SyncFileWatcher(FileWatcher &fw, ClientCommand &c): fw{fw}, c{c} {}
 
+// Questa funzione setta la callback che gestisce le azioni necessarie in base al tipo di evento
+// (modifica, creazione o cancellazione) avvenuto.
 void SyncFileWatcher::run() {
     this->fw.on_file_changed([this](std::string path_matched, FileStatus status) -> void {
         if (!boost::filesystem::is_regular_file(boost::filesystem::path(path_matched)) && status != FileStatus::erased) {
