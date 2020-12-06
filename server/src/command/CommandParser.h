@@ -1,3 +1,8 @@
+//
+// Classe che si occupa dell'interpretazione di un comando ricevuto, attua le azione necessarie e indine invoca la distach
+// in modo da mandare una risposta al client.
+//
+
 #pragma once
 
 #include "server/src/user/SingleUserConnection.h"
@@ -44,7 +49,6 @@ private:
 
     std:: string get_file_path(tcp::socket& socket, ServerCommand& command) {
         auto parameters = command.getParameters();
-
         std::string dest_dir = ServerConf::get_instance().dest;
         SessionContainer& sc = SessionContainer::get_instance();
         UserData ud = sc.get_user_data(socket);
@@ -73,7 +77,6 @@ public:
                     std::cout << username << " si è connesso al server. Ci sono " << sc.get_number_users_connected() << " utenti connessi " << std::endl;
                     sc.set_user_data(socket, ud);
                 }
-
                 md.dispatch(command_name,result_map);
                 command.clear();
             } else error();
@@ -210,7 +213,6 @@ public:
     void error(){
         std::cout << "Errore nel comando " << std::endl; // TODO
     }
-    void sendResult(std::string & r){}
 
     std::string sendTree(std::string const& path) {
         std::map<std::string, std::string> local_tree;
@@ -222,7 +224,7 @@ public:
         return buffer;
     }
 
-    void rollback_command(tcp::socket& socket, ServerCommand& command){
+    void rollback_command(tcp::socket& socket, ServerCommand& command){ //TODO: quando dovrebbe essere richiamata?
         if(command.get_command_name() == "POSTFILE"){
             std::string file_path = get_file_path(socket, command);
             RemovalManager rm;

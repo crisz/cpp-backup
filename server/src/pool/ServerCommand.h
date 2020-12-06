@@ -1,3 +1,6 @@
+//
+// Classe contente tutte le informazioni relative al comando ricevuto o inviato dal server.
+//
 #pragma once
 
 #include "server/src/user/SingleUserConnection.h"
@@ -9,7 +12,7 @@
 #include "server/src/user/MessageDispatcher.h"
 #include "common/Constants.h"
 
-class ServerCommand {
+class ServerCommand { //TODO: non andrebbe spostata in command?
 private:
     std::string command_name;
     std::map<std::string, std::string> parameters;

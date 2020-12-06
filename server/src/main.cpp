@@ -26,6 +26,8 @@ int parse_options(int argc, char** argv) {
     ;
     po::variables_map vm;
     try {
+        //Di seguito si ottiene l'istanza di ServerConf e si settano la porta e la cartella dest
+        //tramite i valori passati come argomento al main
         ServerConf& sc = ServerConf::get_instance();
         auto clp = po::command_line_parser(argc, argv).options(desc);
         po::store(clp.run(), vm);
@@ -37,9 +39,11 @@ int parse_options(int argc, char** argv) {
             sc.dest = sc.dest + '/';
         }
 
+        //Se la cartella specificata non esiste o non è possibile aprirla in scrittura, il server temina.
         if (!check_dest_dir(sc.dest)) 
             die("La cartella " + sc.dest + " non esiste o non è possibile aprirla in scrittura.");
         return 0;
+
     } catch (po::error& e) {
         if (!vm.count("help")) {
             std::cout << "Comando non valido " << std::endl;

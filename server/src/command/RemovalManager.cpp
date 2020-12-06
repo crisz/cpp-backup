@@ -6,7 +6,6 @@
 
 std::future<bool> RemovalManager::remove_file(std::string path) {
     return std::async([&path]() {
-        std::string dest = ServerConf::get_instance().dest;
         if(boost::filesystem::exists(path)){
             if(boost::filesystem::remove(path)){
                 std::cout<<"Rimozione file path: " <<path<<std::endl;
@@ -16,7 +15,6 @@ std::future<bool> RemovalManager::remove_file(std::string path) {
                 while(true){
                     std::size_t found = dir_path.find_last_of("/\\");
                     dir_path = dir_path.substr(0,found);
-                    std::cout<<"$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$"<<dir_path<<std::endl;
                     if(boost::filesystem::is_empty(dir_path)){
                         boost::filesystem::remove(dir_path);
                     }else break;

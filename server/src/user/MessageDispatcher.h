@@ -1,5 +1,6 @@
 //
 // Created by giuseppe on 08/11/20.
+// Classe che permette l'invio dei comandi e dei relativi parametri dal server verso il client
 //
 
 #pragma once

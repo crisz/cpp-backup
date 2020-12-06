@@ -16,7 +16,6 @@
 #include "common/encode_length_utils.h"
 
 
-
 using boost::asio::ip::tcp;
 
 class SingleUserConnection : public std::enable_shared_from_this<SingleUserConnection> { // TODO: splittare in ServerSocketManager (che contiene tutte le scritture e le letture)
@@ -25,7 +24,6 @@ class SingleUserConnection : public std::enable_shared_from_this<SingleUserConne
     boost::asio::streambuf buffer;
     ServerCommand currentCommand;
     CommandParser commandParser;
-
 
 public:
     typedef std::shared_ptr<SingleUserConnection> pointer;
@@ -133,7 +131,6 @@ public:
     }
 
 
-
 private:
     SingleUserConnection(boost::asio::thread_pool& io_context) : socket(io_context) {}
 
@@ -207,7 +204,6 @@ private:
         std::ostringstream oss;
         oss << &buffer;
         std::string parameter_value = oss.str();
-
 
         currentCommand.addParameter(parameter_name, parameter_value);
         std::cout << "value for parameter " << parameter_name << " is " <<  currentCommand.getParameters()[parameter_name]<< std::endl;
