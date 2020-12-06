@@ -5,18 +5,22 @@
 #include <string>
 #include "server/src/user/UserData.h"
 #include <iostream>
+//
+// Classe SINGLETON che contiene le informazioni relative a tutti gli utenti connessi (tramite le socket).
+//
 
+#pragma once
 using boost::asio::ip::tcp;
 
-class SessionContainer {
+class ConnectionsContainer {
 private:
-    SessionContainer(SessionContainer& source) = delete;
-    SessionContainer(SessionContainer&& source) = delete;
-    SessionContainer(){}
+    ConnectionsContainer(ConnectionsContainer& source) = delete;
+    ConnectionsContainer(ConnectionsContainer&& source) = delete;
+    ConnectionsContainer(){}
 
     std::map<tcp::socket*, UserData> container;
 public:
-    static SessionContainer& get_instance();
+    static ConnectionsContainer& get_instance();
 
     UserData& get_user_data(tcp::socket& socket);
 

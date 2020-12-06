@@ -1,3 +1,6 @@
+//
+// Classe che gestisce la scrittura del file bufferizzato
+//
 #pragma once
 #include <string>
 #include <fstream>
@@ -5,15 +8,15 @@
 #include <future>
 #include <boost/filesystem.hpp>
 
+// Classe User defined che estende std::exception per la gestione degli errori in fase di scrittura
 class BufferedFileWriterException : public std::exception {
 private:
     std::string message;
 public:
     int code;
-    BufferedFileWriterException(std::string&& message, int code=0): message{message}, code{code} {};
-	const char* what() const throw(){
-    	return ("An exception occurred in BufferedFileWriter: " + message).c_str();
-    }
+    BufferedFileWriterException(std::string&& message, int code=0);
+
+	const char* what() const throw();
 };
 
 class BufferedFileWriter {
@@ -21,53 +24,13 @@ private:
     std::string file_path;
     std::ofstream stream;
 public:
-    BufferedFileWriter(std::string file_path, long file_size): file_path{file_path} {
-
-        std::size_t found = file_path.find_last_of("/\\");
-        std::string path = file_path.substr(0, found);
-        boost::filesystem::path dir(path);
-
-        if (!(boost::filesystem::exists(dir))) { // TODO: chi ce lo dice che la cartella debba esserci sempre?
-            std::cout << "Doesn't Exists" << std::endl;
-            if (boost::filesystem::create_directories(dir)) {
-                std::cout << "....Successfully Created !" << std::endl;
-            } else {
-                throw BufferedFileWriterException("Cannot create file " + file_path, -2);
-            }
-        }
-
-        if (boost::filesystem::exists(file_path)) {
-            std::cout<<"File già esistente, lo rimuovo!"<<std::endl;
-
-            if (boost::filesystem::remove(file_path)) {
-                std::cout<<"File rimosso con successo!"<<std::endl;
-            } else {
-                throw BufferedFileWriterException("Cannot delete file " + file_path, -3);
-           }
-        }
-
-        stream = std::ofstream {file_path, std::ios::out | std::ios::binary | std::ios::app};
-
-        if (stream.fail()) {
-            stream.close();
-            throw BufferedFileWriterException("File " + file_path + " does not exist", -1);
-        }
-
-    }
-
-    // ~BufferedFileWriter() {
-        //Non c'è bisogno di chiudere lo stream in qunato lo fa da solo non appena esce dallo scope
-    // }
+    BufferedFileWriter(std::string file_path, long file_size);
 
     BufferedFileWriter(BufferedFileWriter& bfm) = delete;
+
     BufferedFileWriter(BufferedFileWriter&& bfm) = delete;
 
-    std::future<void> append(char* buffer, int size) {
-        return std::async([this, buffer, size] () {
-            std::cout << "writing chunk on " << file_path << std::endl;
-            stream.write(buffer, size);
-        });
-    }
+    std::future<void> append(char* buffer, int size);
 
 };
 

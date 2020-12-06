@@ -10,7 +10,7 @@
 #include <memory>
 #include "common/Constants.h"
 #include "common/encode_length_utils.h"
-#include "server/src/command/SessionContainer.h"
+#include "server/src/pool/ConnectionsContainer.h"
 #include "UserData.h"
 #include "server/src/pool/ServerConf.h"
 using boost::asio::ip::tcp;

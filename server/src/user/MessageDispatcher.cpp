@@ -7,7 +7,7 @@
 
 //Il costruttore ottiene tutte le informazioni dell'utente associato alla socket corrente
 MessageDispatcher::MessageDispatcher(tcp::socket& socket) {
-    this->ud = SessionContainer::get_instance().get_user_data(socket);
+    this->ud = ConnectionsContainer::get_instance().get_user_data(socket);
 }
 
 //Le tre funzioni distach seguenti si occupano dell'invio dei comandi e dei paramentri verso il client

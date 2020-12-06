@@ -1,9 +1,12 @@
 //
 // Created by Andrea Vara on 21/11/20.
 //
+// Classe che si occupa della rimozione dei FILE
+//
 
 #include "server/src/command/RemovalManager.h"
 
+// Funzione asincrona che ritorna un future<bool> in base all'esito della rimozione del file.
 std::future<bool> RemovalManager::remove_file(std::string path) {
     return std::async([&path]() {
         if(boost::filesystem::exists(path)){

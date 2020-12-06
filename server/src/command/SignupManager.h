@@ -1,6 +1,8 @@
 //
 // Created by giuseppe on 04/12/20.
 //
+// Classe che serve per la registrazione di nuovi utenti.
+//
 
 #ifndef CPP_BACKUP_SIGNUPMANAGER_H
 #define CPP_BACKUP_SIGNUPMANAGER_H

@@ -7,7 +7,7 @@
 
 #include "server/src/user/SingleUserConnection.h"
 #include "server/src/user/MessageDispatcher.h"
-#include "server/src/pool/ServerCommand.h"
+#include "ServerCommand.h"
 #include "TreeManager.h"
 #include "common/BufferedFileWriter.h"
 #include "common/BufferedFileReader.h"
@@ -15,10 +15,11 @@
 #include <map>
 #include <boost/asio.hpp>
 #include <memory>
-#include "SessionContainer.h"
+#include "server/src/pool/ConnectionsContainer.h"
 #include "server/src/user/UserData.h"
 #include "server/src/pool/ServerConf.h"
 #include "RemovalManager.h"
+#include "SignupManager.h"
 
 // LOGINSNC USERNAME _jD1 PEPPE PASSWORD 003 ABC STOPFLOW
 // LOGINSNC __RESULT 0002 OK STOPFLOW
@@ -37,7 +38,7 @@
 
 #include <boost/asio/ip/tcp.hpp>
 #include <common/BufferedFileWriter.h>
-#include <server/src/pool/ServerCommand.h>
+#include <server/src/command/ServerCommand.h>
 
 #define BUFFER_SIZE 1024
 
@@ -45,12 +46,13 @@ using boost::asio::ip::tcp;
 
 class CommandParser {
 private:
-    BufferedFileWriter* bfw;
+    BufferedFileWriter* bfw; //TODO : @cris perchè un puntatore nativo?
 
+    // Serve per ottenere il path locale di un file relativo alla directory associata ad un utente lato server
     std:: string get_file_path(tcp::socket& socket, ServerCommand& command) {
         auto parameters = command.getParameters();
         std::string dest_dir = ServerConf::get_instance().dest;
-        SessionContainer& sc = SessionContainer::get_instance();
+        ConnectionsContainer& sc = ConnectionsContainer::get_instance();
         UserData ud = sc.get_user_data(socket);
         std::string file_path = dest_dir+ud.username+parameters[FILEPATH];
         return file_path;
@@ -58,10 +60,13 @@ private:
 
 public:
 
+    // Si occupa dell'interpretazione di un comando ricevuto, attua le azione necessarie e indine invoca la distach
+    // in modo da mandare una risposta al client.
     void digest(tcp::socket& socket, ServerCommand& command) {
         std::string command_name=command.get_command_name();
         MessageDispatcher md{socket};
         auto parameters = command.getParameters();
+
         if (command_name == LOGINSNC) {
             if(parameters.find(USERNAME) != parameters.end() && parameters.find(PASSWORD) != parameters.end()){
                 LoginManager lm;
@@ -71,7 +76,7 @@ public:
                 std::map<std::string, std::string> result_map;
                 result_map[__RESULT] = result ? "OK" : "KO";
                 if (result) {
-                    SessionContainer& sc = SessionContainer::get_instance();
+                    ConnectionsContainer& sc = ConnectionsContainer::get_instance();
                     UserData ud = sc.get_user_data(socket);
                     ud.username = username;
                     std::cout << username << " si è connesso al server. Ci sono " << sc.get_number_users_connected() << " utenti connessi " << std::endl;
@@ -82,12 +87,25 @@ public:
             } else error();
             return;
         }
+        if (command_name == "SIGNUPNU") {
+            if(parameters.find(USERNAME) != parameters.end() && parameters.find(PASSWORD) != parameters.end()){
+                SignupManager sm;
+                std::string username = parameters[USERNAME];
+                std::string password = parameters[PASSWORD];
+                bool result = sm.signup(username, password).get();
+                std::map<std::string, std::string> result_map;
+                result_map[__RESULT] = result ? "OK" : "KO";
+                md.dispatch(command_name,result_map);
+                command.clear();
+            } else error();
+            return;
+        }
 
         if (command_name == REQRTREE ){
             TreeManager tm;
             std::cout << boost::filesystem::current_path() << std::endl;
             std::string dest_dir = ServerConf::get_instance().dest;
-            SessionContainer& sc = SessionContainer::get_instance();
+            ConnectionsContainer& sc = ConnectionsContainer::get_instance();
             UserData ud = sc.get_user_data(socket);
             std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir+ud.username).get();
             std::vector<std::pair<std::string, std::string>> parameters;
@@ -107,7 +125,7 @@ public:
                parameters.find(FILEDATA) != parameters.end() &&
                parameters.find(FILEHASH) != parameters.end()){
 
-                // PostFileManager pfm;
+                // PostFileManager pfm;//TODO : si può levare questa parte commentata?
                 std::string file_path = parameters[FILEPATH];
                 std::string file_data = parameters[FILEDATA];
                 std::string file_hash = parameters[FILEHASH];

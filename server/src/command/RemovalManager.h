@@ -1,6 +1,8 @@
 //
 // Created by Andrea Vara on 21/11/20.
 //
+// Classe che si occupa della rimozione dei FILE
+//
 
 #ifndef CPP_BACKUP_REMOVALMANAGER_H
 #define CPP_BACKUP_REMOVALMANAGER_H

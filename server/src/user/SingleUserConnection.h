@@ -7,11 +7,11 @@
 #include <string>
 #include <memory>
 #include <arpa/inet.h>
-#include "server/src/pool/ServerCommand.h"
+#include "server/src/command/ServerCommand.h"
 #include "common/hash_file.h"
 #include "server/src/command/CommandParser.h"
 #include <tgmath.h>
-#include "server/src/command/SessionContainer.h"
+#include "server/src/pool/ConnectionsContainer.h"
 #include "UserData.h"
 #include "common/encode_length_utils.h"
 
@@ -152,7 +152,7 @@ private:
         std::string message_name = parameter.substr(0, 8);
         if(message_name.compare("STOPFLOW")==0){
             std::cout<<"Fine comando raggiunto"<<std::endl;
-            SessionContainer& sc=SessionContainer::get_instance();
+            ConnectionsContainer& sc=ConnectionsContainer::get_instance();
             UserData ud;
             if(sc.get_user_data(socket).username!="") ud.username= sc.get_user_data(socket).username;
 
@@ -162,7 +162,7 @@ private:
             ud.send_raw_response_callback = [this](const char* message, int size) {
                 this->send_response(message, size);
             };
-            SessionContainer::get_instance().set_user_data(socket,ud);
+            ConnectionsContainer::get_instance().set_user_data(socket, ud);
             commandParser.digest(socket, currentCommand);
             this->put_on_read_command();
             return;
@@ -241,7 +241,7 @@ private:
         if(currentCommand.get_command_name()=="POSTFILE"){
            // remove_file();
             std::string dest_dir = ServerConf::get_instance().dest;
-            SessionContainer& sc = SessionContainer::get_instance();
+            ConnectionsContainer& sc = ConnectionsContainer::get_instance();
             UserData ud = sc.get_user_data(socket);
             RemovalManager rm;
             auto result=rm.remove_file(dest_dir+ud.username+currentCommand.getParameters()[FILEPATH]).get();
@@ -267,7 +267,7 @@ private:
 
     void handle_disconnection(){
         std::cout << "Il cliente ha chiuso la connessione" << std::endl;
-        SessionContainer::get_instance().remove_user(socket);
+        ConnectionsContainer::get_instance().remove_user(socket);
     }
 
 };

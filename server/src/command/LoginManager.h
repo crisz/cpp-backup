@@ -1,6 +1,8 @@
 //
 // Created by giuseppe on 08/11/20.
 //
+// Classe che si occupa della gestione del login
+//
 
 #ifndef CPP_BACKUP_LOGINMANAGER_H
 #define CPP_BACKUP_LOGINMANAGER_H

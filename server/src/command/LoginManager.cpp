@@ -1,9 +1,12 @@
 //
 // Created by giuseppe on 08/11/20.
 //
+// Classe che si occupa della gestione del login
+//
 
 #include "LoginManager.h"
 
+// Funzione asincrona che ritorna un future<bool> in base all'esito del login.
 std::future<bool> LoginManager::check_login(std::string username, std::string password) {
     return std::async([&username, &password]() {
         MD5 md5(password);

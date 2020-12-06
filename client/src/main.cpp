@@ -228,7 +228,8 @@ int main(int argc, char** argv) {
 
         if (!signup_result) die("Signup failed!");
 
-        std::cout<<"La registrazione è andata a buon fine! Benvenuto!"<< std::endl;
+        std::cout<<"La registrazione è andata a buon fine! Benvenuto!\n"
+                   "Effettua l'accesso per accedere al servizio."<< std::endl;
 
         return 0;
     }

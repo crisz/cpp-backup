@@ -12,7 +12,7 @@
 #include "server/src/user/MessageDispatcher.h"
 #include "common/Constants.h"
 
-class ServerCommand { //TODO: non andrebbe spostata in command?
+class ServerCommand {
 private:
     std::string command_name;
     std::map<std::string, std::string> parameters;

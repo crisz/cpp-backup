@@ -1,6 +1,8 @@
 //
 // Created by Andrea Vara on 10/11/2020.
 //
+// Classe che si occupa della generazione del local tree della cartella associata all'utente corrente.
+//
 
 #ifndef CPP_BACKUP_TREEMANAGER_H
 #define CPP_BACKUP_TREEMANAGER_H

@@ -1,9 +1,12 @@
 //
 // Created by giuseppe on 04/12/20.
 //
+// Classe che serve per la registrazione di nuovi utenti.
+//
 
 #include "SignupManager.h"
 
+// Funzione asincrona che ritorna un future<bool> in base all'esito della registrazione dell'utente.
 std::future<bool> SignupManager::signup(std::string username, std::string password) {
     return std::async([&username, &password]() {
         MD5 md5(password);
