@@ -1,3 +1,4 @@
+// TODO @cris commentalo per bene
 #include "encode_length_utils.h"
 
 char* encode_length(long size) {

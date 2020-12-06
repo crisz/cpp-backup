@@ -4,6 +4,7 @@
 
 #define BUFFER_SIZE 128
 
+// Funzione che ritorna l'hash del contenuto di un file
 std::string hash_file(std::string path) {
     MD5 md5;
     FILE *fp = fopen(path.c_str(), "r");
