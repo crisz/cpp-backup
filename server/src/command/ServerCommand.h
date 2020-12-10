@@ -3,7 +3,6 @@
 //
 #pragma once
 
-#include "server/src/user/SingleUserConnection.h"
 #include <string>
 #include <map>
 #include <boost/filesystem.hpp>
@@ -19,20 +18,20 @@ private:
 
 public:
 
-    void setName(std::string name){
-        command_name=name;
+    void set_name(std::string name){
+        command_name = name;
     }
-    void addParameter(std::string par_name, std::string par_value){
+    void add_parameter(std::string par_name, std::string par_value){
         parameters.insert(std::pair<std::string, std::string>(par_name, par_value));
     }
     std::string get_command_name(){
         return command_name;
     }
-    std::map<std::string, std::string> getParameters(){
+    std::map<std::string, std::string> get_parameters(){
         return parameters;
     }
-    void clear (){
-        command_name="";
+    void clear() {
+        command_name = "";
         parameters.clear();
     }
 

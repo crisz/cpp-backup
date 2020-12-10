@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="CMakeWorkspace" PROJECT_DIR="$PROJECT_DIR$" />
+  <component name="CidrRootsConfiguration">
+    <sourceRoots>
+      <file path="$PROJECT_DIR$/client/src" />
+      <file path="$PROJECT_DIR$/common" />
+      <file path="$PROJECT_DIR$/server/src" />
+      <file path="$PROJECT_DIR$/server/src/command" />
+      <file path="$PROJECT_DIR$/server/src/options" />
+      <file path="$PROJECT_DIR$/server/src/pool" />
+      <file path="$PROJECT_DIR$/server/src/user" />
+    </sourceRoots>
+  </component>
   <component name="JavaScriptSettings">
     <option name="languageLevel" value="ES6" />
   </component>

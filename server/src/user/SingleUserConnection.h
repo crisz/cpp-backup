@@ -9,7 +9,7 @@
 #include <arpa/inet.h>
 #include "server/src/command/ServerCommand.h"
 #include "common/hash_file.h"
-#include "server/src/command/CommandParser.h"
+#include "../command/CommandParser.h"
 #include <tgmath.h>
 #include "server/src/pool/ConnectionsContainer.h"
 #include "UserData.h"
@@ -22,7 +22,7 @@ class SingleUserConnection : public std::enable_shared_from_this<SingleUserConne
                     // e CommandEncoder/CommandHandler/altro che contiene gli handle (handle_write, handle_read) e che utilizza il ServerSocketManager
     tcp::socket socket;
     boost::asio::streambuf buffer;
-    ServerCommand currentCommand;
+    ServerCommand current_command;
     CommandParser commandParser;
 
 public:
@@ -55,7 +55,7 @@ public:
     }
 
     void put_on_read_command() {
-        currentCommand.clear();
+        current_command.clear();
         auto on_read = boost::bind(&SingleUserConnection::handle_read_command, shared_from_this(),
                                             boost::asio::placeholders::error,
                                             boost::asio::placeholders::bytes_transferred);
@@ -85,7 +85,7 @@ public:
         int number_of_reads = ceil((double)file_size/(double)buffer_size);
         std::cout << "start send file with size " << file_size << std::endl;
 
-        this->commandParser.start_send_file(socket, file_size, currentCommand);
+        this->commandParser.start_send_file(socket, file_size, current_command);
 
         std::cout << "send file started" << std::endl;
 
@@ -114,7 +114,7 @@ public:
             }
 
             std::cout << "end of read from client " << std::endl;
-            this->commandParser.end_send_file(socket, currentCommand);
+            this->commandParser.end_send_file(socket, current_command);
 
             // ignoriamo il valore poiché è sempre STOPFLOW0000.
             boost::asio::read(socket, boost::asio::buffer(_buffer,12), boost::asio::transfer_exactly(12), ec);
@@ -126,8 +126,6 @@ public:
             this->send_response("STOPFLOW");
             this->send_response(encode_length(0), 4);
             this->put_on_read_command();
-        // });
-        // t.detach();
     }
 
 
@@ -163,7 +161,7 @@ private:
                 this->send_response(message, size);
             };
             ConnectionsContainer::get_instance().set_user_data(socket, ud);
-            commandParser.digest(socket, currentCommand);
+            commandParser.digest(socket, current_command);
             this->put_on_read_command();
             return;
         }
@@ -205,8 +203,8 @@ private:
         oss << &buffer;
         std::string parameter_value = oss.str();
 
-        currentCommand.addParameter(parameter_name, parameter_value);
-        std::cout << "value for parameter " << parameter_name << " is " <<  currentCommand.getParameters()[parameter_name]<< std::endl;
+        current_command.add_parameter(parameter_name, parameter_value);
+        std::cout << "value for parameter " << parameter_name << " is " << current_command.get_parameters()[parameter_name] << std::endl;
         this->put_on_read_parameter_name();
     }
 
@@ -223,8 +221,8 @@ private:
         oss << &buffer;
         messageP = oss.str();
 
-        currentCommand.setName(messageP);
-        std::cout << "Message:" << currentCommand.get_command_name() << std::endl;
+        current_command.set_name(messageP);
+        std::cout << "Message:" << current_command.get_command_name() << std::endl;
         if (messageP != "") {
             std::cout << "returning in read parameter name " << std::endl;
             this->put_on_read_parameter_name();
@@ -238,35 +236,26 @@ private:
     void handle_error(const boost::system::error_code& error) {
 
         std::cout << "Error: " << error.message() << "\n";
-        if(currentCommand.get_command_name()=="POSTFILE"){
-           // remove_file();
-            std::string dest_dir = ServerConf::get_instance().dest;
-            ConnectionsContainer& sc = ConnectionsContainer::get_instance();
-            UserData ud = sc.get_user_data(socket);
-            RemovalManager rm;
-            auto result=rm.remove_file(dest_dir+ud.username+currentCommand.getParameters()[FILEPATH]).get();
-            if (result){
-                std::cout<< "La POSTFILE del file "<<ud.username+currentCommand.getParameters()[FILEPATH]<< "è fallita"<< std::endl;
-            }
-        }
 
+        // Disconnessione ordinaria del client. Non è un errore, per cui non viene stampato nulla
         if (error == boost::asio::error::eof) {
             handle_disconnection();
             return;
         }
 
-        std::cout << "Error on command :" << currentCommand.get_command_name() << std::endl;
-        if (currentCommand.getParameters().empty()) {
+        std::cout << "Error on command :" << current_command.get_command_name() << std::endl;
+        if (current_command.get_parameters().empty()) {
             std::cout << "Non ci sono parametri associati al comando"<< std::endl;
         } else {
-            std::cout << "Last parameter read: " << (currentCommand.getParameters().cbegin())->first << " with value : "
-                      << (currentCommand.getParameters().cbegin())->second << std::endl;
+            std::cout << "Ultimo parametro letto: " << (current_command.get_parameters().cbegin())->first << " con valore: "
+                      << (current_command.get_parameters().cbegin())->second << std::endl;
         }
         handle_disconnection();
     }
 
-    void handle_disconnection(){
+    void handle_disconnection() {
         std::cout << "Il cliente ha chiuso la connessione" << std::endl;
+        this->commandParser.rollback_command(socket, this->current_command);
         ConnectionsContainer::get_instance().remove_user(socket);
     }
 
