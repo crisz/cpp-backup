@@ -6,6 +6,7 @@
 #include <thread>
 #include <string>
 #include <memory>
+#include <utility>
 #include <arpa/inet.h>
 #include "server/src/command/ServerCommand.h"
 #include "common/hash_file.h"
@@ -36,7 +37,7 @@ public:
         return socket;
     }
 
-    void send_response(const std::string message) {
+    void send_response(const std::string& message) {
         std::cout << "Sending response " << message << " with length " << message.size() << std::endl;
         auto on_write = boost::bind(&SingleUserConnection::handle_write, shared_from_this(),
                                             boost::asio::placeholders::error,
@@ -75,7 +76,7 @@ public:
         auto on_read = boost::bind(&SingleUserConnection::handle_read_parameter_value, shared_from_this(),
                                     boost::asio::placeholders::error,
                                     boost::asio::placeholders::bytes_transferred,
-                                    parameter_name);
+                                    std::move(parameter_name));
         boost::asio::async_read(socket, buffer, boost::asio::transfer_exactly(n), on_read);
     }
 
@@ -223,7 +224,7 @@ private:
 
         current_command.set_name(messageP);
         std::cout << "Message:" << current_command.get_command_name() << std::endl;
-        if (messageP != "") {
+        if (!messageP.empty()) {
             std::cout << "returning in read parameter name " << std::endl;
             this->put_on_read_parameter_name();
         } else {
@@ -235,7 +236,6 @@ private:
 
     void handle_error(const boost::system::error_code& error) {
 
-        std::cout << "Error: " << error.message() << "\n";
 
         // Disconnessione ordinaria del client. Non è un errore, per cui non viene stampato nulla
         if (error == boost::asio::error::eof) {
@@ -243,9 +243,10 @@ private:
             return;
         }
 
-        std::cout << "Error on command :" << current_command.get_command_name() << std::endl;
+        std::cout << "Errore: " << error.message() << std::endl;
+        std::cout << "Si è verificato un errore nel comando: " << current_command.get_command_name() << std::endl;
         if (current_command.get_parameters().empty()) {
-            std::cout << "Non ci sono parametri associati al comando"<< std::endl;
+            std::cout << "Non erano presenti parametri associati al comando"<< std::endl;
         } else {
             std::cout << "Ultimo parametro letto: " << (current_command.get_parameters().cbegin())->first << " con valore: "
                       << (current_command.get_parameters().cbegin())->second << std::endl;

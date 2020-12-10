@@ -28,13 +28,18 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
         int port = vm["port"].as<int>();
         us.username = std::move(username);
         us.password = std::move(password);
-        if(!boost::filesystem::exists(dir)){
-            std::cout << "ERRORE: La cartella specificata non esiste! " << std::endl;
+        if (!dir.starts_with(".") && !dir.starts_with("/")) {
+            std::cout << "ERRORE: Il percorso della cartella è ambiguo. "
+                         "Specifica un percorso assoluto o relativo!" << std::endl;
+            return -1;
+        }
+        if(!boost::filesystem::exists(dir)) {
+            std::cout << "ERRORE: La cartella specificata non esiste!" << std::endl;
             return -1;
         }
         us.dir = std::move(dir);
         us.address = std::move(address);
-        us.port = std::move(port);
+        us.port = port;
         return 0;
     } catch (po::error& e) {
         if (!vm.count("help")) {
@@ -48,8 +53,7 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
         std::cout << e.what() << std::endl;
         return -1;
     } catch (...) {
-        std::cout << "uncaught" << std::endl;
-        std::cout << *std::current_exception << std::endl;
+        std::cout << "Si è verificato un errore." << std::endl;
         return -1;
     }
 }
@@ -83,7 +87,7 @@ int parse_signup_options(int argc, char** argv, UserSession& us) {
         us.username = std::move(username);
         us.password = std::move(password);
         us.address = std::move(address);
-        us.port = std::move(port);
+        us.port = port;
         return 0;
     } catch (po::error& e) {
         if (!vm.count("help")) {
@@ -97,8 +101,7 @@ int parse_signup_options(int argc, char** argv, UserSession& us) {
         std::cout << e.what() << std::endl;
         return -1;
     } catch (...) {
-        std::cout << "uncaught" << std::endl;
-        std::cout << *std::current_exception << std::endl;
+        std::cout << "Si è verificato un errore." << std::endl;
         return -1;
     }
 }

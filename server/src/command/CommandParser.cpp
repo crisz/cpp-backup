@@ -15,7 +15,17 @@ std::string CommandParser::get_file_path(tcp::socket &socket, ServerCommand &com
     std::string dest_dir = ServerConf::get_instance().dest;
     ConnectionsContainer& sc = ConnectionsContainer::get_instance();
     UserData ud = sc.get_user_data(socket);
-    std::string file_path = dest_dir+ud.username+parameters[FILEPATH];
+
+    int index = 0;
+    int count = 0;
+    for (;; index++) {
+        if (parameters[FILEPATH][index] == '/') count++;
+        if (count == 2) break;
+    }
+
+    std::string user_content_path = "/__user_content__/" + parameters[FILEPATH].substr(index);
+
+    std::string file_path = dest_dir + ud.username + user_content_path ;
     return file_path;
 }
 
@@ -67,12 +77,13 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir+ud.username).get();
         std::vector<std::pair<std::string, std::string>> req_tree_parameters;
         for (const auto& item: tree) {
+            std::cout << "item is " << item.first << " -- " << item.second << std::endl;
             std::string file_path = item.first;
             std::string file_hash = item.second;
             req_tree_parameters.emplace_back("FILEHASH", file_hash);
             req_tree_parameters.emplace_back("FILEPATH", file_path);
         }
-        md.dispatch(command_name, parameters);
+        md.dispatch(command_name, req_tree_parameters);
         command.clear();
         return;
     }

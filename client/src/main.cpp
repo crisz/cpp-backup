@@ -14,9 +14,6 @@
 #include "options/options_utils.h"
 #include "file/SyncFileWatcher.h"
 
-
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wmissing-noreturn"
 #define SYNCH_INTERVAL 1000
 
 void die(std::string message) {
