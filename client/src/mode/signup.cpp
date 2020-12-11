@@ -6,6 +6,6 @@ void signup(UserSession& us) {
 
     if (!signup_result) die("Signup failed!");
 
-    std::cout<<"La registrazione è andata a buon fine! Benvenuto!\n"
+    std::cout << "La registrazione è andata a buon fine! Benvenuto!\n"
                "Effettua l'accesso per accedere al servizio."<< std::endl;
 }

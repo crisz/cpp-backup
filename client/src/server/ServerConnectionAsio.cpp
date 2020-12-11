@@ -32,7 +32,6 @@ void ServerConnectionAsio::init(std::string &address, int port) {
 
 // Funzione che si occupa dell'invio di un messaggio passato come stringa
 void ServerConnectionAsio::send(const std::string &m) {
-    std::cout << "Sending " << m << " with size " << m.size() << std::endl;
     const char* message = (m).c_str();
     boost::system::error_code ec;
     boost::asio::write(s, boost::asio::buffer(message, m.size()),ec);
@@ -43,11 +42,8 @@ void ServerConnectionAsio::send(const std::string &m) {
 
 // Funzione che si occupa dell'invio di un messaggio passato come char*
 void ServerConnectionAsio::send(const char *message, int size) {
-    std::cout << "Sending " << message << " with size " << size << std::endl;
     boost::system::error_code ec;
-    std::cout << "writing " << std::endl;
     boost::asio::write(s, boost::asio::buffer(message, size), ec);
-    std::cout << "write done " << std::endl;
 
     if (ec.failed()) {
         throw ServerConnectionAsioException("Cannot send");
@@ -58,14 +54,12 @@ void ServerConnectionAsio::send(const char *message, int size) {
 char *ServerConnectionAsio::read(int length) {
     char* buffer = new char[length];
     boost::system::error_code ec;
-    std::cout << "Waiting for read with length" << length << std::endl;
     boost::asio::read(s, boost::asio::buffer(buffer, length), boost::asio::transfer_exactly(length), ec);
 
     if (ec.failed()) {
         throw ServerConnectionAsioException("Cannot read");
     }
 
-    std::cout << "returning buffer " << buffer << std::endl;
     return buffer;
 }
 
@@ -73,9 +67,7 @@ char *ServerConnectionAsio::read(int length) {
 std::string ServerConnectionAsio::read_as_str(int length) {
     char* buffer = new char[length+1];
     boost::system::error_code ec;
-    std::cout << "Waiting for read with length" << length << std::endl;
     boost::asio::read(s, boost::asio::buffer(buffer, length), boost::asio::transfer_exactly(length), ec);
     buffer[length] = 0;
-    std::cout << "returning buffer " << buffer << std::endl;
     return std::string(buffer);
 }

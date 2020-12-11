@@ -12,7 +12,6 @@ std::string hash_file(std::string path) {
     BufferedFileReader bfr{BUFFER_SIZE, path};
 
     auto cb = [&bfr, &md5] (bool done, char* data, int bytes_read)  {
-        std::cout << "adding " << data << " to hash " << std::endl;
         md5.update(data, bytes_read);
         bfr.signal();
     };

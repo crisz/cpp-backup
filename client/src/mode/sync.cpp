@@ -17,9 +17,6 @@ void sync(UserSession &us) {
 
     auto server_tree = c.require_tree().get();
 
-    for (auto st: server_tree) {
-        std::cout<<st.path<<std::endl;
-    }
 
     TreesComparator tc{us.dir};
     auto arr = tc.compare(server_tree);
@@ -43,7 +40,6 @@ void sync(UserSession &us) {
     // Esecuzione delle remove
 
     for (auto fm_rm: files_to_remove) {
-        std::cout<< fm_rm.path<<std::endl;
         fm_rm.path_to_send=fm_rm.path;
         auto remove_file = c.remove_file(fm_rm);
         remove_results[fm_rm.path] = false;

@@ -1,11 +1,7 @@
 #include <boost/asio/post.hpp>
-#include <boost/bind/bind.hpp>
-#include <boost/enable_shared_from_this.hpp>
 #include <boost/asio.hpp>
-#include <thread>
 #include <string>
 #include <memory>
-#include <arpa/inet.h>
 #include <tgmath.h>
 #include "CommandParser.h"
 
@@ -15,15 +11,6 @@ std::string CommandParser::get_file_path(tcp::socket &socket, ServerCommand &com
     std::string dest_dir = ServerConf::get_instance().dest;
     ConnectionsContainer& sc = ConnectionsContainer::get_instance();
     UserData ud = sc.get_user_data(socket);
-
-//    int index = 0;
-//    int count = 0;
-//    for (;; index++) {
-//        if (parameters[FILEPATH][index] == '/') count++;
-//        if (count == 2) break;
-//    }
-//
-//    std::string user_content_path = "/__user_content__/" + parameters[FILEPATH].substr(index);
 
     std::string file_path = dest_dir + ud.username + parameters[FILEPATH];
     return file_path;
@@ -103,34 +90,17 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
     }
 
     if (command_name == "REQRFILE") {
-        std::cout << "REQRFILE CALLED!" << std::endl;
         if (parameters.find(FILEPATH) == parameters.end()) {
             error(socket);
             return;
         }
-
-        std::cout << "getting file path" << std::endl;
         std::string file_path = get_file_path(socket, command);
-        std::cout << "file path is " << file_path << std::endl;
-
-        std::cout << "constructing bfr "  << std::endl;
         BufferedFileReader bfr{BUFFER_SIZE, file_path};
-        std::cout << "bfr constructed"  << std::endl;
-
-        std::cout << "sending command name" << std::endl;
         md.send_command(command_name);
-
-        std::cout << "sending chunk filedata" << std::endl;
-
         md.send_chunk("FILEDATA", 8);
-
-        std::cout << "sending length" << std::endl;
-
         md.send_chunk(encode_length(bfr.get_file_size()), 4);
 
         bfr.register_callback([&md, &bfr](bool done, char* data, int length){
-            std::cout << "chunk received: " << data << std::endl;
-
             md.send_chunk(data, length);
             if (done) {
                 md.stop_flow();

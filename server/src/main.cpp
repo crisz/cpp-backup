@@ -11,12 +11,6 @@
 
 
 int main(int argc, char** argv) {
-
-    long result = decode_length(encode_length(56737));
-
-    std::cout << "result is: " << std::dec << result << std::endl;
-
-
     if (parse_options(argc, argv)) return 0;
 
     try {

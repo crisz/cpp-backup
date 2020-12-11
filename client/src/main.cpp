@@ -47,7 +47,7 @@ int main(int argc, char** argv) {
            "  / __| _ \\ _ \\___| _ ) /_\\ / __| |/ / | | | _ \\\n"
            " | (__|  _/  _/___| _ \\/ _ \\ (__| ' <| |_| |  _/\n"
            "  \\___|_| |_|     |___/_/ \\_\\___|_|\\_\\\\___/|_|  \n"
-           "                                                ";
+           "  ®                                     v 1.0.0 stable \n\n\n";
 
     std::cout << oss.str();
     // Il timeout serve per apprezzare l'ascii art

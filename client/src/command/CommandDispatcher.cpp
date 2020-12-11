@@ -22,9 +22,7 @@ void CommandDispatcher::dispatch_partial(std::string command, const CommandDTO p
 // Acuisisce il lock, manda il comando con tutti i suoi parametri, rilascia il lock
 // e si mette in attela della risposta da parte del server
 std::future<CommandDTO> CommandDispatcher::dispatch(std::string command, const CommandDTO &parameters) {
-    std::cout << command << " is trying to acquire lock" << std::endl;
     std::unique_lock ul(dispatch_mutex);
-    std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in dispatch " << command << std::endl;
 
     // copia e incolla dispatch_partial. Soluzione: recursive_mutex
 
@@ -37,7 +35,6 @@ std::future<CommandDTO> CommandDispatcher::dispatch(std::string command, const C
 
     // fine copia e incolla
     send_parameter("STOPFLOW", "");
-    std::cout << std::this_thread::get_id() << " ~~ " << "Releasing lock in dispatch " << command << std::endl;
     ul.unlock();
     return wait_for_response(command);
 }
@@ -45,9 +42,7 @@ std::future<CommandDTO> CommandDispatcher::dispatch(std::string command, const C
 std::future<CommandDTO>
 CommandDispatcher::wait_for_response(std::string command, bool buffered, std::function<void(char *, int)> fn) {
     return std::async([this, command, &fn, buffered]() {
-        std::cout << command << " is trying to take lock in wfr" << std::endl;
         std::unique_lock ul(dispatch_mutex);
-        std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock in wait_for_response: " << command << std::endl;
 
         CommandDTO result;
         std::string received_command = sc->read_as_str(8);
@@ -74,15 +69,12 @@ CommandDispatcher::wait_for_response(std::string command, bool buffered, std::fu
                     }
                 }
 
-                std::cout << std::this_thread::get_id() << " ~~ " << "Releasing lock in wait_for_response: " << command << std::endl;
                 cv.notify_all();
                 ul.unlock();
-                std::cout << "unlocked and notified" << std::endl;
                 return cc_result.parameters;
             }
             long length = decode_length(sc->read(4));
             if (buffered) {
-                std::cout << "fn is defined: " << std::endl;
                 while (length != 0) { // Questo while serve per segnalare al controllo di flusso del tcp
                     int size_to_read = length > BUFFER_SIZE ? BUFFER_SIZE : length;
                     length -= size_to_read;
@@ -98,12 +90,10 @@ CommandDispatcher::wait_for_response(std::string command, bool buffered, std::fu
 }
 
 void CommandDispatcher::lock_raw() {
-    std::cout << std::this_thread::get_id() << " ~~ " << "Acquiring lock raw" << std::endl;
     this->dispatch_mutex.lock();
 }
 
 void CommandDispatcher::unlock_raw() {
-    std::cout << std::this_thread::get_id() << " ~~ " << "Releasing lock raw" << std::endl;
     this->dispatch_mutex.unlock();
 }
 

@@ -52,7 +52,6 @@ BufferedFileWriter::BufferedFileWriter(std::string file_path, long file_size) : 
 // Funzione asincrona che effettua la scrittura del file bufferizzato
 std::future<void> BufferedFileWriter::append(char *buffer, int size) {
     return std::async([this, buffer, size] () {
-        std::cout << "writing chunk on " << file_path << std::endl;
         stream.write(buffer, size);
     });
 }

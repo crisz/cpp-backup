@@ -1,11 +1,9 @@
 #include "ClientCommand.h"
 
 ClientCommand::ClientCommand() {
-    std::cout << "constr cc " << std::endl;
 }
 
 std::future<bool> ClientCommand::login(std::string username, std::string password) {
-    std::cout << "Init login " << std::endl;
 
     std::string command;
     CommandDTO parameters;
@@ -14,15 +12,12 @@ std::future<bool> ClientCommand::login(std::string username, std::string passwor
     parameters.insert(std::pair<std::string, std::string>(USERNAME, username));
     parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
     return std::async([this, command, parameters] () {
-        std::cout << "Trying to dispatch login " << std::endl;
         CommandDTO result = cd.dispatch(command, parameters).get();
-        std::cout << "result is " << result.find(("__RESULT")).second << std::endl;
         return result.find(("__RESULT")).second == "OK";
     });
 }
 
 std::future<bool> ClientCommand::signup(std::string username, std::string password) {
-    std::cout << "Init signup " << std::endl;
     std::string command;
     CommandDTO parameters;
     parameters.erase();
@@ -30,9 +25,7 @@ std::future<bool> ClientCommand::signup(std::string username, std::string passwo
     parameters.insert(std::pair<std::string, std::string>(USERNAME, username));
     parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
     return std::async([this, command, parameters] () {
-        std::cout << "Trying to dispatch signup " << std::endl;
         CommandDTO result = cd.dispatch(command, parameters).get();
-        std::cout << "result is " << result.find(("__RESULT")).second << std::endl;
         return result.find(("__RESULT")).second == "OK";
     });
 }
@@ -44,15 +37,10 @@ std::future<std::vector<FileMetadata>> ClientCommand::require_tree() {
     parameters.erase();
     return std::async([this, command, parameters] () {
         std::vector<FileMetadata> tree;
-        std::cout << "WAITING FOR REQTREE" << std::endl;
         CommandDTO result = cd.dispatch(command, parameters).get();
-        std::cout << "REQTREE RETURNED" << std::endl;
-        std::cout << result.size() << " elements" << std::endl;
         FileMetadata fm;
-        std::cout << fm.hash.size() << " hash size" << std::endl;
 
         for (const std::pair< const std::string, std::string>& item: result) {
-            std::cout << "item.first = " << item.first << "; item.second = " << item.second << std::endl;
             if (fm.hash != "" && fm.path != "") {
                 tree.push_back(fm);
                 fm.hash.clear();
@@ -131,9 +119,7 @@ std::future<bool> ClientCommand::remove_file(FileMetadata &file_metadata) {
     command = "REMVFILE";
     parameters.insert(std::pair<std::string, std::string>(FILEPATH,file_metadata.path_to_send));
     return std::async([this, command, parameters] () {
-        std::cout << "Trying to dispatch remove file " << std::endl;
         CommandDTO result = cd.dispatch(command, parameters).get();
-        std::cout << "result is " << result.find(("__RESULT")).second << std::endl;
         return result.find(("__RESULT")).second == "OK";
     });
 }

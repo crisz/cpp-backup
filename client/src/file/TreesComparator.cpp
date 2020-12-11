@@ -6,7 +6,6 @@
 
 // Il Costruttore genera l'albero locale
 TreesComparator::TreesComparator(std::string current_path) : current_path{current_path}{
-    std::cout << "current path is " << current_path << std::endl;
     for(auto &file : boost::filesystem::recursive_directory_iterator(current_path)) {
         if(!boost::filesystem::is_regular_file(file.path())) continue;
         FileMetadata fm;
@@ -21,7 +20,6 @@ TreesComparator::TreesComparator(std::string current_path) : current_path{curren
 
         fm.path_to_send = path_to_send;
         fm.hash = hash_file(fm.path);
-        std::cout << fm.hash << std::endl;
         local_tree_vect.push_back(fm);
     }
 }
@@ -32,11 +30,6 @@ TreesComparator::TreesComparator(std::string current_path) : current_path{curren
 // -File da aggiungere
 std::array<std::shared_ptr<std::vector<FileMetadata>>, 3>
 TreesComparator::compare(std::vector<FileMetadata> &server_tree) {
-
-    std::cout << "printing local tree vect" << std::endl;
-    for (auto file: local_tree_vect) {
-        std::cout << "file in local tree vect " << file.path << std::endl;
-    }
 
     // Ricaviamo l'intersezione tra i due alberi facendo riferimento ai path dei file
     auto set_intersection = [ this ](FileMetadata& fm) {

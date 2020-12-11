@@ -16,9 +16,6 @@ void restore(UserSession &us) {
 
         auto server_tree = c.require_tree().get();
 
-        for (auto st: server_tree) {
-            std::cout << st.path << std::endl;
-        }
 
         TreesComparator tc{us.dir};
         auto arr = tc.compare(server_tree);
@@ -102,6 +99,8 @@ void restore(UserSession &us) {
         return;
     };
 
+
+    std::cout << "\n\n=================================" << std::endl;
     if (!at_least_one_added && !at_least_one_removed) {
         std::cout << "Non sono state apportate modifiche " << std::endl;
     }
@@ -111,5 +110,7 @@ void restore(UserSession &us) {
     } else {
         std::cout << "Restore completato con successo" << std::endl;
     }
+
+    std::cout << "=================================\n\n" << std::endl;
 
 }
