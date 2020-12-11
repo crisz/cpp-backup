@@ -19,8 +19,14 @@ BufferedFileReader::BufferedFileReader(int buffer_size, std::string &file_path) 
         stream.close();
         throw BufferedFileReaderException("File " + file_path + " does not exist", -1);
     }
+    stream.clear();   //  Since ignore will have set eof.
+    stream.seekg( 0, std::ios_base::beg);
+
     stream.ignore( std::numeric_limits<std::streamsize>::max() );
-    this->file_size = stream.gcount()+1;
+    //this->file_size = stream.gcount();//+1;
+    this->file_size = std::filesystem::file_size(file_path);
+    std::cout << "Calcolato file size: " << this->file_size << std::endl;
+    std::this_thread::sleep_for(std::chrono::seconds(3));
     stream.clear();   //  Since ignore will have set eof.
     stream.seekg( 0, std::ios_base::beg);
     std::cout<<"Dimensione del file: " << file_size << std::endl;
@@ -36,10 +42,10 @@ BufferedFileReader::~BufferedFileReader() {
 void BufferedFileReader::flush_buffer(bool done, int chars_read) {
     this->buffer[chars_read] = 0;
     this->busy = true;
-    std::thread([this, done, chars_read] () {
+    // std::thread([this, done, chars_read] () { // TODO: cancellare o decommentare
         this->callback(done, this->buffer, chars_read);
-        return ;
-    }).detach();
+       //  return;
+    // }).detach();
 }
 
 // Ritorna la dimensione del file da leggere
@@ -50,7 +56,7 @@ long BufferedFileReader::get_file_size() {
 // Segnale al BuffereFileReader che può essere effettuato un'altra flush
 void BufferedFileReader::signal() {
     this->busy = false;
-    //cv.notify_all();
+    cv.notify_all();
 }
 
 // Funzione che apre uno stream legato al file da leggere ed esegue
@@ -65,7 +71,7 @@ void BufferedFileReader::run() {
 
     bool done = false;
     this->busy = false;
-    int bytes_to_read = this->file_size-1;
+    int bytes_to_read = this->file_size;//-1;
     do {
         std::cout << "Reading " << buffer_size << " bytes from file system" << std::endl;
         // leggiamo il minimo tra buffer size e la dimensione dei dati rimanenti
@@ -82,10 +88,11 @@ void BufferedFileReader::run() {
 
 
         // se il flush del buffer è in esecuzione allora ci mettiamo in attesa
-        // cv.wait(ul, [this](){ return !this->busy; });
+        cv.wait(ul, [this](){ return !this->busy; });
         this->busy = true;
+        std::cout << "DONE IS " << (bytes_to_read <= 0) << std::endl;
         flush_buffer(bytes_to_read <= 0, bytes_read);
-        std::this_thread::sleep_for(std::chrono::milliseconds(90));
+
         std::cout << "after wake up " << std::endl;
     } while (bytes_to_read > 0);
     std::cout << "client read done" << std::endl;

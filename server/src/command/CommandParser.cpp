@@ -168,10 +168,11 @@ void CommandParser::end_send_file(tcp::socket &socket, ServerCommand &command) {
     std::string current_file_hash = hash_file(file_path);
     std::cout<< "Hash ricevuto: " << receved_file_hash<< std::endl;
     std::cout<< "Hash corrente: " << current_file_hash<< std::endl;
-    if(receved_file_hash != current_file_hash){
+    if (receved_file_hash != current_file_hash){
         std::cout<<"File: " << file_path<< " corrotto, lo elimino!" << std::endl;
         RemovalManager rm;
-      // path);
+        // rm.remove_file(file_path);
+        // TODO: inviare KO
     }
 }
 

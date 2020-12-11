@@ -101,13 +101,15 @@ std::future<bool> ClientCommand::post_file(FileMetadata &file_metadata, const in
 
         bfm.signal();
         if (done) {
-            this->cd.send_parameter("STOPFLOW", "");
-            this->cd.unlock_raw();
+            std::cout << "done var is true" << std::endl;
         }
     });
 
     bfm.run();
     read_done.get_future().get();
+
+    this->cd.send_parameter("STOPFLOW", "");
+    this->cd.unlock_raw();
 
     return std::async([command, this]() {
         CommandDTO post_file_result = cd.wait_for_response(command).get();

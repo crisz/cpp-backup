@@ -80,7 +80,7 @@ void UserSocket::put_on_read_file_data(int file_size) {
             return;
         }
         std::cout << "buffer size is  " << buffer_size << " and I read " << bytes_read << std::endl;
-        _buffer[buffer_size] = 0;
+        _buffer[bytes_read] = 0;
         std::cout << "Received buffer " << _buffer << std::endl;
 
         this->command_parser.send_file_chunk(_buffer, bytes_read).get();
@@ -140,21 +140,25 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
     }
 
     const char* message_size_arr = parameter.substr(8, 12).c_str();
-    int message_size = 0;
-    int shift_value = 24;
 
-    std::cout << "0: " << (int)message_size_arr[0] << std::endl;
-    std::cout << "1: " << (int)message_size_arr[1] << std::endl;
-    std::cout << "2: " << (int)message_size_arr[2] << std::endl;
-    std::cout << "3: " << (int)message_size_arr[3] << std::endl;
 
-    for (int i=0; i<4; i++) {
-        char x = (char)message_size_arr[i];
-        message_size += ((char)message_size_arr[i]) << shift_value;
-        shift_value -= 8;
-    }
+    int fixed_size = decode_length(message_size_arr);
 
-    int fixed_size = ntohl(message_size);
+//    int message_size = 0;
+//    int shift_value = 24;
+//
+//    std::cout << "0: " << (int)message_size_arr[0] << std::endl;
+//    std::cout << "1: " << (int)message_size_arr[1] << std::endl;
+//    std::cout << "2: " << (int)message_size_arr[2] << std::endl;
+//    std::cout << "3: " << (int)message_size_arr[3] << std::endl;
+//
+//    for (int i=0; i<4; i++) {
+//        char x = (char)message_size_arr[i];
+//        message_size += ((char)message_size_arr[i]) << shift_value;
+//        shift_value -= 8;
+//    }
+//
+//    int fixed_size = ntohl(message_size);
 
     std::cout << "Received parameter " << message_name << " with length " << fixed_size << std::endl;
 
