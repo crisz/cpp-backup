@@ -34,7 +34,7 @@ std::future<CommandDTO> CommandDispatcher::dispatch(std::string command, const C
     }
 
     // fine copia e incolla
-    send_parameter("STOPFLOW", "");
+    send_parameter(STOPFLOW, "");
     ul.unlock();
     return wait_for_response(command);
 }
@@ -49,7 +49,7 @@ CommandDispatcher::wait_for_response(std::string command, bool buffered, std::fu
         while(true) {
             std::string parameter_name = sc->read_as_str(8);
 
-            if (parameter_name == "STOPFLOW") {
+            if (parameter_name == STOPFLOW) {
                 sc->read(4); // viene letta la dimensione che sarà sempre \0\0\0\0
                 IncomingCommand cc;
                 cc.command_name = received_command;

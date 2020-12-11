@@ -29,7 +29,7 @@ std::future<bool> RemovalManager::remove_file(std::string path) {
             }
         }
 
-        std::cout << "File does not exist " << std::endl;
+        std::cout << "Il file da eliminare non esiste o si trattava di una cartalle vuota" << std::endl;
         return false;
     });
 }

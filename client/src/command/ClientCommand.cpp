@@ -9,12 +9,12 @@ std::future<bool> ClientCommand::login(std::string username, std::string passwor
     std::string command;
     CommandDTO parameters;
     parameters.erase();
-    command = "LOGINSNC";
+    command = LOGINSNC;
     parameters.insert(std::pair<std::string, std::string>(USERNAME, username));
     parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
     return std::async([this, command, parameters] () {
         CommandDTO result = cd.dispatch(command, parameters).get();
-        return result.find(("__RESULT")).second == "OK";
+        return result.find((__RESULT)).second == "OK";
     });
 }
 
@@ -22,19 +22,19 @@ std::future<bool> ClientCommand::signup(std::string username, std::string passwo
     std::string command;
     CommandDTO parameters;
     parameters.erase();
-    command = "SIGNUPNU";
+    command = SIGNUPNU;
     parameters.insert(std::pair<std::string, std::string>(USERNAME, username));
     parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
     return std::async([this, command, parameters] () {
         CommandDTO result = cd.dispatch(command, parameters).get();
-        return result.find(("__RESULT")).second == "OK";
+        return result.find((__RESULT)).second == "OK";
     });
 }
 
 std::future<std::vector<FileMetadata>> ClientCommand::require_tree() {
     std::string command;
     CommandDTO parameters;
-    command = "REQRTREE";
+    command = REQRTREE;
     parameters.erase();
     return std::async([this, command, parameters] () {
         std::vector<FileMetadata> tree;
@@ -47,11 +47,11 @@ std::future<std::vector<FileMetadata>> ClientCommand::require_tree() {
                 fm.hash.clear();
                 fm.path.clear();
             }
-            if (item.first == "FILEHASH") {
+            if (item.first == FILEHASH) {
                 fm.hash = item.second;
                 continue;
             }
-            if (item.first == "FILEPATH") {
+            if (item.first == FILEPATH) {
                 fm.path = item.second;
                 fm.path_to_send = fm.path;
 
@@ -73,13 +73,13 @@ std::future<bool> ClientCommand::post_file(FileMetadata &file_metadata, const in
         BufferedFileReader bfm{FILE_BUFFER_SIZE, file_metadata.path}; // RAII
         std::string command;
         CommandDTO parameters;
-        command = "POSTFILE";
+        command = POSTFILE;
         parameters.erase();
-        parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_metadata.path_to_send));
-        parameters.insert(std::pair<std::string, std::string>("FILEHASH", file_metadata.hash));
+        parameters.insert(std::pair<std::string, std::string>(FILEPATH, file_metadata.path_to_send));
+        parameters.insert(std::pair<std::string, std::string>(FILEHASH, file_metadata.hash));
         cd.lock_raw();
         cd.dispatch_partial(command, parameters);
-        cd.send_raw("FILEDATA", 8);
+        cd.send_raw(FILEDATA, 8);
 
         cd.send_raw(encode_length(bfm.get_file_size()), 4);
 
@@ -94,12 +94,12 @@ std::future<bool> ClientCommand::post_file(FileMetadata &file_metadata, const in
         bfm.run();
         read_done.get_future().get();
 
-        this->cd.send_parameter("STOPFLOW", "");
+        this->cd.send_parameter(STOPFLOW, "");
         this->cd.unlock_raw();
 
         return std::async([command, this]() {
             CommandDTO post_file_result = cd.wait_for_response(command).get();
-            return post_file_result.find(("__RESULT")).second == "OK";
+            return post_file_result.find((__RESULT)).second == "OK";
         });
     } catch (BufferedFileReaderException& bfre) {
         std::cerr << "Skipping the post of the following file: " << file_metadata.path << std::endl;
@@ -117,11 +117,11 @@ std::future<bool> ClientCommand::remove_file(FileMetadata &file_metadata) {
     std::string command;
     CommandDTO parameters;
     parameters.erase();
-    command = "REMVFILE";
+    command = REMVFILE;
     parameters.insert(std::pair<std::string, std::string>(FILEPATH,file_metadata.path_to_send));
     return std::async([this, command, parameters] () {
         CommandDTO result = cd.dispatch(command, parameters).get();
-        return result.find(("__RESULT")).second == "OK";
+        return result.find((__RESULT)).second == "OK";
     });
 }
 
@@ -129,11 +129,11 @@ std::future<bool> ClientCommand::require_file(FileMetadata &file_metadata) {
     std::string command;
     CommandDTO parameters;
     parameters.erase();
-    command = "REQRFILE";
-    parameters.insert("FILEPATH", file_metadata.path_to_send);
+    command = REQRFILE;
+    parameters.insert(FILEPATH, file_metadata.path_to_send);
     cd.lock_raw();
     cd.dispatch_partial(command, parameters);
-    cd.send_parameter("STOPFLOW", "");
+    cd.send_parameter(STOPFLOW, "");
     cd.unlock_raw();
 
     std::string path = file_metadata.path;

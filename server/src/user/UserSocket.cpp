@@ -87,11 +87,11 @@ void UserSocket::put_on_read_file_data(int file_size) {
                 ec);
 
         delete[] _buffer;
-        this->send_response("POSTFILE");
-        this->send_response("__RESULT");
+        this->send_response(POSTFILE);
+        this->send_response(__RESULT);
         this->send_response(encode_length(2), 4);
         this->send_response(result ?"OK" : "KO");
-        this->send_response("STOPFLOW");
+        this->send_response(STOPFLOW);
         this->send_response(encode_length(0), 4);
         this->put_on_read_command();
 
@@ -125,7 +125,7 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
     std::string parameter = oss.str();
 
     std::string message_name = parameter.substr(0, 8);
-    if(message_name.compare("STOPFLOW")==0){
+    if(message_name.compare(STOPFLOW)==0){
         ConnectionsContainer& sc=ConnectionsContainer::get_instance();
         UserData ud;
         if(sc.get_user_data(socket).username!="") ud.username= sc.get_user_data(socket).username;

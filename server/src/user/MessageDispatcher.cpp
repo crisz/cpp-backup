@@ -58,5 +58,5 @@ void MessageDispatcher::send_chunk(const char* chunk_data, int chunk_length) {
 
 // Serve ad inviare il parametro di terminazione di un comando
 void MessageDispatcher::stop_flow() {
-    send_parameter("STOPFLOW", "");
+    send_parameter(STOPFLOW, "");
 }

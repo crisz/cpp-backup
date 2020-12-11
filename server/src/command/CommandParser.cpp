@@ -39,7 +39,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         } else error(socket);
         return;
     }
-    if (command_name == "SIGNUPNU") {
+    if (command_name == SIGNUPNU) {
         if(parameters.find(USERNAME) != parameters.end() && parameters.find(PASSWORD) != parameters.end()){
             SignupManager sm;
             std::string username = parameters[USERNAME];
@@ -64,8 +64,8 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         for (const auto& item: tree) {
             std::string file_path = item.first;
             std::string file_hash = item.second;
-            req_tree_parameters.emplace_back("FILEHASH", file_hash);
-            req_tree_parameters.emplace_back("FILEPATH", file_path);
+            req_tree_parameters.emplace_back(FILEHASH, file_hash);
+            req_tree_parameters.emplace_back(FILEPATH, file_path);
         }
         std::cout<<"Invio del tree richiesto dal client"<<std::endl;
         md.dispatch(command_name, req_tree_parameters);
@@ -88,7 +88,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         return;
     }
 
-    if (command_name == "REQRFILE") {
+    if (command_name == REQRFILE) {
         if (parameters.find(FILEPATH) == parameters.end()) {
             error(socket);
             return;
@@ -97,7 +97,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         BufferedFileReader bfr{BUFFER_SIZE, file_path};
         std::cout<<"Invio al client del file richiesto: " << file_path<< std::endl;
         md.send_command(command_name);
-        md.send_chunk("FILEDATA", 8);
+        md.send_chunk(FILEDATA, 8);
         md.send_chunk(encode_length(bfr.get_file_size()), 4);
 
         bfr.register_callback([&md, &bfr](bool done, char* data, int length){
@@ -151,7 +151,7 @@ void CommandParser::error(tcp::socket& socket) {
 }
 
 void CommandParser::rollback_command(tcp::socket &socket, ServerCommand &command) { 
-    if (command.get_command_name() == "POSTFILE"){
+    if (command.get_command_name() == POSTFILE){
         RemovalManager rm;
         std::string dest_dir = ServerConf::get_instance().dest;
         ConnectionsContainer& sc = ConnectionsContainer::get_instance();
