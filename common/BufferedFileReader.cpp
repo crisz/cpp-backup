@@ -1,3 +1,5 @@
+#pragma clang diagnostic push
+#pragma ide diagnostic ignored "hicpp-signed-bitwise"
 //
 // Created by Andrea Vara on 06/12/20.
 //
@@ -5,6 +7,8 @@
 //
 #include "BufferedFileReader.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wshift-count-overflow"
 BufferedFileReaderException::BufferedFileReaderException(std::string &&message, int code) : message{message}, code{code} {}
 
 const char *BufferedFileReaderException::what() const throw() {
@@ -24,9 +28,15 @@ BufferedFileReader::BufferedFileReader(int buffer_size, std::string &file_path) 
     stream.ignore( std::numeric_limits<std::streamsize>::max() );
     this->file_size =  stream.gcount();
 
+    // Supportiamo solo file minori di 4GB = 2^32 byte
+    long long _4gb = 0xFFFFFFFF;
+    if (this->file_size > _4gb) {
+        stream.close();
+        throw BufferedFileReaderException("File " + file_path + " is bigger than 4GB", -1);
+    }
+
     stream.clear();   //  Since ignore will have set eof.
     stream.seekg( 0, std::ios_base::beg);
-    std::cout<<"Dimensione del file: " << file_size << std::endl;
 }
 
 BufferedFileReader::~BufferedFileReader() {
@@ -38,10 +48,7 @@ BufferedFileReader::~BufferedFileReader() {
 void BufferedFileReader::flush_buffer(bool done, int chars_read) {
     this->buffer[chars_read] = 0;
     this->busy = true;
-    // std::thread([this, done, chars_read] () { // TODO: cancellare o decommentare
-        this->callback(done, this->buffer, chars_read);
-       //  return;
-    // }).detach();
+    this->callback(done, this->buffer, chars_read);
 }
 
 // Ritorna la dimensione del file da leggere
@@ -100,3 +107,6 @@ std::promise<bool> &BufferedFileReader::register_callback(std::function<void(boo
     this->callback = fn;
     return this->read_done;
 }
+
+#pragma clang diagnostic pop
+#pragma clang diagnostic pop

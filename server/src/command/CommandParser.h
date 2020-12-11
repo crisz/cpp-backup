@@ -46,7 +46,7 @@ public:
     std::future<void> send_file_chunk(char* buffer, int buffer_size);
 
     // Termina la scrittura del file
-    void end_send_file(tcp::socket& socket, ServerCommand& command);
+    bool end_send_file(tcp::socket& socket, ServerCommand& command);
 
     // Viene invocato in caso di errore. Annulla l'invocazione di un comando pendente in caso di errore
     void rollback_command(tcp::socket& socket, ServerCommand& command);

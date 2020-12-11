@@ -12,7 +12,7 @@
 #include <mutex>
 #include "CommandDTO.h"
 
-#define FILE_BUFFER_SIZE 256
+#define FILE_BUFFER_SIZE 512
 
 class ClientCommand {
 private:
@@ -32,6 +32,6 @@ public:
 
     std::future<bool> remove_file(FileMetadata& file_metadata);
 
-    std::future<void> require_file(FileMetadata& file_metadata);
+    std::future<bool> require_file(FileMetadata& file_metadata);
 };
 

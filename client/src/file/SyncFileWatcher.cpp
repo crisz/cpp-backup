@@ -25,23 +25,28 @@ void SyncFileWatcher::run() {
         fm.path_to_send = fm.path.substr(found);
 
 
-        if (status==FileStatus::created) {
-            std::cout << "File created: " << fm.path_to_send << std::endl;
+        if (status == FileStatus::created || status == FileStatus::modified) {
             fm.hash = hash_file(fm.path);
-            auto post_file1 = c.post_file(fm);
-            bool post_file_result_1 = post_file1.get();
-            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-        } else if (status == FileStatus::modified) {
-            std::cout << "File modified: " << fm.path_to_send << std::endl;
-            fm.hash=hash_file(fm.path);
-            auto post_file1 = c.post_file(fm);
-            bool post_file_result_1 = post_file1.get();
-            std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
+            auto post_file = c.post_file(fm);
+            bool post_file_result = post_file.get();
+            std::string action = status == FileStatus::created ? "aggiunti" : "aggiornati";
+            if (post_file_result) {
+                std::cout << "I seguenti file sono stati " << action << " sul server: " << std::endl;
+                std::cout << " + " << fm.path << std::endl;
+            } else {
+                std::cout << "I seguenti file NON sono stati " << action << " sul server: " << std::endl;
+                std::cout << " ? " << fm.path << std::endl;
+            }
         } else if (status == FileStatus::erased) {
-            std::cout << "File erased: " << fm.path_to_send << '\n';
-            auto remove_file= c.remove_file(fm);
-            bool remove_file_result=remove_file.get();
-            std::cout << "Remove file effettuato con " << (remove_file_result ? "successo" : "fallimento") << std::endl;
+            auto remove_file = c.remove_file(fm);
+            bool remove_file_result = remove_file.get();
+            if (remove_file_result) {
+                std::cout << "I seguenti file sono stati eliminati dal server: " << std::endl;
+                std::cout << " - " << fm.path << std::endl;
+            } else {
+                std::cout << "I seguenti file NON sono stati eliminati dal server: " << std::endl;
+                std::cout << " ? " << fm.path << std::endl;
+            }
         } else {
             std::cout << "Error! Unknown file status.\n";
         }

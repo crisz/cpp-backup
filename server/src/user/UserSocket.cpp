@@ -54,52 +54,59 @@ void UserSocket::put_on_read_parameter_value(std::string parameter_name, int n) 
 }
 
 void UserSocket::put_on_read_file_data(int file_size) {
-    std::cout << "PUT ON READ FILE DATA!!!!!!!!" << std::endl;
     int buffer_size = 1001;
     int number_of_reads = ceil((double)file_size/(double)buffer_size);
-    std::cout << "start send file with size " << file_size << std::endl;
 
-    this->command_parser.start_send_file(socket, file_size, current_command);
+    try {
+        this->command_parser.start_send_file(socket, file_size, current_command);
 
-    std::cout << "send file started" << std::endl;
+        boost::system::error_code ec;
 
-    boost::system::error_code ec;
+        char *_buffer = new char[buffer_size + 1];
+        for (int i = 0; i < number_of_reads; i++) {
+            if (i == number_of_reads - 1) {
+                buffer_size = file_size - i * buffer_size;
+            }
 
-    char *_buffer = new char[buffer_size + 1];
-    for (int i = 0; i < number_of_reads; i++) {
-        std::cout << std::this_thread::get_id() << "!!!" << i << " out of " << number_of_reads << std::endl;
-        if (i == number_of_reads - 1) {
-            buffer_size = file_size - i * buffer_size;
+            int bytes_read = boost::asio::read(socket, boost::asio::buffer(_buffer, buffer_size),
+                                               boost::asio::transfer_exactly(buffer_size), ec);
+            if (ec) {
+                handle_error(ec);
+                return;
+            }
+            _buffer[bytes_read] = 0;
+
+
+            this->command_parser.send_file_chunk(_buffer, bytes_read).get();
         }
-        std::cout << "buffer size is  " << buffer_size << std::endl;
 
-        int bytes_read = boost::asio::read(socket, boost::asio::buffer(_buffer, buffer_size),
-                                           boost::asio::transfer_exactly(buffer_size), ec);
-        if (ec) {
-            handle_error(ec);
-            return;
-        }
-        std::cout << "buffer size is  " << buffer_size << " and I read " << bytes_read << std::endl;
-        _buffer[bytes_read] = 0;
-        std::cout << "Received buffer " << _buffer << std::endl;
+        bool result = this->command_parser.end_send_file(socket, current_command);
 
-        this->command_parser.send_file_chunk(_buffer, bytes_read).get();
-        std::cout << "Chunk saved" << _buffer << std::endl;
+        // ignoriamo il valore poiché è sempre STOPFLOW0000.
+        boost::asio::read(socket,
+                boost::asio::buffer(_buffer, 12),
+                boost::asio::transfer_exactly(12),
+                ec);
+
+        delete[] _buffer;
+        this->send_response("POSTFILE");
+        this->send_response("__RESULT");
+        this->send_response(encode_length(2), 4);
+        this->send_response(result ?"OK" : "KO");
+        this->send_response("STOPFLOW");
+        this->send_response(encode_length(0), 4);
+        this->put_on_read_command();
+
+    } catch (BufferedFileWriterException& bfwe) {
+        std::cerr << "È avvenuto un errore nella scrittura del file: " << bfwe.what() << std::endl;
+        handle_disconnection();
+        return;
+    } catch (...) {
+        std::cerr << "È avvenuto un errore durante il tentativo di scrittura del file." << std::endl;
+        handle_disconnection();
+        return;
     }
 
-    std::cout << "end of read from client " << std::endl;
-    this->command_parser.end_send_file(socket, current_command);
-
-    // ignoriamo il valore poiché è sempre STOPFLOW0000.
-    boost::asio::read(socket, boost::asio::buffer(_buffer, 12), boost::asio::transfer_exactly(12), ec);
-    delete[] _buffer;
-    this->send_response("POSTFILE");
-    this->send_response("__RESULT");
-    this->send_response(encode_length(2), 4);
-    this->send_response("OK");
-    this->send_response("STOPFLOW");
-    this->send_response(encode_length(0), 4);
-    this->put_on_read_command();
 
 }
 

@@ -80,42 +80,48 @@ std::future<std::vector<FileMetadata>> ClientCommand::require_tree() {
 
 std::future<bool> ClientCommand::post_file(FileMetadata &file_metadata, const int buffer_size) {
 
-    BufferedFileReader bfm{500, file_metadata.path}; // RAII
-    std::string command;
-    CommandDTO parameters;
-    command = "POSTFILE";
-    parameters.erase();
-    parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_metadata.path_to_send));
-    parameters.insert(std::pair<std::string, std::string>("FILEHASH", file_metadata.hash));
-    std::cout << "ACQUIRING LOCK RAW NOW" << std::endl;
-    cd.lock_raw();
-    cd.dispatch_partial(command, parameters);
-    cd.send_raw("FILEDATA", 8);
+    try {
+        BufferedFileReader bfm{FILE_BUFFER_SIZE, file_metadata.path}; // RAII
+        std::string command;
+        CommandDTO parameters;
+        command = "POSTFILE";
+        parameters.erase();
+        parameters.insert(std::pair<std::string, std::string>("FILEPATH", file_metadata.path_to_send));
+        parameters.insert(std::pair<std::string, std::string>("FILEHASH", file_metadata.hash));
+        cd.lock_raw();
+        cd.dispatch_partial(command, parameters);
+        cd.send_raw("FILEDATA", 8);
 
-    cd.send_raw(encode_length(bfm.get_file_size()), 4);
+        cd.send_raw(encode_length(bfm.get_file_size()), 4);
 
-    std::promise<bool>& read_done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {
-        std::cout << "cb: sending raw " << std::endl;
-        this->cd.send_raw(data, bytes_read);
-        std::cout << "cb: signaling" << std::endl;
+        std::promise<bool> &read_done = bfm.register_callback([&bfm, this](bool done, char *data, int bytes_read) {
+            this->cd.send_raw(data, bytes_read);
+            bfm.signal();
+ //           if (done) {
+ //               std::cout << "done var is true" << std::endl;
+ //           }
+        });
 
-        bfm.signal();
-        if (done) {
-            std::cout << "done var is true" << std::endl;
-        }
-    });
+        bfm.run();
+        read_done.get_future().get();
 
-    bfm.run();
-    read_done.get_future().get();
+        this->cd.send_parameter("STOPFLOW", "");
+        this->cd.unlock_raw();
 
-    this->cd.send_parameter("STOPFLOW", "");
-    this->cd.unlock_raw();
-
-    return std::async([command, this]() {
-        CommandDTO post_file_result = cd.wait_for_response(command).get();
-        std::cout << "wait for response returnded" << std::endl;
-        return post_file_result.find(("__RESULT")).second == "OK";
-    });
+        return std::async([command, this]() {
+            CommandDTO post_file_result = cd.wait_for_response(command).get();
+            return post_file_result.find(("__RESULT")).second == "OK";
+        });
+    } catch (BufferedFileReaderException& bfre) {
+        std::cerr << "Skipping the post of the following file: " << file_metadata.path << std::endl;
+        std::cerr << "The reason is " << bfre.what() << std::endl;
+        auto prom = std::promise<bool>();
+        prom.set_value(false);
+        return prom.get_future();
+    } catch (...) {
+        std::cerr << "Failed to post file: " << file_metadata.path << std::endl;
+        throw;
+    }
 }
 
 std::future<bool> ClientCommand::remove_file(FileMetadata &file_metadata) {
@@ -132,7 +138,7 @@ std::future<bool> ClientCommand::remove_file(FileMetadata &file_metadata) {
     });
 }
 
-std::future<void> ClientCommand::require_file(FileMetadata &file_metadata) {
+std::future<bool> ClientCommand::require_file(FileMetadata &file_metadata) {
     std::string command;
     CommandDTO parameters;
     parameters.erase();
@@ -149,11 +155,13 @@ std::future<void> ClientCommand::require_file(FileMetadata &file_metadata) {
     return std::async([command, this, path, size]() {
         BufferedFileWriter bfw{path, size};
         std::function<void(char* buffer, int)> flush_buffer_fn = [&bfw](auto data, auto length) {
-            std::cout << "Received chunk " << data << std::endl;
             bfw.append(data, length);
         };
         CommandDTO reqr_file_result = cd.wait_for_response(command, true, flush_buffer_fn).get();
-        std::cout << "wait for response returnded" << std::endl;
-        // return post_file_result.find(("__RESULT")).second == "OK";
+        for (auto x: reqr_file_result) {
+            std::cout << "KEY: " << x.first << std::endl;
+            std::cout << "VALUE: " << x.second << std::endl;
+        }
+        return true;
     });
 }

@@ -3,72 +3,113 @@
 void restore(UserSession &us) {
     ClientCommand c;
 
-    auto login = c.login(us.username, us.password);
+    bool at_least_one_removed = false;
+    bool at_least_one_added = false;
+    bool at_least_one_failed = false;
 
-    bool login_result = login.get();
+    try {
 
-    if (!login_result) die("Invalid credentials");
+        auto login = c.login(us.username, us.password);
+        bool login_result = login.get();
 
-    auto server_tree = c.require_tree().get();
+        if (!login_result) die("Invalid credentials");
 
-    for (auto st: server_tree) {
-        std::cout << st.path << std::endl;
-    }
+        auto server_tree = c.require_tree().get();
 
-    TreesComparator tc{us.dir};
-    auto arr = tc.compare(server_tree);
-
-    auto new_files = arr[0];
-    auto changed_files = arr[1];
-    auto removed_files = arr[2];
-
-    std::vector<FileMetadata> files_to_require = *removed_files;
-    std::vector<FileMetadata> files_to_remove = *new_files;
-
-    files_to_require.insert(
-            (files_to_require).end(),
-            std::make_move_iterator((*changed_files).begin()),
-            std::make_move_iterator((*changed_files).end())
-    );
-
-
-    std::cout << "REQRFILE FOR: " << std::endl;
-    for (auto file: files_to_require) {
-        std::cout << file.path_to_send << std::endl;
-    }
-
-    std::cout << "delete FOR: " << std::endl;
-    for (auto file: files_to_remove) {
-        std::cout << file.path_to_send << std::endl;
-    }
-
-    for (auto file: files_to_remove) {
-        std::cout << "removing " << file.path << std::endl;
-        if (boost::filesystem::exists(file.path)) {
-            boost::filesystem::remove_all(file.path);
+        for (auto st: server_tree) {
+            std::cout << st.path << std::endl;
         }
-    }
 
-    std::vector<std::future<void>> futures_to_wait;
-    for (auto file: files_to_require) {
-        int count = 0;
-        size_t index = 0;
-        for (;; index++) {
-            if (file.path_to_send[index] == '/') count++;
-            if (count == 2) break;
+        TreesComparator tc{us.dir};
+        auto arr = tc.compare(server_tree);
+
+        auto new_files = arr[0];
+        auto changed_files = arr[1];
+        auto removed_files = arr[2];
+
+        std::vector<FileMetadata> files_to_require = *removed_files;
+        std::vector<FileMetadata> files_to_remove = *new_files;
+
+        files_to_require.insert(
+                (files_to_require).end(),
+                std::make_move_iterator((*changed_files).begin()),
+                std::make_move_iterator((*changed_files).end())
+        );
+
+
+        for (auto file: files_to_remove) {
+            if (boost::filesystem::exists(file.path)) {
+                boost::filesystem::remove_all(file.path);
+                at_least_one_removed = true;
+            }
         }
-        file.path = us.dir + file.path_to_send.substr(index);
 
-        std::cout << "file.path = " << file.path << std::endl;
-        std::cout << "file.path_to_send = " << file.path_to_send << std::endl;
+        std::map<std::string, bool> require_results;
+        std::vector<std::future<bool>> futures_to_wait;
 
-        futures_to_wait.push_back(c.require_file(file));
-        //c.require_file(file).get();
+
+        for (auto file: files_to_require) {
+            int count = 0;
+            size_t index = 0;
+            for (;; index++) {
+                if (file.path_to_send[index] == '/') count++;
+                if (count == 2) break;
+            }
+            file.path = us.dir + file.path_to_send.substr(index);
+
+            futures_to_wait.push_back(c.require_file(file));
+            require_results[file.path] = false;
+        }
+
+        auto it = require_results.begin();
+        for (auto &future: futures_to_wait) {
+            it->second = future.get();
+            if (it->second) at_least_one_added = true;
+            else at_least_one_failed = true;
+            it++;
+        }
+
+        if (at_least_one_removed) {
+            std::cout << "I seguenti file sono stati eliminati: " << std::endl;
+
+            for (auto file: files_to_remove) {
+                std::cout << " - " << file.path << std::endl;
+            }
+        }
+
+
+        if (at_least_one_added) {
+            std::cout << "I seguenti file sono stati aggiunti: " << std::endl;
+
+            for (auto file: require_results) {
+                if (file.second) {
+                    std::cout << " + " << file.first << std::endl;
+                }
+            }
+        }
+
+        if (at_least_one_failed) {
+            std::cout << "I seguenti file NON sono stati aggiunti: " << std::endl;
+
+            for (auto file: require_results) {
+                if (!file.second) {
+                    std::cout << " ? " << file.first << std::endl;
+                }
+            }
+        }
+    } catch (...) {
+        std::cout << "Si è verficato un errore." << std::endl;
+        return;
+    };
+
+    if (!at_least_one_added && !at_least_one_removed) {
+        std::cout << "Non sono state apportate modifiche " << std::endl;
     }
 
-    for (auto& future: futures_to_wait) {
-        future.get();
+    if (at_least_one_failed) {
+        std::cout << "Restore completato, ma non tutti i file sono stati scaricati. Si prega di riprovare" << std::endl;
+    } else {
+        std::cout << "Restore completato con successo" << std::endl;
     }
 
-    std::cout << "Restore completato con successo " << std::endl;
 }

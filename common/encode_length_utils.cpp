@@ -37,15 +37,6 @@ long decode_length(const char* message_size_arr) {
     message_size += (message_size_arr[3] & 0xFF) << 24;
     return message_size;
 
-    for (int i=0; i<4; i++) {
-        char x = (char)message_size_arr[i];
-
-        std::cout << "decode: " << std::hex << (message_size_arr[i] << shift_value) << std::endl;
-        message_size += ((char)message_size_arr[i]) << shift_value;
-        shift_value -= 8;
-    }
-
-    return ntohl(message_size);
 }
 
 #pragma clang diagnostic pop

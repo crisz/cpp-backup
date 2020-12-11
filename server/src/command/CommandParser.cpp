@@ -160,20 +160,21 @@ std::future<void> CommandParser::send_file_chunk(char *buffer, int buffer_size) 
     return bfw->append(buffer, buffer_size);
 }
 
-void CommandParser::end_send_file(tcp::socket &socket, ServerCommand &command) {
+bool CommandParser::end_send_file(tcp::socket &socket, ServerCommand &command) {
     delete bfw;
 
     std::string file_path = get_file_path(socket, command);
-    std::string receved_file_hash = command.get_parameters()[FILEHASH];
+    std::string received_file_hash = command.get_parameters()[FILEHASH];
     std::string current_file_hash = hash_file(file_path);
-    std::cout<< "Hash ricevuto: " << receved_file_hash<< std::endl;
+    std::cout<< "Hash ricevuto: " << received_file_hash<< std::endl;
     std::cout<< "Hash corrente: " << current_file_hash<< std::endl;
-    if (receved_file_hash != current_file_hash){
+    if (received_file_hash != current_file_hash){
         std::cout<<"File: " << file_path<< " corrotto, lo elimino!" << std::endl;
         RemovalManager rm;
-        // rm.remove_file(file_path);
-        // TODO: inviare KO
+        rm.remove_file(file_path);
+        return false;
     }
+    return true;
 }
 
 void CommandParser::error(tcp::socket& socket) {
