@@ -32,6 +32,8 @@ public:
 
     std::future<void> append(char* buffer, int size);
 
+    void close();
+
 };
 
 

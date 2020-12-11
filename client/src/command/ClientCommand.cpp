@@ -1,3 +1,4 @@
+#include <common/hash_file.h>
 #include "ClientCommand.h"
 
 ClientCommand::ClientCommand() {
@@ -136,18 +137,23 @@ std::future<bool> ClientCommand::require_file(FileMetadata &file_metadata) {
     cd.unlock_raw();
 
     std::string path = file_metadata.path;
+    std::string prev_hash = file_metadata.hash;
     long size = file_metadata.size;
 
-    return std::async([command, this, path, size]() {
+    return std::async([command, this, path, prev_hash, size]() {
         BufferedFileWriter bfw{path, size};
         std::function<void(char* buffer, int)> flush_buffer_fn = [&bfw](auto data, auto length) {
             bfw.append(data, length);
         };
         CommandDTO reqr_file_result = cd.wait_for_response(command, true, flush_buffer_fn).get();
-        for (auto x: reqr_file_result) {
-            std::cout << "KEY: " << x.first << std::endl;
-            std::cout << "VALUE: " << x.second << std::endl;
+
+        bfw.close();
+        std::string hash = hash_file(path);
+
+        bool is_corrupted = hash != prev_hash;
+        if (is_corrupted) {
+            boost::filesystem::remove_all(path);
         }
-        return true;
+        return !is_corrupted;
     });
 }

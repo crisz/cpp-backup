@@ -21,7 +21,6 @@ std::future<bool> LoginManager::check_login(std::string username, std::string pa
         std::string user_pwd;
         if (ifs.is_open()) {
             getline (ifs,user_pwd);
-            std::cout<<"La password letta è: "<< user_pwd <<std::endl;
             ifs.close();
         }else{
             std::cout<<"Errore nell'apertura del file"<<std::endl;

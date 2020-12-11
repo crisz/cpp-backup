@@ -55,3 +55,7 @@ std::future<void> BufferedFileWriter::append(char *buffer, int size) {
         stream.write(buffer, size);
     });
 }
+
+void BufferedFileWriter::close() {
+    this->stream.close();
+}

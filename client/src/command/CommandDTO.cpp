@@ -22,11 +22,6 @@ std::pair<std::string, std::string> CommandDTO::find(std::string key) {
     return std::pair<std::string, std::string>{};
 }
 
-// Funzione che ritorna il puntatore al primo elemento della lista di parametri
-
-
-// Funzione che ritorna il puntatore all'ultimo elemento della lista di parametri
-
 // Funzione che resetta il nome del comando e la lista di parametri
 void CommandDTO::erase() {
     parameters.clear();

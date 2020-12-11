@@ -113,7 +113,6 @@ void UserSocket::put_on_read_file_data(int file_size) {
 UserSocket::UserSocket(boost::asio::thread_pool &io_context) : socket(io_context) {}
 
 void UserSocket::handle_write(const boost::system::error_code &error, size_t bytes_transferred) {
-    std::cout << "write completed" << std::endl;
 }
 
 void UserSocket::handle_read_parameter_name(const boost::system::error_code &error, size_t bytes_transferred) {
