@@ -15,3 +15,4 @@
 #define REMVFILE "REMVFILE"
 #define STOPFLOW "STOPFLOW"
 #define __RESULT "__RESULT"
+#define REQRFILE "REQRFILE"

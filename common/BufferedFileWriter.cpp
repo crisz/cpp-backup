@@ -22,9 +22,7 @@ BufferedFileWriter::BufferedFileWriter(std::string file_path, long file_size) : 
 
     // Se la cartella di destinazione non esiste la creiamo
     if (!(boost::filesystem::exists(dir))) {
-        std::cout << "Doesn't Exists" << std::endl;
         if (boost::filesystem::create_directories(dir)) {
-            std::cout << "....Successfully Created !" << std::endl;
         } else {
             throw BufferedFileWriterException("Cannot create file " + file_path, -2);
         }

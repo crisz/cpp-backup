@@ -9,14 +9,13 @@ ConnectionPool::ConnectionPool(boost::asio::thread_pool &io_context) :
         acceptor(io_context, tcp::endpoint(tcp::v4(), ServerConf::get_instance().port)) {
 
     acceptor.listen(0);
+    std::cout << "Waiting connection"<<std::endl;
     this->start_accept();
 }
 
 //Funzione  che crea un UserSocket e registra una callback per la gestione dell'accept per ogni connessione entrante.
 void ConnectionPool::start_accept() {
-    std::cout << "waiting connection"<<std::endl;
     UserSocket::pointer new_connection = UserSocket::create(io_context);
-
     auto on_accept = boost::bind(&ConnectionPool::handle_accept, this, new_connection, boost::asio::placeholders::error);
     acceptor.async_accept(new_connection->get_socket(), on_accept);
 }
@@ -26,6 +25,7 @@ void ConnectionPool::handle_accept(UserSocket::pointer new_connection, const boo
     if (!error) {
         std::thread t([new_connection]() {
             std::cout << "A client connected" << std::endl;
+            std::cout << "Waiting new connection"<<std::endl;
             new_connection->put_on_read_command();
         });
         t.detach();

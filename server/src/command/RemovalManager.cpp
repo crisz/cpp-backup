@@ -11,7 +11,6 @@ std::future<bool> RemovalManager::remove_file(std::string path) {
     return std::async([&path]() {
         if(boost::filesystem::exists(path)){
             if(boost::filesystem::remove_all(path)){
-                std::cout<<"Rimozione file path: " <<path<<std::endl;
                 //Il while successivo serve a vedere ricorsivamente se le cartelle che contenevano il file si sono svuotate.
                 // Se si, le elimina.
                 std::string dir_path = path;
@@ -25,7 +24,7 @@ std::future<bool> RemovalManager::remove_file(std::string path) {
                 }
                 return true;
             }else{
-                std::cout << "Error deleting file!" << std::endl;
+                std::cerr << "Error deleting file!" << std::endl;
                 return false;
             }
         }

@@ -9,7 +9,7 @@ tcp::socket &UserSocket::get_socket() {
 }
 
 void UserSocket::send_response(const std::string &message) {
-    std::cout << "Sending response " << message << " with length " << message.size() << std::endl;
+    //std::cout << "Sending response " << message << " with length " << message.size() << std::endl;
     auto on_write = boost::bind(&UserSocket::handle_write, shared_from_this(),
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred);
@@ -18,7 +18,7 @@ void UserSocket::send_response(const std::string &message) {
 }
 
 void UserSocket::send_response(const char *message, int size) {
-    std::cout << "Sending response " << message << " with length " << size << std::endl;
+    //std::cout << "Sending response " << message << " with length " << size << std::endl;
 
     auto on_write = boost::bind(&UserSocket::handle_write, shared_from_this(),
                                 boost::asio::placeholders::error,
@@ -37,7 +37,6 @@ void UserSocket::put_on_read_command() {
 }
 
 void UserSocket::put_on_read_parameter_name() {
-    std::cout << "waiting for 12 bytes" << std::endl;
     auto on_read = boost::bind(&UserSocket::handle_read_parameter_name, shared_from_this(),
                                boost::asio::placeholders::error,
                                boost::asio::placeholders::bytes_transferred);
@@ -45,7 +44,6 @@ void UserSocket::put_on_read_parameter_name() {
 }
 
 void UserSocket::put_on_read_parameter_value(std::string parameter_name, int n) {
-    std::cout << "waiting for (pv) " << n << " bytes" << std::endl;
     auto on_read = boost::bind(&UserSocket::handle_read_parameter_value, shared_from_this(),
                                boost::asio::placeholders::error,
                                boost::asio::placeholders::bytes_transferred,
@@ -128,7 +126,6 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
 
     std::string message_name = parameter.substr(0, 8);
     if(message_name.compare("STOPFLOW")==0){
-        std::cout<<"Fine comando raggiunto"<<std::endl;
         ConnectionsContainer& sc=ConnectionsContainer::get_instance();
         UserData ud;
         if(sc.get_user_data(socket).username!="") ud.username= sc.get_user_data(socket).username;
@@ -165,8 +162,7 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
 //    }
 //
 //    int fixed_size = ntohl(message_size);
-
-    std::cout << "Received parameter " << message_name << " with length " << fixed_size << std::endl;
+//  std::cout << "Received parameter " << message_name << " with length " << fixed_size << std::endl;
 
     if (message_name.compare(FILEDATA) == 0) {
         this->put_on_read_file_data(fixed_size);
@@ -188,12 +184,11 @@ void UserSocket::handle_read_parameter_value(const boost::system::error_code &er
     std::string parameter_value = oss.str();
 
     current_command.add_parameter(parameter_name, parameter_value);
-    std::cout << "value for parameter " << parameter_name << " is " << current_command.get_parameters()[parameter_name] << std::endl;
+    //std::cout << "value for parameter " << parameter_name << " is " << current_command.get_parameters()[parameter_name] << std::endl;
     this->put_on_read_parameter_name();
 }
 
 void UserSocket::handle_read_command(const boost::system::error_code &error, size_t bytes_transferred) {
-    std::cout << "Received command \n";
     if (error) {
         handle_error(error);
         return;
@@ -205,9 +200,8 @@ void UserSocket::handle_read_command(const boost::system::error_code &error, siz
     messageP = oss.str();
 
     current_command.set_name(messageP);
-    std::cout << "Message:" << current_command.get_command_name() << std::endl;
+    std::cout << "Comando ricevuto: " << current_command.get_command_name() << std::endl;
     if (!messageP.empty()) {
-        std::cout << "returning in read parameter name " << std::endl;
         this->put_on_read_parameter_name();
     } else {
         handle_disconnection();

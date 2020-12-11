@@ -16,7 +16,6 @@ void restore(UserSession &us) {
 
         auto server_tree = c.require_tree().get();
 
-
         TreesComparator tc{us.dir};
         auto arr = tc.compare(server_tree);
 
@@ -33,7 +32,6 @@ void restore(UserSession &us) {
                 std::make_move_iterator((*changed_files).end())
         );
 
-
         for (auto file: files_to_remove) {
             if (boost::filesystem::exists(file.path)) {
                 boost::filesystem::remove_all(file.path);
@@ -43,7 +41,6 @@ void restore(UserSession &us) {
 
         std::map<std::string, bool> require_results;
         std::vector<std::future<bool>> futures_to_wait;
-
 
         for (auto file: files_to_require) {
             int count = 0;

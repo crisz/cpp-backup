@@ -18,7 +18,6 @@ std::future<bool> SignupManager::signup(std::string username, std::string passwo
             return false;
         }else{
             if (boost::filesystem::create_directories(path)) {
-                std::cout << "....Successfully Created !" << std::endl;
                 std::ofstream stream;
                 stream = std::ofstream {path+"/.credentials", std::ios::out};
                 if (stream.fail()) {
