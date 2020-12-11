@@ -28,7 +28,7 @@ int parse_sync_options(int argc, char** argv, UserSession& us) {
         int port = vm["port"].as<int>();
         us.username = std::move(username);
         us.password = std::move(password);
-        if (!dir.starts_with(".") && !dir.starts_with("/")) {
+        if (dir.substr(0,1)!="." && dir.substr(0,1)!="/") {
             std::cout << "ERRORE: Il percorso della cartella è ambiguo. "
                          "Specifica un percorso assoluto o relativo!" << std::endl;
             return -1;

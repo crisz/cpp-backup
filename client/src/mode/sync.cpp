@@ -4,7 +4,6 @@ void sync(UserSession &us) {
     FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
     ClientCommand c;
 
-
     bool at_least_one_removed = false;
     bool at_least_one_added = false;
     bool at_least_one_remove_failed = false;
@@ -61,7 +60,6 @@ void sync(UserSession &us) {
     std::map<std::string, bool> post_results;
 
     for(auto fm_po: files_to_post){
-        std::cout<< fm_po.path_to_send <<std::endl;
         auto post_file1 = c.post_file(fm_po);
         futures_to_wait.push_back(std::move(post_file1));
         post_results[fm_po.path] = false;
