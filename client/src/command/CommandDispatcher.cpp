@@ -4,7 +4,7 @@
 
 #include "CommandDispatcher.h"
 
-// Il costruttre ottine l'istanza della connessione con il server
+// Il costruttre ottiene l'istanza della connessione con il server
 CommandDispatcher::CommandDispatcher() {
     sc = ServerConnectionAsio::get_instance();
 }
@@ -12,7 +12,6 @@ CommandDispatcher::CommandDispatcher() {
 // Manda il comando con tutti i suoi parametri
 void CommandDispatcher::dispatch_partial(std::string command, const CommandDTO parameters) {
 
-    // lock acquire
     sc->send(command);
 
     for (auto it = parameters.begin(); it != parameters.end(); it++ ) {

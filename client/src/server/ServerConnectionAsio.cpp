@@ -5,6 +5,8 @@
 //
 #include "ServerConnectionAsio.h"
 
+
+
 // Il costruttore effettua la connect con il server
 ServerConnectionAsio::ServerConnectionAsio(std::string &address, int port) {
     boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(address), port);
@@ -34,9 +36,8 @@ void ServerConnectionAsio::send(const std::string &m) {
     const char* message = (m).c_str();
     boost::system::error_code ec;
     boost::asio::write(s, boost::asio::buffer(message, m.size()),ec);
-    if (ec){
-        std::cout << "ERROR: Cannot send!" << std::endl;
-        exit(1);
+    if (ec.failed()) {
+        throw ServerConnectionAsioException("Cannot send");
     }
 }
 
@@ -44,10 +45,12 @@ void ServerConnectionAsio::send(const std::string &m) {
 void ServerConnectionAsio::send(const char *message, int size) {
     std::cout << "Sending " << message << " with size " << size << std::endl;
     boost::system::error_code ec;
+    std::cout << "writing " << std::endl;
     boost::asio::write(s, boost::asio::buffer(message, size), ec);
-    if(ec){
-        std::cout << "Cannot send" << std::endl;
-        exit(1);
+    std::cout << "write done " << std::endl;
+
+    if (ec.failed()) {
+        throw ServerConnectionAsioException("Cannot send");
     }
 }
 
@@ -57,6 +60,11 @@ char *ServerConnectionAsio::read(int length) {
     boost::system::error_code ec;
     std::cout << "Waiting for read with length" << length << std::endl;
     boost::asio::read(s, boost::asio::buffer(buffer, length), boost::asio::transfer_exactly(length), ec);
+
+    if (ec.failed()) {
+        throw ServerConnectionAsioException("Cannot read");
+    }
+
     std::cout << "returning buffer " << buffer << std::endl;
     return buffer;
 }

@@ -16,16 +16,16 @@ std::string CommandParser::get_file_path(tcp::socket &socket, ServerCommand &com
     ConnectionsContainer& sc = ConnectionsContainer::get_instance();
     UserData ud = sc.get_user_data(socket);
 
-    int index = 0;
-    int count = 0;
-    for (;; index++) {
-        if (parameters[FILEPATH][index] == '/') count++;
-        if (count == 2) break;
-    }
+//    int index = 0;
+//    int count = 0;
+//    for (;; index++) {
+//        if (parameters[FILEPATH][index] == '/') count++;
+//        if (count == 2) break;
+//    }
+//
+//    std::string user_content_path = "/__user_content__/" + parameters[FILEPATH].substr(index);
 
-    std::string user_content_path = "/__user_content__/" + parameters[FILEPATH].substr(index);
-
-    std::string file_path = dest_dir + ud.username + user_content_path ;
+    std::string file_path = dest_dir + ud.username + parameters[FILEPATH];
     return file_path;
 }
 
@@ -171,7 +171,7 @@ void CommandParser::end_send_file(tcp::socket &socket, ServerCommand &command) {
     if(receved_file_hash != current_file_hash){
         std::cout<<"File: " << file_path<< " corrotto, lo elimino!" << std::endl;
         RemovalManager rm;
-        rm.remove_file(file_path);
+      // path);
     }
 }
 

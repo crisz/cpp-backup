@@ -11,6 +11,18 @@
 
 
 
+class ServerConnectionAsioException: public std::exception {
+private:
+    std::string message;
+public:
+    int code;
+    ServerConnectionAsioException(std::string&& message, int code=0) : message{message}, code{code} {}
+
+    const char* what() const throw() {
+        return ("Non è possibile raggiungere il server: (" + message + ")").c_str();
+    }
+};
+
 class ServerConnectionAsio {
 private:
     boost::asio::io_service io_service;

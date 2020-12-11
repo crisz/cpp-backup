@@ -19,23 +19,25 @@ void SyncFileWatcher::run() {
         }
         FileMetadata fm;
         fm.path = path_matched;
+        if (fm.path.find("/.") != std::string::npos) return;
+
         std::size_t found = fw.path_to_watch.string().find_last_of("/\\");
-        fm.path_to_send=fm.path.substr(found);
+        fm.path_to_send = fm.path.substr(found);
 
 
         if (status==FileStatus::created) {
             std::cout << "File created: " << fm.path_to_send << std::endl;
-            fm.hash=hash_file(fm.path);
+            fm.hash = hash_file(fm.path);
             auto post_file1 = c.post_file(fm);
             bool post_file_result_1 = post_file1.get();
             std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-        } else if (status==FileStatus::modified) {
+        } else if (status == FileStatus::modified) {
             std::cout << "File modified: " << fm.path_to_send << std::endl;
             fm.hash=hash_file(fm.path);
             auto post_file1 = c.post_file(fm);
             bool post_file_result_1 = post_file1.get();
             std::cout << "Post file effettuato con " << (post_file_result_1 ? "successo" : "fallimento") << std::endl;
-        } else if (status==FileStatus::erased) {
+        } else if (status == FileStatus::erased) {
             std::cout << "File erased: " << fm.path_to_send << '\n';
             auto remove_file= c.remove_file(fm);
             bool remove_file_result=remove_file.get();

@@ -80,7 +80,7 @@ std::future<std::vector<FileMetadata>> ClientCommand::require_tree() {
 
 std::future<bool> ClientCommand::post_file(FileMetadata &file_metadata, const int buffer_size) {
 
-    BufferedFileReader bfm{10, file_metadata.path}; // RAII
+    BufferedFileReader bfm{500, file_metadata.path}; // RAII
     std::string command;
     CommandDTO parameters;
     command = "POSTFILE";
@@ -95,7 +95,10 @@ std::future<bool> ClientCommand::post_file(FileMetadata &file_metadata, const in
     cd.send_raw(encode_length(bfm.get_file_size()), 4);
 
     std::promise<bool>& read_done = bfm.register_callback([&bfm, this] (bool done, char* data, int bytes_read) {
+        std::cout << "cb: sending raw " << std::endl;
         this->cd.send_raw(data, bytes_read);
+        std::cout << "cb: signaling" << std::endl;
+
         bfm.signal();
         if (done) {
             this->cd.send_parameter("STOPFLOW", "");

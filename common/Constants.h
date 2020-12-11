@@ -1,3 +1,4 @@
+#pragma once
 //
 // Created by giuseppe on 08/11/20.
 //
@@ -14,7 +15,3 @@
 #define REMVFILE "REMVFILE"
 #define STOPFLOW "STOPFLOW"
 #define __RESULT "__RESULT"
-
-
-
-
