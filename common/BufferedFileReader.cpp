@@ -21,16 +21,12 @@ BufferedFileReader::BufferedFileReader(int buffer_size, std::string &file_path) 
     }
     stream.clear();   //  Since ignore will have set eof.
     stream.seekg( 0, std::ios_base::beg);
-
     stream.ignore( std::numeric_limits<std::streamsize>::max() );
-    //this->file_size = stream.gcount();//+1;
-    this->file_size = std::filesystem::file_size(file_path);
-    std::cout << "Calcolato file size: " << this->file_size << std::endl;
-    std::this_thread::sleep_for(std::chrono::seconds(3));
+    this->file_size =  stream.gcount();
+
     stream.clear();   //  Since ignore will have set eof.
     stream.seekg( 0, std::ios_base::beg);
     std::cout<<"Dimensione del file: " << file_size << std::endl;
-    //stream.seekg(0, stream.beg);
 }
 
 BufferedFileReader::~BufferedFileReader() {
