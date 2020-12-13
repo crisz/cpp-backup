@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <string>
 #include <iostream>
+#include <boost/range/algorithm/count.hpp>
 
 // Funzione che verifica l'esistenza di una directory
 bool check_dest_dir(const std::string& dir) {
@@ -8,7 +9,7 @@ bool check_dest_dir(const std::string& dir) {
 }
 
 std::string remove_first_folder(const std::string& path) {
-    if (std::count(path.begin(), path.end(), '/') <= 1)
+    if (boost::count(path, '/') <= 1)
         return path;
 
     int count = 0;
