@@ -20,15 +20,21 @@ private:
 
     std::map<tcp::socket*, UserData> container;
 public:
+    // Ritorna l'istanza della classe
     static ConnectionsContainer& get_instance();
 
+    // Ritorna le informazioni relative ad un utente tramite la socket associata ad esso.
     UserData& get_user_data(tcp::socket& socket);
 
+    // Setta le informazioni relative ad un utente tramite la socket associata ad esso.
     void set_user_data(tcp::socket& socket, UserData user_data);
 
+    // Aggiunge un utente generico.
     void add_user(tcp::socket& socket);
 
+    // Rimuove le informazioni relative ad un utente tramite la socket associata ad esso.
     void remove_user(tcp::socket& socket);
 
+    // Ritorna il numero di utenti connessi.
     int get_number_users_connected();
 };

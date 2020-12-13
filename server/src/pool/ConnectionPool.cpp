@@ -1,4 +1,6 @@
+//
 //Lo scopo di questa classe è quello di gestire il pool di connessioni con i client.
+//
 
 #include "ConnectionPool.h"
 

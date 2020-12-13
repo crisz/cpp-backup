@@ -1,6 +1,10 @@
 //
 // Created by andrea on 24/11/20.
 //
+//
+// Classe che gestisce il confronto tra l'albero ricevuto dal server, contenente le informazioni (path ed hash) di ogni file,
+// e l'albero locale relativo ai file contenuti all'interno della cartella da monitorare
+//
 
 #include "TreesComparator.h"
 
@@ -24,7 +28,7 @@ TreesComparator::TreesComparator(std::string current_path) : current_path{curren
     }
 }
 
-// Funzione che confronta l'lbero locale con quello ricevuto dal server e ritorna tre vettori di file:
+// Funzione che confronta l'albero locale con quello ricevuto dal server e ritorna tre vettori di file:
 // -File da rimuovere
 // -File da modificare
 // -File da aggiungere

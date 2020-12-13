@@ -56,14 +56,14 @@ long BufferedFileReader::get_file_size() {
     return this->file_size;
 }
 
-// Segnale al BuffereFileReader che può essere effettuato un'altra flush
+// Segnala al BufferFileReader che può essere effettuato un'altro flush
 void BufferedFileReader::signal() {
     this->busy = false;
     cv.notify_all();
 }
 
 // Funzione che apre uno stream legato al file da leggere ed esegue
-// la funzione registrata nella callback tramite il flush del buffer fino a quando non abbiamo
+// la funzione registrata nella callback tramite il flush del buffer, fino a quando non abbiamo
 // raggiunto la fine del file
 void BufferedFileReader::run() {
     std::unique_lock ul(m);

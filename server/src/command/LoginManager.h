@@ -7,7 +7,6 @@
 #ifndef CPP_BACKUP_LOGINMANAGER_H
 #define CPP_BACKUP_LOGINMANAGER_H
 
-
 #include <future>
 #include <string>
 #include <fstream>
@@ -15,9 +14,9 @@
 #include "common/file_system_helper.h"
 #include "server/src/pool/ServerConf.h"
 
-
 class LoginManager {
 public:
+    // Funzione asincrona che ritorna un future<bool> in base all'esito del login.
     std::future<bool> check_login(std::string username, std::string password);
 };
 

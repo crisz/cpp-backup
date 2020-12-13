@@ -1,5 +1,5 @@
 //
-// Struttura tutte le informazioni utili alla gestione dei file
+// Struttura contente tutte le informazioni utili alla gestione dei file
 //
 
 #pragma once

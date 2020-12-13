@@ -1,5 +1,5 @@
 //
-// Classe che si occupa dell'interpretazione di un comando ricevuto, attua le azione necessarie e indine invoca la distach
+// Classe che si occupa dell'interpretazione di un comando ricevuto, attua le azione necessarie e infine invoca la dispatch
 // in modo da mandare una risposta al client.
 //
 

@@ -21,6 +21,7 @@
      std::unordered_map<std::string, std::time_t> paths_;
      bool running_ = true;
 
+     // Controlla se la mappa contiene una certa chiave
      bool contains(const std::string &key);
 
  public:
@@ -29,10 +30,11 @@
      // Time interval at which we check the base folder for changes
      std::chrono::duration<int, std::milli> delay;
 
-     // Keep a record of files from the base directory and their last modification time on a unordered map
+     // Costruttore che  setta il path della cartella da monitorare e dopo quanto tempo di deve ricontrollare per eventuali modifiche,
+     // inoltre crea una mappa (path, ultima modifica)
      FileWatcher(std::string path_to_watch, std::chrono::duration<int, std::milli> delay);
 
-     // Monitor "path_to_watch" for changes and in case of a change execute the user supplied "action" function
+     // Monitora la cartella specificata e in caso di cambiamenti esegue l'azione necessaria
      void on_file_changed(const std::function<void (std::string, FileStatus)> &callback);
 
 

@@ -1,3 +1,8 @@
+//
+// Classe che si occupa dell'interpretazione di un comando ricevuto, attua le azione necessarie e infine invoca la dispatch
+// in modo da mandare una risposta al client.
+//
+
 #include <boost/asio/post.hpp>
 #include <boost/asio.hpp>
 #include <string>
@@ -5,6 +10,7 @@
 #include <tgmath.h>
 #include "CommandParser.h"
 
+// Serve per ottenere il path locale di un file relativo alla directory associata ad un utente lato server
 std::string CommandParser::get_file_path(tcp::socket &socket, ServerCommand &command) {
     auto parameters = command.get_parameters();
     std::string dest_dir = ServerConf::get_instance().dest;
@@ -14,6 +20,8 @@ std::string CommandParser::get_file_path(tcp::socket &socket, ServerCommand &com
     return file_path;
 }
 
+// Si occupa dell'interpretazione di un comando ricevuto, attua le azioni necessarie e infine invoca la dispatch
+// in modo da mandare una risposta al client.
 void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
     std::string command_name=command.get_command_name();
     MessageDispatcher md{socket};
@@ -116,6 +124,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
     error(socket);
 }
 
+// Predispone l'invio di un file
 void CommandParser::start_send_file(tcp::socket &socket, long file_size, ServerCommand &command) {
     auto parameters = command.get_parameters();
     std::string file_path = get_file_path(socket,command);
@@ -123,6 +132,7 @@ void CommandParser::start_send_file(tcp::socket &socket, long file_size, ServerC
     bfw = new BufferedFileWriter(file_path, file_size);
 }
 
+// Svuota il buffer su disco
 std::future<void> CommandParser::send_file_chunk(char *buffer, int buffer_size) {
     if (bfw == nullptr) {
         throw std::logic_error("Parametri necessari. chiamare start_send_file prima");
@@ -130,6 +140,7 @@ std::future<void> CommandParser::send_file_chunk(char *buffer, int buffer_size) 
     return bfw->append(buffer, buffer_size);
 }
 
+// Termina la scrittura del file
 bool CommandParser::end_send_file(tcp::socket &socket, ServerCommand &command) {
     delete bfw;
     std::string file_path = get_file_path(socket, command);
@@ -145,11 +156,13 @@ bool CommandParser::end_send_file(tcp::socket &socket, ServerCommand &command) {
     return true;
 }
 
+// Stampa un errore e disconnette il client
 void CommandParser::error(tcp::socket& socket) {
     std::cout << "Errore nel comando." << std::endl;
     socket.close();
 }
 
+// Viene invocato in caso di errore. Annulla l'invocazione di un comando pendente in caso di errore
 void CommandParser::rollback_command(tcp::socket &socket, ServerCommand &command) { 
     if (command.get_command_name() == POSTFILE){
         RemovalManager rm;

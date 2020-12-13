@@ -1,3 +1,7 @@
+//
+// Classe che specifica il comportamento del server riguardo ad una specifica connessione con un client
+//
+
 #pragma once
 #include <boost/asio/post.hpp>
 #include <boost/bind/bind.hpp>
@@ -14,7 +18,6 @@
 #include "server/src/pool/ConnectionsContainer.h"
 #include "UserData.h"
 #include "common/encode_length_utils.h"
-
 
 using boost::asio::ip::tcp;
 

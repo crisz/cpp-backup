@@ -1,5 +1,5 @@
 //
-// Classe contente tutte le informazioni relative al comando ricevuto o inviato dal server.
+// Classe contenente tutte le informazioni relative al comando ricevuto o inviato dal server.
 //
 #pragma once
 

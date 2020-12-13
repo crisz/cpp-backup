@@ -15,6 +15,7 @@
 #include <iostream>
 class RemovalManager {
 public:
+    // Funzione asincrona che ritorna un future<bool> in base all'esito della rimozione del file.
     std::future<bool> remove_file(std::string path);
 };
 

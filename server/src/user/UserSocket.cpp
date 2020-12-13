@@ -1,3 +1,7 @@
+//
+// Classe che specifica il comportamento del server riguardo ad una specifica connessione con un client
+//
+
 #include "UserSocket.h"
 
 UserSocket::pointer UserSocket::create(boost::asio::thread_pool &io_context) {
@@ -9,7 +13,6 @@ tcp::socket &UserSocket::get_socket() {
 }
 
 void UserSocket::send_response(const std::string &message) {
-    //std::cout << "Sending response " << message << " with length " << message.size() << std::endl;
     auto on_write = boost::bind(&UserSocket::handle_write, shared_from_this(),
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred);
@@ -18,8 +21,6 @@ void UserSocket::send_response(const std::string &message) {
 }
 
 void UserSocket::send_response(const char *message, int size) {
-    //std::cout << "Sending response " << message << " with length " << size << std::endl;
-
     auto on_write = boost::bind(&UserSocket::handle_write, shared_from_this(),
                                 boost::asio::placeholders::error,
                                 boost::asio::placeholders::bytes_transferred);
@@ -147,23 +148,6 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
 
     int fixed_size = decode_length(message_size_arr);
 
-//    int message_size = 0;
-//    int shift_value = 24;
-//
-//    std::cout << "0: " << (int)message_size_arr[0] << std::endl;
-//    std::cout << "1: " << (int)message_size_arr[1] << std::endl;
-//    std::cout << "2: " << (int)message_size_arr[2] << std::endl;
-//    std::cout << "3: " << (int)message_size_arr[3] << std::endl;
-//
-//    for (int i=0; i<4; i++) {
-//        char x = (char)message_size_arr[i];
-//        message_size += ((char)message_size_arr[i]) << shift_value;
-//        shift_value -= 8;
-//    }
-//
-//    int fixed_size = ntohl(message_size);
-//  std::cout << "Received parameter " << message_name << " with length " << fixed_size << std::endl;
-
     if (message_name.compare(FILEDATA) == 0) {
         this->put_on_read_file_data(fixed_size);
     } else {
@@ -210,7 +194,6 @@ void UserSocket::handle_read_command(const boost::system::error_code &error, siz
 }
 
 void UserSocket::handle_error(const boost::system::error_code &error) {
-
 
     // Disconnessione ordinaria del client. Non è un errore, per cui non viene stampato nulla
     if (error == boost::asio::error::eof) {

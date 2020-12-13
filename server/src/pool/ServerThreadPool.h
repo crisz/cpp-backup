@@ -7,11 +7,11 @@
 #include <thread>
 #include <server/src/options/parse_server_options.h>
 
-
 class ServerThreadPool {
 public:
     ServerThreadPool() { }
 
+    // crea il pool di thread e lo utilizza per inizzializzare il ConnectionPool
     void init();
 };
 

@@ -18,6 +18,9 @@ private:
     ClientCommand& c;
 public:
     SyncFileWatcher(FileWatcher& fw, ClientCommand& c);
+
+    // Questa funzione setta la callback che gestisce le azioni necessarie in base al tipo di evento
+    // (modifica, creazione o cancellazione) avvenuto.
     void run();
 };
 
