@@ -29,10 +29,10 @@ void ConnectionsContainer::add_user(tcp::socket &socket) {
 // Rimuove le informazioni relative ad un utente tramite la socket associata ad esso.
 void ConnectionsContainer::remove_user(tcp::socket &socket) {
     container.erase(&socket);
-    std::cout<<"Ci sono " << container.size() << " utenti connessi"<< std::endl;
+    std::cout << "Ci sono " << this->get_number_users_connected() << " utenti connessi" << std::endl;
 }
 
 // Ritorna il numero di utenti connessi.
 int ConnectionsContainer::get_number_users_connected() {
-    return container.size();
+    return container.size() - 1;
 }

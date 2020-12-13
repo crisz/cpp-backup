@@ -27,6 +27,9 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
     MessageDispatcher md{socket};
     auto parameters = command.get_parameters();
 
+    ConnectionsContainer& sc = ConnectionsContainer::get_instance();
+    UserData ud = sc.get_user_data(socket);
+
     if (command_name == LOGINSNC) {
         if(parameters.find(USERNAME) != parameters.end() && parameters.find(PASSWORD) != parameters.end()){
             LoginManager lm;
@@ -36,10 +39,8 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
             std::map<std::string, std::string> result_map;
             result_map[__RESULT] = result ? "OK" : "KO";
             if (result) {
-                ConnectionsContainer& sc = ConnectionsContainer::get_instance();
-                UserData ud = sc.get_user_data(socket);
                 ud.username = username;
-                std::cout <<"L'utente "<< username << " si è connesso al server. Ci sono " << sc.get_number_users_connected() << " utenti connessi " << std::endl;
+                std::cout <<"L'utente " << username << " si è connesso al server. Ci sono " << sc.get_number_users_connected() << " utenti connessi " << std::endl;
                 sc.set_user_data(socket, ud);
             }
             md.dispatch(command_name,result_map);
@@ -55,7 +56,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
             bool result = sm.signup(username, password).get();
             std::map<std::string, std::string> result_map;
             result_map[__RESULT] = result ? "OK" : "KO";
-            std::cout<<"Registrazione del nuovo utente " << (result? "avvenuta con successo": "fallita" )<< std::endl;
+            std::cout << "Registrazione del nuovo utente " << (result ? "avvenuta con successo": "fallita" )<< std::endl;
             md.dispatch(command_name,result_map);
             command.clear();
         } else error(socket);
@@ -65,8 +66,6 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
     if (command_name == REQRTREE ){
         TreeManager tm;
         std::string dest_dir = ServerConf::get_instance().dest;
-        ConnectionsContainer& sc = ConnectionsContainer::get_instance();
-        UserData ud = sc.get_user_data(socket);
         std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir+ud.username).get();
         std::vector<std::pair<std::string, std::string>> req_tree_parameters;
         for (const auto& item: tree) {
@@ -75,7 +74,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
             req_tree_parameters.emplace_back(FILEHASH, file_hash);
             req_tree_parameters.emplace_back(FILEPATH, file_path);
         }
-        std::cout<<"Invio del tree richiesto dal client"<<std::endl;
+        ud.print_user_log("Invio del tree richiesto dal client");
         md.dispatch(command_name, req_tree_parameters);
         command.clear();
         return;
@@ -90,7 +89,8 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         auto result = rm.remove_file(file_path).get();
         std::map<std::string, std::string> result_map;
         result_map[__RESULT] = result ? "OK" : "KO";
-        std::cout<<"Rimozione del file "<< file_path << (result? " avvenuta con successo": " fallita" )<< std::endl;
+
+        ud.print_user_log("Rimozione del file " + file_path + (result? " avvenuta con successo": " fallita" ));
         md.dispatch(command_name, result_map);
         command.clear();
         return;
@@ -103,7 +103,8 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         }
         std::string file_path = get_file_path(socket, command);
         BufferedFileReader bfr{BUFFER_SIZE, file_path};
-        std::cout<<"Invio al client del file richiesto: " << file_path<< std::endl;
+
+        ud.print_user_log("Invio al client del file richiesto: \"" + file_path + "\"");
         md.send_command(command_name);
         md.send_chunk(FILEDATA, 8);
         md.send_chunk(encode_length(bfr.get_file_size()), 4);
@@ -143,22 +144,27 @@ std::future<void> CommandParser::send_file_chunk(char *buffer, int buffer_size) 
 // Termina la scrittura del file
 bool CommandParser::end_send_file(tcp::socket &socket, ServerCommand &command) {
     delete bfw;
+    ConnectionsContainer& sc = ConnectionsContainer::get_instance();
+    UserData ud = sc.get_user_data(socket);
+
     std::string file_path = get_file_path(socket, command);
     std::string received_file_hash = command.get_parameters()[FILEHASH];
     std::string current_file_hash = hash_file(file_path);
     if (received_file_hash != current_file_hash){
-        std::cout<<"File: " << file_path<< " corrotto, lo elimino!" << std::endl;
+        ud.print_user_log("File: \"" + file_path + "\" corrotto, lo elimino!");
         RemovalManager rm;
         rm.remove_file(file_path);
         return false;
     }
-    std::cout<<"File: " << file_path<< " aggiunto correttamente" << std::endl;
+    ud.print_user_log("File: \"" + file_path + "\" aggiunto correttamente");
     return true;
 }
 
 // Stampa un errore e disconnette il client
 void CommandParser::error(tcp::socket& socket) {
-    std::cout << "Errore nel comando." << std::endl;
+    ConnectionsContainer& sc = ConnectionsContainer::get_instance();
+    UserData ud = sc.get_user_data(socket);
+    ud.print_user_log("Errore nel comando.");
     socket.close();
 }
 

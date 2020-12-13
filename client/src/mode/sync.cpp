@@ -116,6 +116,13 @@ void sync(UserSession &us) {
         }
     }
 
+    if (!at_least_one_added && !at_least_one_removed) {
+        std::cout << "Non sono state apportate modifiche sul server " << std::endl;
+    }
+
+
+    std::cout << "Rimango in attesa di modifiche sulla cartella" << std::endl;
+
     SyncFileWatcher sfw{fw, c};
     sfw.run();
 }

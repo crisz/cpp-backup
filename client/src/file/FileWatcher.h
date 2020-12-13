@@ -24,8 +24,9 @@
      // Controlla se la mappa contiene una certa chiave
      bool contains(const std::string &key);
 
- public:
      boost::filesystem::path path_to_watch;
+
+ public:
 
      // Time interval at which we check the base folder for changes
      std::chrono::duration<int, std::milli> delay;
@@ -37,5 +38,7 @@
      // Monitora la cartella specificata e in caso di cambiamenti esegue l'azione necessaria
      void on_file_changed(const std::function<void (std::string, FileStatus)> &callback);
 
+     boost::filesystem::path get_path_to_watch();
 
-};
+
+ };

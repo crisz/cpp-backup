@@ -13,6 +13,10 @@ FileWatcher::FileWatcher(std::string path_to_watch, std::chrono::duration<int, s
     }
 }
 
+boost::filesystem::path FileWatcher::get_path_to_watch() {
+    return this->path_to_watch;
+}
+
 // Controlla se la mappa contiene una certa chiave
 bool FileWatcher::contains(const std::string &key) {
     auto el = paths_.find(key);

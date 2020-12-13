@@ -109,7 +109,9 @@ void UserSocket::put_on_read_file_data(int file_size) {
 
 }
 
-UserSocket::UserSocket(boost::asio::thread_pool &io_context) : socket(io_context) {}
+UserSocket::UserSocket(boost::asio::thread_pool &io_context) : socket(io_context) {
+    ConnectionsContainer::get_instance().add_user(this->socket);
+}
 
 void UserSocket::handle_write(const boost::system::error_code &error, size_t bytes_transferred) {
 }
@@ -127,9 +129,11 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
 
     std::string message_name = parameter.substr(0, 8);
     if(message_name.compare(STOPFLOW)==0){
-        ConnectionsContainer& sc=ConnectionsContainer::get_instance();
+        ConnectionsContainer& sc = ConnectionsContainer::get_instance();
         UserData ud;
-        if(sc.get_user_data(socket).username!="") ud.username= sc.get_user_data(socket).username;
+        if (sc.get_user_data(socket).username != "") {
+            ud.username = sc.get_user_data(socket).username;
+        }
 
         ud.send_response_callback = [this](const std::string message) {
             this->send_response(message);
@@ -137,7 +141,7 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
         ud.send_raw_response_callback = [this](const char* message, int size) {
             this->send_response(message, size);
         };
-        ConnectionsContainer::get_instance().set_user_data(socket, ud);
+        ConnectionsContainer::get_instance().set_user_data(this->socket, ud);
         command_parser.digest(socket, current_command);
         this->put_on_read_command();
         return;
@@ -157,7 +161,6 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
 
 void UserSocket::handle_read_parameter_value(const boost::system::error_code &error, size_t bytes_transferred,
                                              std::string parameter_name) {
-    //std::cout << "Received parameter value with size " << bytes_transferred << std::endl ;
     if (error) {
         handle_error(error);
         return;
@@ -168,7 +171,6 @@ void UserSocket::handle_read_parameter_value(const boost::system::error_code &er
     std::string parameter_value = oss.str();
 
     current_command.add_parameter(parameter_name, parameter_value);
-    //std::cout << "value for parameter " << parameter_name << " is " << current_command.get_parameters()[parameter_name] << std::endl;
     this->put_on_read_parameter_name();
 }
 
@@ -184,7 +186,11 @@ void UserSocket::handle_read_command(const boost::system::error_code &error, siz
     messageP = oss.str();
 
     current_command.set_name(messageP);
-    std::cout << "Comando ricevuto: " << current_command.get_command_name() << std::endl;
+
+    auto& cc = ConnectionsContainer::get_instance();
+    cc.get_user_data(socket)
+         .print_user_log("Comando ricevuto: " + current_command.get_command_name());
+
     if (!messageP.empty()) {
         this->put_on_read_parameter_name();
     } else {
@@ -201,19 +207,24 @@ void UserSocket::handle_error(const boost::system::error_code &error) {
         return;
     }
 
-    std::cout << "Errore: " << error.message() << std::endl;
-    std::cout << "Si è verificato un errore nel comando: " << current_command.get_command_name() << std::endl;
+    UserData ud = ConnectionsContainer::get_instance().get_user_data(this->socket);
+
+    ud.print_user_log("Errore: " + error.message());
+    ud.print_user_log("Si è verificato un errore nel comando: " + current_command.get_command_name());
     if (current_command.get_parameters().empty()) {
-        std::cout << "Non erano presenti parametri associati al comando"<< std::endl;
+        ud.print_user_log("Non erano presenti parametri associati al comando");
     } else {
-        std::cout << "Ultimo parametro letto: " << (current_command.get_parameters().cbegin())->first << " con valore: "
-                  << (current_command.get_parameters().cbegin())->second << std::endl;
+        ud.print_user_log("Ultimo parametro letto: " +
+        (current_command.get_parameters().cbegin())->first + " con valore: " +
+        (current_command.get_parameters().cbegin())->second);
     }
     handle_disconnection();
 }
 
 void UserSocket::handle_disconnection() {
-    std::cout << "Il cliente ha chiuso la connessione" << std::endl;
+    UserData ud = ConnectionsContainer::get_instance().get_user_data(this->socket);
+
+    ud.print_user_log("Il cliente ha chiuso la connessione");
     this->command_parser.rollback_command(socket, this->current_command);
     ConnectionsContainer::get_instance().remove_user(socket);
 }

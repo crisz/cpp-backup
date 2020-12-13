@@ -11,11 +11,14 @@
 
 #include "../command/ClientCommand.h"
 #include "FileWatcher.h"
+#include <set>
 
 class SyncFileWatcher {
 private:
     FileWatcher& fw;
     ClientCommand& c;
+    std::set<std::string> directories;
+
 public:
     SyncFileWatcher(FileWatcher& fw, ClientCommand& c);
 

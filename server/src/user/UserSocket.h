@@ -26,7 +26,6 @@ class UserSocket : public std::enable_shared_from_this<UserSocket> {
     boost::asio::streambuf buffer;
     ServerCommand current_command;
     CommandParser command_parser;
-
 public:
     typedef std::shared_ptr<UserSocket> pointer;
 

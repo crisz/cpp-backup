@@ -6,11 +6,11 @@
 
 //Il costruttore inizializza l'io_context e l'acceptor, si mette in ascolto sulla porta di listening
 //e inizia ad accettare le connessioni entranti
-ConnectionPool::ConnectionPool(boost::asio::thread_pool &io_context) :
-        io_context(io_context),
-        acceptor(io_context, tcp::endpoint(tcp::v4(), ServerConf::get_instance().port)) {
+ConnectionPool::ConnectionPool(boost::asio::thread_pool &thread_pool) :
+        io_context(thread_pool),
+        acceptor(thread_pool, tcp::endpoint(tcp::v4(), ServerConf::get_instance().port)) {
 
-    acceptor.listen(0);
+    acceptor.listen(5);
     std::cout << "Waiting connection"<<std::endl;
     this->start_accept();
 }
@@ -25,14 +25,14 @@ void ConnectionPool::start_accept() {
 //Funzione che gestisce l'accept di una nuova connessione
 void ConnectionPool::handle_accept(UserSocket::pointer new_connection, const boost::system::error_code &error) {
     if (!error) {
-        std::thread t([new_connection]() {
+        boost::asio::post(io_context, [new_connection]() {
             std::cout << "A client connected" << std::endl;
             std::cout << "Waiting new connection"<<std::endl;
             new_connection->put_on_read_command();
         });
-        t.detach();
     } else {
-        std::cerr<<"ERRORE nello stabilire la connessione con il client"<<std::endl;
+        std::cerr << "ERRORE nello stabilire la connessione con il client" << std::endl;
+        std::cerr << error.message() << std::endl;
     }
     start_accept();
 }
