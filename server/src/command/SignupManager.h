@@ -19,8 +19,7 @@
 class SignupManager {
 public:
     // Funzione asincrona che ritorna un future<bool> in base all'esito della registrazione dell'utente.
-    std::future<bool> signup (std::string username, std::string password);
-
+    std::future<bool> signup (const std::string& username, const std::string& password);
 };
 
 

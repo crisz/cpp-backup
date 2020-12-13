@@ -36,8 +36,17 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
             LoginManager lm;
             std::string username = parameters[USERNAME];
             std::string password = parameters[PASSWORD];
-            bool result = lm.check_login(username, password).get();
             std::map<std::string, std::string> result_map;
+
+            bool result = lm.check_login(username, password).get();
+            if (!result) result_map[ERRORMSG] = "Username o password errati";
+
+            if (sc.check_user_connected(username)) {
+                std::cout << "L'utente " << username << " era già connesso." << std::endl;
+                result = false;
+                result_map[ERRORMSG] = "L'utente risulta già connesso";
+            }
+
             result_map[__RESULT] = result ? "OK" : "KO";
             if (result) {
                 ud.username = username;

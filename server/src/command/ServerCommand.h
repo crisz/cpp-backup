@@ -21,7 +21,7 @@ public:
     void set_name(std::string name){
         command_name = name;
     }
-    void add_parameter(std::string par_name, std::string par_value){
+    void add_parameter(const std::string& par_name, const std::string& par_value){
         parameters.insert(std::pair<std::string, std::string>(par_name, par_value));
     }
     std::string get_command_name(){

@@ -44,7 +44,7 @@ void MessageDispatcher::send_command(std::string& command) {
 }
 
 // Serve ad inviare un particolare parametro con il rispettivo formato TLV
-void MessageDispatcher::send_parameter(std::string key, std::string value) {
+void MessageDispatcher::send_parameter(const std::string& key, const std::string& value) {
     ud.send_response_callback(key); // TAG
     ud.send_raw_response_callback(encode_length(value.size()), 4); // LENGTH
     ud.send_response_callback(value); // VALUE

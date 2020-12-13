@@ -35,7 +35,7 @@ public:
     void send_command(std::string& commands);
 
     // Serve ad inviare un particolare parametro con il rispettivo formato TLV
-    void send_parameter(std::string key, std::string value);
+    void send_parameter(const std::string& key, const std::string& value);
 
     // Serve ad inviare dei dati raw (es. la lunghezza del valore e il valore stesso di un parametro)
     // La necessità di questa funzione è dovuto al fatto che std::string ignora i caratteri non stampabili

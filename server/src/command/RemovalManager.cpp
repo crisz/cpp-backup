@@ -7,10 +7,10 @@
 #include "server/src/command/RemovalManager.h"
 
 // Funzione asincrona che ritorna un future<bool> in base all'esito della rimozione del file.
-std::future<bool> RemovalManager::remove_file(std::string path) {
+std::future<bool> RemovalManager::remove_file(const std::string& path) {
     return std::async([&path]() {
-        if(boost::filesystem::exists(path)){
-            if(boost::filesystem::remove_all(path)){
+        if (boost::filesystem::exists(path)){
+            if (boost::filesystem::remove_all(path)){
                 //Il while successivo serve a vedere ricorsivamente se le cartelle che contenevano il file si sono svuotate.
                 // Se si, le elimina.
                 std::string dir_path = path;

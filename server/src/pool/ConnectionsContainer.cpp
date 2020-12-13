@@ -4,6 +4,8 @@
 
 #include "ConnectionsContainer.h"
 
+#include <utility>
+
 // Ritorna l'istanza della classe
 ConnectionsContainer &ConnectionsContainer::get_instance() {
     static ConnectionsContainer instance;
@@ -17,7 +19,7 @@ UserData &ConnectionsContainer::get_user_data(tcp::socket &socket) {
 
 // Setta le informazioni relative ad un utente tramite la socket associata ad esso.
 void ConnectionsContainer::set_user_data(tcp::socket &socket, UserData user_data) {
-    container[&socket] = user_data;
+    container[&socket] = std::move(user_data);
 }
 
 // Aggiunge un utente generico.
@@ -35,4 +37,13 @@ void ConnectionsContainer::remove_user(tcp::socket &socket) {
 // Ritorna il numero di utenti connessi.
 int ConnectionsContainer::get_number_users_connected() {
     return container.size() - 1;
+}
+
+bool ConnectionsContainer::check_user_connected(const std::string& username) {
+    for (auto& pair: container) {
+        if (pair.second.username == username) {
+            return true;
+        }
+    }
+    return false;
 }

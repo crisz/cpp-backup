@@ -12,7 +12,7 @@ void sync(UserSession &us) {
     auto login = c.login(us.username, us.password);
     bool login_result = login.get();
 
-    if (!login_result) die("Invalid credentials");
+    if (!login_result) die("Impossibile effettuare il login");
 
     auto server_tree = c.require_tree().get();
 

@@ -17,3 +17,4 @@
 #define __RESULT "__RESULT"
 #define REQRFILE "REQRFILE"
 #define SIGNUPNU "SIGNUPNU"
+#define ERRORMSG "ERRORMSG"

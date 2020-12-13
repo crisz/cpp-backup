@@ -17,7 +17,7 @@
 class LoginManager {
 public:
     // Funzione asincrona che ritorna un future<bool> in base all'esito del login.
-    std::future<bool> check_login(std::string username, std::string password);
+    std::future<bool> check_login(const std::string& username, const std::string& password);
 };
 
 

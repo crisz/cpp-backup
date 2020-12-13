@@ -7,7 +7,7 @@
 #include "SignupManager.h"
 
 // Funzione asincrona che ritorna un future<bool> in base all'esito della registrazione dell'utente.
-std::future<bool> SignupManager::signup(std::string username, std::string password) {
+std::future<bool> SignupManager::signup(const std::string& username, const std::string& password) {
     return std::async([&username, &password]() {
         MD5 md5(password);
         std::string hash_pwd = md5.hexdigest();

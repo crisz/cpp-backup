@@ -18,7 +18,11 @@ std::future<bool> ClientCommand::login(std::string username, std::string passwor
     parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
     return std::async([this, command, parameters] () {
         CommandDTO result = cd.dispatch(command, parameters).get();
-        return result.find((__RESULT)).second == "OK";
+        bool success = result.find((__RESULT)).second == "OK";
+        if (!success) {
+            std::cerr << result.find(ERRORMSG).second << std::endl;
+        }
+        return success;
     });
 }
 
@@ -62,7 +66,6 @@ std::future<std::vector<FileMetadata>> ClientCommand::require_tree() {
                 fm.path_to_send = fm.path;
 
                 std::size_t found = fm.path.find_last_of("/\\");
-                fm.name = fm.path.substr(found+1);
                 continue;
             }
         }

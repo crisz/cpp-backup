@@ -16,7 +16,7 @@ class TreeManager {
 public:
     // Funzione asincrona che ritorna un future<std::map<std::string, std::string>> contenente
     // il local tree (coppie: filname, hash)  della cartella associata all'utente corrente.
-    std::future<std::map<std::string,std::string>> obtain_tree(std::string const& path);
+    std::future<std::map<std::string,std::string>> obtain_tree(const std::string& path);
 
 };
 

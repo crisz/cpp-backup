@@ -20,9 +20,7 @@
 
 class ClientCommand {
 private:
-    std::string command;
     CommandDispatcher cd;
-    CommandDTO parameters;
 
 public:
     ClientCommand();

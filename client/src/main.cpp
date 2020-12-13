@@ -18,7 +18,7 @@
 #include "mode/signup.h"
 
 void die(std::string message) {
-    std::cout << message << std::endl;
+    std::cerr << message << std::endl;
     exit(-1);
 }
 

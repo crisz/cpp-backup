@@ -37,4 +37,6 @@ public:
 
     // Ritorna il numero di utenti connessi.
     int get_number_users_connected();
+
+    bool check_user_connected(const std::string& username);
 };

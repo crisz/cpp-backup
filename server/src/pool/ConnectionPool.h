@@ -18,7 +18,7 @@
 void die(std::string message);
 
 class ConnectionPool {
-    boost::asio::thread_pool& io_context;
+    boost::asio::thread_pool& thread_pool;
     tcp::acceptor acceptor;
 public:
     //Il costruttore inizializza l'io_context e l'acceptor, si mette in ascolto sulla porta di listening

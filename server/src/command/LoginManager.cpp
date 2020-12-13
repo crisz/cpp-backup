@@ -7,7 +7,7 @@
 #include "LoginManager.h"
 
 // Funzione asincrona che ritorna un future<bool> in base all'esito del login.
-std::future<bool> LoginManager::check_login(std::string username, std::string password) {
+std::future<bool> LoginManager::check_login(const std::string& username, const std::string& password) {
     return std::async([&username, &password]() {
         MD5 md5(password);
         std::string hash_pwd= md5.hexdigest();
@@ -22,7 +22,7 @@ std::future<bool> LoginManager::check_login(std::string username, std::string pa
         if (ifs.is_open()) {
             getline (ifs,user_pwd);
             ifs.close();
-        }else{
+        } else {
             std::cout<<"Errore nell'apertura del file"<<std::endl;
             return false;
         }
