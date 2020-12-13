@@ -15,7 +15,8 @@ TreesComparator::TreesComparator(std::string current_path) : current_path{curren
         if(!boost::filesystem::is_regular_file(file.path())) continue;
         FileMetadata fm;
         fm.path = file.path().string();
-        fm.path_to_send = remove_first_folder(fm.path);;
+        std::string path = file.path().string().substr(current_path.size());
+        fm.path_to_send = path; //remove_first_folder(path);
 
         if (file.path().string().find("/.") != std::string::npos) continue;
 

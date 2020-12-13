@@ -37,8 +37,8 @@ void init_connection(UserSession& us) {
 int main(int argc, char** argv) {
 
     if (argc <= 1) {
-        die("Please, choose a command among sync, restore and signup."
-            "Example: ./client sync"
+        die("Please, choose a command among sync, restore and signup.\n"
+            "Example: \n " + std::string(argv[0]) + " sync --help"
         );
     }
 

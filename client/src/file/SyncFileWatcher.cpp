@@ -25,7 +25,9 @@ void SyncFileWatcher::run() {
         FileMetadata fm;
         fm.path = path_matched;
         if (fm.path.find("/.") != std::string::npos) return;
-        fm.path_to_send = remove_first_folder(fm.path);
+
+        std::string path = path_matched.substr(fw.get_path_to_watch().string().size());
+        fm.path_to_send = path; //remove_first_folder(path);
 
         if (status == FileStatus::created || status == FileStatus::modified) {
             if (boost::filesystem::is_directory(boost::filesystem::path(path_matched))) {
@@ -37,11 +39,13 @@ void SyncFileWatcher::run() {
             bool post_file_result = post_file.get();
             std::string action = status == FileStatus::created ? "aggiunti" : "aggiornati";
             if (post_file_result) {
+                std::cout << std::endl;
                 std::cout << "I seguenti file sono stati " << action << " sul server: " << std::endl;
-                std::cout << " + " << fm.path << std::endl;
+                std::cout << " + " << fm.path << std::endl << std::endl;
             } else {
+                std::cout << std::endl;
                 std::cout << "I seguenti file NON sono stati " << action << " sul server: " << std::endl;
-                std::cout << " ? " << fm.path << std::endl;
+                std::cout << " ? " << fm.path << std::endl << std::endl;
             }
         } else if (status == FileStatus::erased) {
             if (directories.count(path_matched)) {
@@ -53,11 +57,13 @@ void SyncFileWatcher::run() {
             bool remove_file_result = remove_file.get();
 
             if (remove_file_result) {
+                std::cout << std::endl;
                 std::cout << "I seguenti file sono stati eliminati dal server: " << std::endl;
-                std::cout << " - " << fm.path << std::endl;
+                std::cout << " - " << fm.path << std::endl << std::endl;
             } else {
+                std::cout << std::endl;
                 std::cout << "I seguenti file NON sono stati eliminati dal server: " << std::endl;
-                std::cout << " ? " << fm.path << std::endl;
+                std::cout << " ? " << fm.path << std::endl << std::endl;
             }
         } else {
             std::cout << "Error! Unknown file status.\n";
