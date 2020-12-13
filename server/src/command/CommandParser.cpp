@@ -13,10 +13,11 @@
 // Serve per ottenere il path locale di un file relativo alla directory associata ad un utente lato server
 std::string CommandParser::get_file_path(tcp::socket &socket, ServerCommand &command) {
     auto parameters = command.get_parameters();
-    std::string dest_dir = ServerConf::get_instance().dest;
+    ServerConf& conf = ServerConf::get_instance();
+    std::string dest_dir = conf.dest;
     ConnectionsContainer& sc = ConnectionsContainer::get_instance();
     UserData ud = sc.get_user_data(socket);
-    std::string file_path = dest_dir + ud.username + parameters[FILEPATH];
+    std::string file_path = dest_dir + ud.username + "/" + conf.user_folder + parameters[FILEPATH];
     return file_path;
 }
 
@@ -65,8 +66,9 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
 
     if (command_name == REQRTREE ){
         TreeManager tm;
-        std::string dest_dir = ServerConf::get_instance().dest;
-        std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir+ud.username).get();
+        ServerConf& conf = ServerConf::get_instance();
+        std::string dest_dir = conf.dest;
+        std::map<std::string, std::string> tree = tm.obtain_tree(dest_dir + ud.username + "/" + conf.user_folder).get();
         std::vector<std::pair<std::string, std::string>> req_tree_parameters;
         for (const auto& item: tree) {
             std::string file_path = item.first;
@@ -74,6 +76,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
             req_tree_parameters.emplace_back(FILEHASH, file_hash);
             req_tree_parameters.emplace_back(FILEPATH, file_path);
         }
+
         ud.print_user_log("Invio del tree richiesto dal client");
         md.dispatch(command_name, req_tree_parameters);
         command.clear();
@@ -175,6 +178,6 @@ void CommandParser::rollback_command(tcp::socket &socket, ServerCommand &command
         std::string dest_dir = ServerConf::get_instance().dest;
         ConnectionsContainer& sc = ConnectionsContainer::get_instance();
         UserData ud = sc.get_user_data(socket);
-        rm.remove_file(dest_dir + ud.username + command.get_parameters()[FILEPATH]).get();
+        rm.remove_file(get_file_path(socket, command)).get();
     }
 }

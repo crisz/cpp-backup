@@ -6,6 +6,7 @@
 // e l'albero locale relativo ai file contenuti all'interno della cartella da monitorare
 //
 
+#include <common/file_system_helper.h>
 #include "TreesComparator.h"
 
 // Il Costruttore genera l'albero locale
@@ -14,15 +15,10 @@ TreesComparator::TreesComparator(std::string current_path) : current_path{curren
         if(!boost::filesystem::is_regular_file(file.path())) continue;
         FileMetadata fm;
         fm.path = file.path().string();
-
-        std::size_t found = current_path.find_last_of("/\\");
-        std::string filename = fm.path.substr(found);
-
-        std::string path_to_send = filename;
+        fm.path_to_send = remove_first_folder(fm.path);;
 
         if (file.path().string().find("/.") != std::string::npos) continue;
 
-        fm.path_to_send = path_to_send;
         fm.hash = hash_file(fm.path);
         local_tree_vect.push_back(fm);
     }

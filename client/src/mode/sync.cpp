@@ -39,7 +39,7 @@ void sync(UserSession &us) {
     // Esecuzione delle remove
 
     for (auto fm_rm: files_to_remove) {
-        fm_rm.path_to_send=fm_rm.path;
+        fm_rm.path_to_send = fm_rm.path;
         auto remove_file = c.remove_file(fm_rm);
         remove_results[fm_rm.path] = false;
         futures_to_wait.push_back(std::move(remove_file));
@@ -59,7 +59,7 @@ void sync(UserSession &us) {
     futures_to_wait.clear();
     std::map<std::string, bool> post_results;
 
-    for(auto fm_po: files_to_post){
+    for(auto fm_po: files_to_post) {
         auto post_file1 = c.post_file(fm_po);
         futures_to_wait.push_back(std::move(post_file1));
         post_results[fm_po.path] = false;

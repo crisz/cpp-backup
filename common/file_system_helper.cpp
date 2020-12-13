@@ -6,3 +6,17 @@
 bool check_dest_dir(const std::string& dir) {
     return access(dir.c_str(), W_OK) == 0;
 }
+
+std::string remove_first_folder(const std::string& path) {
+    if (std::count(path.begin(), path.end(), '/') <= 1)
+        return path;
+
+    int count = 0;
+    size_t index = 0;
+    for (;; index++) {
+        if (path[index] == '/') count++;
+        if (count == 2) break;
+    }
+
+    return path.substr(index);
+}

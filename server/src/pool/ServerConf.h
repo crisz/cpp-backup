@@ -14,6 +14,7 @@ private:
 public:
     int port;
     std::string dest;
+    std::string user_folder = "__user_content__";
     //Questo metodo ritorna l'istanza della classe.
     static ServerConf& get_instance() {
         static ServerConf instance;

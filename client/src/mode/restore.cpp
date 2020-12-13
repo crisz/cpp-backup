@@ -43,14 +43,7 @@ void restore(UserSession &us) {
         std::vector<std::future<bool>> futures_to_wait;
 
         for (auto file: files_to_require) {
-            int count = 0;
-            size_t index = 0;
-            for (;; index++) {
-                if (file.path_to_send[index] == '/') count++;
-                if (count == 2) break;
-            }
-            file.path = us.dir + file.path_to_send.substr(index);
-
+            file.path = us.dir + file.path_to_send;
             futures_to_wait.push_back(c.require_file(file));
             require_results[file.path] = false;
         }
@@ -91,7 +84,7 @@ void restore(UserSession &us) {
                 }
             }
         }
-    } catch (...) {
+    } catch (std::exception& e) {
         std::cout << "Si è verficato un errore." << std::endl;
         return;
     };

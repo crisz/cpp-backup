@@ -4,6 +4,8 @@
 
 #include "UserSocket.h"
 
+#include <utility>
+
 UserSocket::pointer UserSocket::create(boost::asio::thread_pool &io_context) {
     return pointer(new UserSocket(io_context));
 }
@@ -53,7 +55,7 @@ void UserSocket::put_on_read_parameter_value(std::string parameter_name, int n) 
 }
 
 void UserSocket::put_on_read_file_data(int file_size) {
-    int buffer_size = 1001;
+    int buffer_size = 1024;
     int number_of_reads = ceil((double)file_size/(double)buffer_size);
 
     try {
@@ -114,6 +116,7 @@ UserSocket::UserSocket(boost::asio::thread_pool &io_context) : socket(io_context
 }
 
 void UserSocket::handle_write(const boost::system::error_code &error, size_t bytes_transferred) {
+    // no-op
 }
 
 void UserSocket::handle_read_parameter_name(const boost::system::error_code &error, size_t bytes_transferred) {
@@ -128,14 +131,14 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
     std::string parameter = oss.str();
 
     std::string message_name = parameter.substr(0, 8);
-    if(message_name.compare(STOPFLOW)==0){
+    if (message_name==STOPFLOW){
         ConnectionsContainer& sc = ConnectionsContainer::get_instance();
         UserData ud;
-        if (sc.get_user_data(socket).username != "") {
+        if (!sc.get_user_data(socket).username.empty()) {
             ud.username = sc.get_user_data(socket).username;
         }
 
-        ud.send_response_callback = [this](const std::string message) {
+        ud.send_response_callback = [this](const std::string& message) {
             this->send_response(message);
         };
         ud.send_raw_response_callback = [this](const char* message, int size) {
@@ -149,10 +152,9 @@ void UserSocket::handle_read_parameter_name(const boost::system::error_code &err
 
     const char* message_size_arr = parameter.substr(8, 12).c_str();
 
+    long fixed_size = decode_length(message_size_arr);
 
-    int fixed_size = decode_length(message_size_arr);
-
-    if (message_name.compare(FILEDATA) == 0) {
+    if (message_name == FILEDATA) {
         this->put_on_read_file_data(fixed_size);
     } else {
         this->put_on_read_parameter_value(message_name, fixed_size);
@@ -170,7 +172,7 @@ void UserSocket::handle_read_parameter_value(const boost::system::error_code &er
     oss << &buffer;
     std::string parameter_value = oss.str();
 
-    current_command.add_parameter(parameter_name, parameter_value);
+    current_command.add_parameter(std::move(parameter_name), parameter_value);
     this->put_on_read_parameter_name();
 }
 

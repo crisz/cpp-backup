@@ -5,6 +5,7 @@
 // la cartella locale con quella del serve
 //
 
+#include <common/file_system_helper.h>
 #include "SyncFileWatcher.h"
 #include "common/hash_file.h"
 
@@ -24,10 +25,7 @@ void SyncFileWatcher::run() {
         FileMetadata fm;
         fm.path = path_matched;
         if (fm.path.find("/.") != std::string::npos) return;
-
-        std::size_t found = fw.get_path_to_watch().string().find_last_of("/\\");
-        fm.path_to_send = fm.path.substr(found);
-
+        fm.path_to_send = remove_first_folder(fm.path);
 
         if (status == FileStatus::created || status == FileStatus::modified) {
             if (boost::filesystem::is_directory(boost::filesystem::path(path_matched))) {
