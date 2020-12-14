@@ -127,16 +127,22 @@ std::future<bool> ClientCommand::post_file(FileMetadata &file_metadata, const in
 
 // Funzione che si occupa di richiedere la rimozione di un file sul server e ritorna la risposta del server
 std::future<bool> ClientCommand::remove_file(FileMetadata &file_metadata) {
-    std::string command;
-    CommandDTO parameters;
-    parameters.erase();
-    command = REMVFILE;
+    try {
+        std::string command;
+        CommandDTO parameters;
+        parameters.erase();
+        command = REMVFILE;
 
-    parameters.insert(std::pair<std::string, std::string>(FILEPATH,file_metadata.path_to_send));
-    return std::async([this, command, parameters] () {
-        CommandDTO result = cd.dispatch(command, parameters).get();
-        return result.find((__RESULT)).second == "OK";
-    });
+        parameters.insert(std::pair<std::string, std::string>(FILEPATH,file_metadata.path_to_send));
+        return std::async([this, command, parameters] () {
+            CommandDTO result = cd.dispatch(command, parameters).get();
+            return result.find((__RESULT)).second == "OK";
+        });
+    } catch (...) {
+        std::cout << "..." << std::endl;
+        throw;
+    }
+
 }
 
 // Funzione che si occupa della richiesta di un file dal server e ritorna un bool in base al fatto

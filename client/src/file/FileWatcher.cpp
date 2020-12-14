@@ -44,17 +44,15 @@ void FileWatcher::on_file_changed(const std::function<void(std::string, FileStat
             if (!contains(file.path().string())) {
                 paths_[file.path().string()] = current_file_last_write_time;
                 std::string path = file.path().string();
-                //std::thread([&it, &callback, &path]() {
-                    callback(path, FileStatus::created);
-                //}).detach();
+                callback(path, FileStatus::created);
                 // File modification
             } else if (paths_[file.path().string()] != current_file_last_write_time) {
                 paths_[file.path().string()] = current_file_last_write_time;
                 std::string path = file.path().string();
-                //std::thread([&it, &callback, &path]() {
-                    callback(path, FileStatus::modified);
-                //}).detach();
+                callback(path, FileStatus::modified);
             }
         }
+
+        callback("", FileStatus::nop);
     }
 }

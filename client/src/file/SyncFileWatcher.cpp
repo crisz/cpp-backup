@@ -18,8 +18,16 @@ SyncFileWatcher::SyncFileWatcher(FileWatcher &fw, ClientCommand &c): fw{fw}, c{c
         }
     }
 
+
     this->check_results_thread = std::thread([this]() {
-        this->check_results();
+        try {
+            this->check_results();
+        } catch (ServerConnectionAsioException& exception) {
+            std::cerr << exception.what() << std::endl;
+            this->excep = std::current_exception();
+        } catch (...) {
+            this->excep = std::current_exception();
+        }
     });
 }
 
@@ -36,21 +44,15 @@ void SyncFileWatcher::check_results() {
         std::vector<SyncFileWatcherResult> _results = std::move(results);
         ul.unlock();
         for (auto& item: _results) {
-            try{
-                bool result = item.result_future.get();
-                item.result = result;
-
-            }catch(...){
-              std::cout<<"Eccola"<<std::endl; //TODO
-            }
-
+            bool result = item.result_future.get();
+            item.result = result;
         }
 
         print_file_changes(_results, FileStatus::created, "creati", "+");
         print_file_changes(_results, FileStatus::modified, "aggiornati","+");
         print_file_changes(_results, FileStatus::erased, "rimossi","-");
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(PRINT_INTERVAL));
     }
 }
 
@@ -96,7 +98,16 @@ void SyncFileWatcher::print_file_changes(std::vector<SyncFileWatcherResult>& _re
 // (modifica, creazione o cancellazione) avvenuto.
 void SyncFileWatcher::run() {
     this->fw.on_file_changed([this](std::string path_matched, FileStatus status) -> void {
-        std::shared_lock ul(m);
+        std::unique_lock ul(m);
+
+        // Se non è avvenuta nessuna modifica, ci limitiamo a controllare se ci sono eccezioni pendenti
+        if (status == FileStatus::nop) {
+            if (excep) {
+                std::rethrow_exception(excep);
+            }
+            return;
+        }
+
         FileMetadata fm;
         fm.path = path_matched;
         if (fm.path.find("/.") != std::string::npos) return;
@@ -110,7 +121,9 @@ void SyncFileWatcher::run() {
                 return;
             }
             fm.hash = hash_file(fm.path);
+            ul.unlock();
             auto post_file = c.post_file(fm);
+            ul.lock();
             results.emplace_back(status, fm.path, std::move(post_file));
 
         } else if (status == FileStatus::erased) {
@@ -119,12 +132,13 @@ void SyncFileWatcher::run() {
                 return;
             }
 
+            ul.unlock();
             auto remove_file = c.remove_file(fm);
+            ul.lock();
+
             results.emplace_back(status, fm.path, std::move(remove_file));
 
-        } else {
-            std::cout << "Error! Unknown file status.\n";
         }
-
     });
+
 }

@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
 
     std::cout << oss.str();
     // Il timeout serve per apprezzare l'ascii art
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // std::this_thread::sleep_for(std::chrono::seconds(1));
 
 
     std::string mode = argv[1];
@@ -87,14 +87,18 @@ int main(int argc, char** argv) {
         }
 
     } catch (ServerConnectionAsioException& exc) {
-        std::cout << "La connessione con il server è stata interrotta." << std::endl;
-        std::cout << "Motivo: " << exc.what() << std::endl;
+        std::cerr << "La connessione con il server è stata interrotta." << std::endl;
+        std::cerr << "Motivo: " << exc.what() << std::endl;
 
         if (mode == "sync") {
             retry_sync(us);
         } else {
             return -1;
         }
+    } catch (boost::filesystem::filesystem_error& err) {
+        std::cerr << "Non è stato possibile calcolare l'hash di un file " << std::endl;
+        std::cerr << err.what() << std::endl;
+        return -1;
     }
 
     std::cout << "The command " << mode << " is not valid " << std::endl;

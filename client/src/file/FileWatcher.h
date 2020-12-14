@@ -14,7 +14,7 @@
 #include <iostream>
 #include <boost/filesystem.hpp>
 
- enum class FileStatus {created, modified, erased};
+ enum class FileStatus {created, modified, erased, nop};
 
  class FileWatcher {
 

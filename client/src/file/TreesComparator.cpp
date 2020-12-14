@@ -11,21 +11,24 @@
 
 // Il Costruttore genera l'albero locale
 TreesComparator::TreesComparator(std::string current_path) : current_path{current_path}{
-    try{
-        for(auto &file : boost::filesystem::recursive_directory_iterator(current_path)) {
-            if(!boost::filesystem::is_regular_file(file.path())) continue;
-            FileMetadata fm;
-            fm.path = file.path().string();
-            std::string path = file.path().string().substr(current_path.size());
-            fm.path_to_send = path; //remove_first_folder(path);
+    for(auto &file : boost::filesystem::recursive_directory_iterator(current_path)) {
+        if (!boost::filesystem::is_regular_file(file.path())) continue;
+        FileMetadata fm;
+        fm.path = file.path().string();
+        std::string path = file.path().string().substr(current_path.size());
+        fm.path_to_send = path; //remove_first_folder(path);
 
-            if (file.path().string().find("/.") != std::string::npos) continue;
+        if (file.path().string().find("/.") != std::string::npos) continue;
 
+        try {
             fm.hash = hash_file(fm.path);
-            local_tree_vect.push_back(fm);
+        } catch (BufferedFileReaderException& excp) {
+            std::cout << "Sto ignorando il file \"" << fm.path << "\" poiché non è possibile aprirlo in lettura" << std::endl;
+            std::cout << "Maggiori dettagli in seguito: " << std::endl;
+            std::cout << excp.what() << std::endl;
+            continue;
         }
-    }catch(boost::filesystem::filesystem_error& err){
-        std::cerr<<"Non è stato possbile calcolare l'hash del file"<<std::endl;
+        local_tree_vect.push_back(fm);
     }
 }
 

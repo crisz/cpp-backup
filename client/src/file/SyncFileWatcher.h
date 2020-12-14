@@ -8,6 +8,7 @@
 #ifndef CPP_BACKUP_SYNCFILEWATCHER_H
 #define CPP_BACKUP_SYNCFILEWATCHER_H
 
+#define PRINT_INTERVAL 500
 
 #include "../command/ClientCommand.h"
 #include "FileWatcher.h"
@@ -39,6 +40,7 @@ private:
     std::thread check_results_thread;
     bool close_flag = false;
     std::shared_mutex m;
+    std::exception_ptr excep;
 
     void check_results();
     void print_file_changes(std::vector<SyncFileWatcherResult>& _results, FileStatus fs, const std::string& action, const std::string& symbol);
