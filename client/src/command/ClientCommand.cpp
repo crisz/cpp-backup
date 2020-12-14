@@ -131,6 +131,7 @@ std::future<bool> ClientCommand::remove_file(FileMetadata &file_metadata) {
     CommandDTO parameters;
     parameters.erase();
     command = REMVFILE;
+
     parameters.insert(std::pair<std::string, std::string>(FILEPATH,file_metadata.path_to_send));
     return std::async([this, command, parameters] () {
         CommandDTO result = cd.dispatch(command, parameters).get();

@@ -4,6 +4,7 @@
 //
 
 #include "FileWatcher.h"
+#include <future>
 
 // Costruttore che  setta il path della cartella da monitorare e dopo quanto tempo di deve ricontrollare per eventuali modifiche,
 // inoltre crea una mappa (path, ultima modifica)
@@ -42,11 +43,17 @@ void FileWatcher::on_file_changed(const std::function<void(std::string, FileStat
             // File creation
             if (!contains(file.path().string())) {
                 paths_[file.path().string()] = current_file_last_write_time;
-                callback(file.path().string(), FileStatus::created);
+                std::string path = file.path().string();
+                //std::thread([&it, &callback, &path]() {
+                    callback(path, FileStatus::created);
+                //}).detach();
                 // File modification
             } else if (paths_[file.path().string()] != current_file_last_write_time) {
                 paths_[file.path().string()] = current_file_last_write_time;
-                callback(file.path().string(), FileStatus::modified);
+                std::string path = file.path().string();
+                //std::thread([&it, &callback, &path]() {
+                    callback(path, FileStatus::modified);
+                //}).detach();
             }
         }
     }

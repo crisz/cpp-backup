@@ -17,8 +17,6 @@
 #include "mode/restore.h"
 #include "mode/signup.h"
 
-#define RETRY_TIMEOUT 3000
-
 void die(std::string message) {
     std::cerr << message << std::endl;
     exit(-1);
@@ -93,17 +91,7 @@ int main(int argc, char** argv) {
         std::cout << "Motivo: " << exc.what() << std::endl;
 
         if (mode == "sync") {
-            while (true) {
-                try {
-                    std::cout << "Ritenterò la riconnessione tra " << (RETRY_TIMEOUT/1000) << " secondi" << std::endl;
-                    std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMEOUT));
-                    ServerConnectionAsio::get_instance()->reset();
-                    sync(us);
-                } catch (ServerConnectionAsioException& exc) {
-                    std::cerr << exc.what() << std::endl;
-                    // nop
-                }
-            }
+            retry_sync(us);
         } else {
             return -1;
         }

@@ -16,12 +16,80 @@ SyncFileWatcher::SyncFileWatcher(FileWatcher &fw, ClientCommand &c): fw{fw}, c{c
             directories.insert(file.path().string());
         }
     }
+
+    this->check_results_thread = std::thread([this]() {
+        this->check_results();
+    });
 }
+
+SyncFileWatcher::~SyncFileWatcher() {
+    close_flag = true;
+    if (this->check_results_thread.joinable()) {
+        this->check_results_thread.join();
+    }
+}
+
+void SyncFileWatcher::check_results() {
+    while (!close_flag) {
+        std::unique_lock ul(m);
+        for (auto& item: results) {
+            bool result = item.result_future.get();
+            item.result = result;
+        }
+
+        print_file_changes(FileStatus::created, "creati", "+");
+        print_file_changes(FileStatus::modified, "aggiornati","+");
+        print_file_changes(FileStatus::erased, "rimossi","-");
+
+        results.clear();
+
+        ul.unlock();
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+}
+
+void SyncFileWatcher::print_file_changes(FileStatus fs, const std::string& action, const std::string& symbol) {
+
+    bool at_least_one_success = false;
+    bool at_least_one_failure = false;
+
+    for (auto& item: results) {
+        if (item.result && fs == item.fs) at_least_one_success = true;
+        else if (!item.result && fs == item.fs) at_least_one_failure = true;
+        if (at_least_one_success && at_least_one_failure) break;
+    }
+
+    if (at_least_one_success) {
+        std::cout << "I seguenti file sono stati " << action << " sul server: " << std::endl;
+
+        for (auto& item: results) {
+            if (item.result && item.fs == fs) {
+                std::cout << " " << symbol << " " << item.path << std::endl;
+            }
+
+        }
+    }
+
+    if (at_least_one_failure) {
+        std::cout << "I seguenti file NON sono stati " << action << " sul server: " << std::endl;
+
+        for (auto& item: results) {
+            if (!item.result && item.fs == fs) {
+                std::cout << " ? " << item.path << std::endl;
+            }
+        }
+
+    }
+
+}
+
 
 // Questa funzione setta la callback che gestisce le azioni necessarie in base al tipo di evento
 // (modifica, creazione o cancellazione) avvenuto.
 void SyncFileWatcher::run() {
     this->fw.on_file_changed([this](std::string path_matched, FileStatus status) -> void {
+        std::unique_lock ul(m);
         FileMetadata fm;
         fm.path = path_matched;
         if (fm.path.find("/.") != std::string::npos) return;
@@ -36,17 +104,8 @@ void SyncFileWatcher::run() {
             }
             fm.hash = hash_file(fm.path);
             auto post_file = c.post_file(fm);
-            bool post_file_result = post_file.get();
-            std::string action = status == FileStatus::created ? "aggiunti" : "aggiornati";
-            if (post_file_result) {
-                std::cout << std::endl;
-                std::cout << "I seguenti file sono stati " << action << " sul server: " << std::endl;
-                std::cout << " + " << fm.path << std::endl << std::endl;
-            } else {
-                std::cout << std::endl;
-                std::cout << "I seguenti file NON sono stati " << action << " sul server: " << std::endl;
-                std::cout << " ? " << fm.path << std::endl << std::endl;
-            }
+            results.emplace_back(status, fm.path, std::move(post_file));
+
         } else if (status == FileStatus::erased) {
             if (directories.count(path_matched)) {
                 directories.erase(path_matched);
@@ -54,17 +113,8 @@ void SyncFileWatcher::run() {
             }
 
             auto remove_file = c.remove_file(fm);
-            bool remove_file_result = remove_file.get();
+            results.emplace_back(status, fm.path, std::move(remove_file));
 
-            if (remove_file_result) {
-                std::cout << std::endl;
-                std::cout << "I seguenti file sono stati eliminati dal server: " << std::endl;
-                std::cout << " - " << fm.path << std::endl << std::endl;
-            } else {
-                std::cout << std::endl;
-                std::cout << "I seguenti file NON sono stati eliminati dal server: " << std::endl;
-                std::cout << " ? " << fm.path << std::endl << std::endl;
-            }
         } else {
             std::cout << "Error! Unknown file status.\n";
         }

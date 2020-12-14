@@ -1,7 +1,6 @@
 #include "sync.h"
 
 void sync(UserSession &us) {
-    // TODO: migliorare gestione errori
     FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
     ClientCommand c;
 
@@ -126,4 +125,18 @@ void sync(UserSession &us) {
 
     SyncFileWatcher sfw{fw, c};
     sfw.run();
+}
+
+void retry_sync(UserSession& us) {
+    while (true) {
+        try {
+            std::cout << "Ritenterò la riconnessione tra " << (RETRY_TIMEOUT/1000) << " secondi" << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMEOUT));
+            ServerConnectionAsio::get_instance()->reset();
+            sync(us);
+        } catch (ServerConnectionAsioException& exc) {
+            std::cerr << exc.what() << std::endl;
+            // nop
+        }
+    }
 }

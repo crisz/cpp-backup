@@ -17,7 +17,10 @@
 #include "../file/SyncFileWatcher.h"
 
 #define SYNCH_INTERVAL 1000
+#define RETRY_TIMEOUT 3000
 
 void die(std::string message);
 
 void sync(UserSession& us);;
+
+void retry_sync(UserSession& us);
