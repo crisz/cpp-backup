@@ -32,7 +32,7 @@ void FileWatcher::on_file_changed(const std::function<void(std::string, FileStat
         auto it = paths_.begin();
         while (it != paths_.end()) {
             if (!boost::filesystem::exists(it->first)) {
-                callback(it->first, FileStatus::erased);
+                std::thread(callback, it->first, FileStatus::erased).detach();
                 it = paths_.erase(it);
             } else it++;
         }
@@ -42,11 +42,11 @@ void FileWatcher::on_file_changed(const std::function<void(std::string, FileStat
             // File creation
             if (!contains(file.path().string())) {
                 paths_[file.path().string()] = current_file_last_write_time;
-                callback(file.path().string(), FileStatus::created);
+                std::thread(callback, file.path().string(), FileStatus::created).detach();
                 // File modification
             } else if (paths_[file.path().string()] != current_file_last_write_time) {
                 paths_[file.path().string()] = current_file_last_write_time;
-                callback(file.path().string(), FileStatus::modified);
+                std::thread(callback, file.path().string(), FileStatus::modified).detach();
             }
         }
     }
