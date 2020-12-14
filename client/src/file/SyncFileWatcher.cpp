@@ -6,6 +6,7 @@
 //
 
 #include <common/file_system_helper.h>
+#include <shared_mutex>
 #include "SyncFileWatcher.h"
 #include "common/hash_file.h"
 
@@ -32,38 +33,43 @@ SyncFileWatcher::~SyncFileWatcher() {
 void SyncFileWatcher::check_results() {
     while (!close_flag) {
         std::unique_lock ul(m);
-        for (auto& item: results) {
-            bool result = item.result_future.get();
-            item.result = result;
+        std::vector<SyncFileWatcherResult> _results = std::move(results);
+        ul.unlock();
+        for (auto& item: _results) {
+            try{
+                bool result = item.result_future.get();
+                item.result = result;
+
+            }catch(...){
+              std::cout<<"Eccola"<<std::endl; //TODO
+            }
+
         }
 
-        print_file_changes(FileStatus::created, "creati", "+");
-        print_file_changes(FileStatus::modified, "aggiornati","+");
-        print_file_changes(FileStatus::erased, "rimossi","-");
-
-        results.clear();
-
-        ul.unlock();
+        print_file_changes(_results, FileStatus::created, "creati", "+");
+        print_file_changes(_results, FileStatus::modified, "aggiornati","+");
+        print_file_changes(_results, FileStatus::erased, "rimossi","-");
 
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
-void SyncFileWatcher::print_file_changes(FileStatus fs, const std::string& action, const std::string& symbol) {
+void SyncFileWatcher::print_file_changes(std::vector<SyncFileWatcherResult>& _results , FileStatus fs, const std::string& action, const std::string& symbol) {
 
     bool at_least_one_success = false;
     bool at_least_one_failure = false;
 
-    for (auto& item: results) {
+    for (auto& item: _results) {
         if (item.result && fs == item.fs) at_least_one_success = true;
         else if (!item.result && fs == item.fs) at_least_one_failure = true;
         if (at_least_one_success && at_least_one_failure) break;
     }
 
     if (at_least_one_success) {
+        std::cout << std::endl;
         std::cout << "I seguenti file sono stati " << action << " sul server: " << std::endl;
 
-        for (auto& item: results) {
+        for (auto& item: _results) {
             if (item.result && item.fs == fs) {
                 std::cout << " " << symbol << " " << item.path << std::endl;
             }
@@ -72,9 +78,10 @@ void SyncFileWatcher::print_file_changes(FileStatus fs, const std::string& actio
     }
 
     if (at_least_one_failure) {
+        std::cout << std::endl;
         std::cout << "I seguenti file NON sono stati " << action << " sul server: " << std::endl;
 
-        for (auto& item: results) {
+        for (auto& item: _results) {
             if (!item.result && item.fs == fs) {
                 std::cout << " ? " << item.path << std::endl;
             }
@@ -89,7 +96,7 @@ void SyncFileWatcher::print_file_changes(FileStatus fs, const std::string& actio
 // (modifica, creazione o cancellazione) avvenuto.
 void SyncFileWatcher::run() {
     this->fw.on_file_changed([this](std::string path_matched, FileStatus status) -> void {
-        std::unique_lock ul(m);
+        std::shared_lock ul(m);
         FileMetadata fm;
         fm.path = path_matched;
         if (fm.path.find("/.") != std::string::npos) return;

@@ -114,7 +114,7 @@ std::future<bool> ClientCommand::post_file(FileMetadata &file_metadata, const in
             return post_file_result.find((__RESULT)).second == "OK";
         });
     } catch (BufferedFileReaderException& bfre) {
-        std::cerr << "Skipping the post of the following file: " << file_metadata.path << std::endl;
+        std::cerr << "Skipping the post of the following file: \"" << file_metadata.path << "\""<< std::endl;
         std::cerr << "The reason is " << bfre.what() << std::endl;
         auto prom = std::promise<bool>();
         prom.set_value(false);

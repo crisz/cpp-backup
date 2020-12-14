@@ -102,7 +102,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         std::map<std::string, std::string> result_map;
         result_map[__RESULT] = result ? "OK" : "KO";
 
-        ud.print_user_log("Rimozione del file " + file_path + (result? " avvenuta con successo": " fallita" ));
+        ud.print_user_log("Rimozione del file \"" + file_path + (result? "\" avvenuta con successo": " fallita" ));
         md.dispatch(command_name, result_map);
         command.clear();
         return;

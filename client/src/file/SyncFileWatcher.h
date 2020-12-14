@@ -12,6 +12,7 @@
 #include "../command/ClientCommand.h"
 #include "FileWatcher.h"
 #include <set>
+#include <shared_mutex>
 
 class SyncFileWatcherResult {
 public:
@@ -37,10 +38,10 @@ private:
     std::vector<SyncFileWatcherResult> results;
     std::thread check_results_thread;
     bool close_flag = false;
-    std::mutex m;
+    std::shared_mutex m;
 
     void check_results();
-    void print_file_changes(FileStatus fs, const std::string& action, const std::string& symbol);
+    void print_file_changes(std::vector<SyncFileWatcherResult>& _results, FileStatus fs, const std::string& action, const std::string& symbol);
 public:
     SyncFileWatcher(FileWatcher& fw, ClientCommand& c);
     ~SyncFileWatcher();
