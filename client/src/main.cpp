@@ -17,6 +17,8 @@
 #include "mode/restore.h"
 #include "mode/signup.h"
 
+#define RETRY_TIMEOUT 3000
+
 void die(std::string message) {
     std::cerr << message << std::endl;
     exit(-1);
@@ -28,6 +30,10 @@ void init_connection(UserSession& us) {
     } catch (boost::system::system_error& error) {
         std::cout << "Impossibile effettuare la connessione al server " << std::endl;
         die(error.what());
+        // Non facciamo il rethrow di ServerConnectionAsioException poiché in questo scenario
+        // non è necessario effettuare il retry
+        // in quanto siamo ancora in fase di inizializzazione del client
+        // per cui ci limitiamo ad invocare il die
     } catch (...) {
         die("Impossibile effettuare la connessione al server ");
     }
@@ -55,10 +61,9 @@ int main(int argc, char** argv) {
 
 
     std::string mode = argv[1];
-
+    UserSession us;
     try {
         if (mode == "sync") {
-            UserSession us;
             if (parse_sync_options(argc, argv, us)) return 0;
 
             init_connection(us);
@@ -67,7 +72,6 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (mode == "restore") {
-            UserSession us;
             if (parse_restore_options(argc, argv, us)) return 0;
 
             init_connection(us);
@@ -76,7 +80,6 @@ int main(int argc, char** argv) {
             return 0;
         }
         if (mode == "signup") {
-            UserSession us;
             if (parse_signup_options(argc, argv, us)) return 0;
 
             init_connection(us);
@@ -88,9 +91,25 @@ int main(int argc, char** argv) {
     } catch (ServerConnectionAsioException& exc) {
         std::cout << "La connessione con il server è stata interrotta." << std::endl;
         std::cout << "Motivo: " << exc.what() << std::endl;
-        return -1;
+
+        if (mode == "sync") {
+            while (true) {
+                try {
+                    std::cout << "Ritenterò la riconnessione tra " << (RETRY_TIMEOUT/1000) << " secondi" << std::endl;
+                    std::this_thread::sleep_for(std::chrono::milliseconds(RETRY_TIMEOUT));
+                    ServerConnectionAsio::get_instance()->reset();
+                    sync(us);
+                } catch (ServerConnectionAsioException& exc) {
+                    std::cerr << exc.what() << std::endl;
+                    // nop
+                }
+            }
+        } else {
+            return -1;
+        }
     }
 
     std::cout << "The command " << mode << " is not valid " << std::endl;
+    return -1;
 }
 

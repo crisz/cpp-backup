@@ -35,7 +35,7 @@ private:
     ServerConnectionAsio& operator=(ServerConnectionAsio const&) = delete;
 
     // Il costruttore effettua la connect con il server
-    ServerConnectionAsio(std::string& address, int port);
+    ServerConnectionAsio(const std::string& address, int port);
 
     // Funzione che crea l'istanza della classe e la ritorna
     static std::shared_ptr<ServerConnectionAsio> get_instance_impl(std::string* const address = nullptr, int* const port = nullptr);
@@ -59,6 +59,10 @@ public:
 
     // Funzione che si occupa della lettura di un messaggio ritornandolo come stringa
     std::string read_as_str(int length);
+
+    void reset();
+
+    void connect();
 
 };
 

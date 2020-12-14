@@ -1,6 +1,7 @@
 #include "sync.h"
 
 void sync(UserSession &us) {
+    // TODO: migliorare gestione errori
     FileWatcher fw{us.dir, std::chrono::milliseconds(SYNCH_INTERVAL)};
     ClientCommand c;
 

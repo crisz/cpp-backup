@@ -8,9 +8,8 @@
 
 
 // Il costruttore effettua la connect con il server
-ServerConnectionAsio::ServerConnectionAsio(std::string &address, int port) {
-    boost::asio::ip::tcp::endpoint endpoint(boost::asio::ip::address::from_string(address), port);
-    s.connect(endpoint);
+ServerConnectionAsio::ServerConnectionAsio(const std::string &address, int port): address{address}, port{port} {
+    connect();
 }
 
 // Funzione che crea l'istanza della classe e la ritorna
@@ -18,6 +17,11 @@ std::shared_ptr<ServerConnectionAsio>
 ServerConnectionAsio::get_instance_impl(std::string *const address, int *const port) {
     static std::shared_ptr<ServerConnectionAsio> instance{new ServerConnectionAsio{*address, *port}};
     return instance;
+}
+
+void ServerConnectionAsio::reset() {
+    this->s = boost::asio::ip::tcp::socket{this->io_service};
+    this->connect();
 }
 
 // Funzione che crea l'istanza della classe con i parametri di default e la ritorna
@@ -71,3 +75,15 @@ std::string ServerConnectionAsio::read_as_str(int length) {
     buffer[length] = 0;
     return std::string(buffer);
 }
+
+void ServerConnectionAsio::connect() {
+    try {
+        boost::asio::ip::tcp::endpoint endpoint(
+                boost::asio::ip::address::from_string(this->address), this->port);
+        this->s.connect(endpoint);
+    } catch (boost::system::system_error& se) {
+        throw ServerConnectionAsioException("Connessione rifiutata: " + std::string(se.what()));
+    }
+}
+
+
