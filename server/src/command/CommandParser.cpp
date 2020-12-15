@@ -63,8 +63,9 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
             SignupManager sm;
             std::string username = parameters[USERNAME];
             std::string password = parameters[PASSWORD];
-            bool result = sm.signup(username, password).get();
             std::map<std::string, std::string> result_map;
+            bool result = sm.signup(username, password).get();
+            if (!result) result_map[ERRORMSG] = "Username già esistente";
             result_map[__RESULT] = result ? "OK" : "KO";
             std::cout << "Registrazione del nuovo utente " << (result ? "avvenuta con successo": "fallita" )<< std::endl;
             md.dispatch(command_name,result_map);
@@ -121,7 +122,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         md.send_chunk(FILEDATA, 8);
         md.send_chunk(encode_length(bfr.get_file_size()), 4);
 
-        bfr.register_callback([&md, &bfr](bool done, char* data, int length){
+        std::promise<bool> &read_done = bfr.register_callback([&md, &bfr](bool done, char* data, int length){
             md.send_chunk(data, length);
             if (done) {
                 md.stop_flow();
@@ -130,6 +131,7 @@ void CommandParser::digest(tcp::socket &socket, ServerCommand &command) {
         });
 
         bfr.run();
+        read_done.get_future().get();
         return;
     }
 

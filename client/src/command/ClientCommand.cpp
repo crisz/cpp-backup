@@ -36,7 +36,11 @@ std::future<bool> ClientCommand::signup(std::string username, std::string passwo
     parameters.insert(std::pair<std::string, std::string>(PASSWORD, password));
     return std::async([this, command, parameters] () {
         CommandDTO result = cd.dispatch(command, parameters).get();
-        return result.find((__RESULT)).second == "OK";
+        bool success = result.find((__RESULT)).second == "OK";
+        if (!success) {
+            std::cerr << result.find(ERRORMSG).second << std::endl;
+        }
+        return success;
     });
 }
 
@@ -168,7 +172,6 @@ std::future<bool> ClientCommand::require_file(FileMetadata &file_metadata) {
             bfw.append(data, length);
         };
         CommandDTO reqr_file_result = cd.wait_for_response(command, true, flush_buffer_fn).get();
-
         bfw.close();
         std::string hash = hash_file(path);
 
